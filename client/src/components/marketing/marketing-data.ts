@@ -1,5 +1,5 @@
 export const ASSURANCE_BOUNDARY =
-  "Synerxus supports assurance preparation and ESG evidence organization. It does not replace independent assurance providers, legal counsel, accounting advisors, or guarantee regulatory compliance.";
+  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, or establish causal attribution.";
 
 export const evidenceObjectFields = [
   "Claim ID",
@@ -84,7 +84,7 @@ export const evidenceLadderLevels = [
   },
   {
     level: "Level 5",
-    title: "Audit-Ready Evidence Object",
+    title: "Review-Ready Evidence Packet",
     meaning:
       "The claim includes source evidence, partner confirmation, chain-of-custody history, negative impact screening, framework mapping, version history, and disclosure-readiness status.",
     risk: "Lowest",
@@ -98,7 +98,7 @@ export const frameworks = [
   "GRI",
   "SASB / ISSB",
   "TCFD",
-  "WEF Stakeholder Capitalism Metrics",
+  "Selected stakeholder reporting frameworks",
   "UN Sustainable Development Goals",
   "CDP support workflows",
   "Supplier and Scope 3 evidence workflows",
@@ -120,7 +120,7 @@ export const primaryUseCases = [
     body: "Collect and confirm ESG evidence from suppliers, contractors, vendors, and distributed field operations.",
   },
   {
-    title: "NGO and Partner Validation",
+    title: "NGO and Partner Confirmation",
     body: "Give trusted external partners a structured way to confirm the outcomes they helped deliver.",
   },
   {
@@ -163,7 +163,7 @@ export const dedicatedInsights = [
     body: "How focused external review can improve claim confidence before publication.",
   },
   {
-    title: "What audit-ready ESG evidence actually means",
+    title: "What review-ready ESG evidence actually means",
     body: "A practical view of source files, confirmations, custody history, and disclosure status.",
   },
   {

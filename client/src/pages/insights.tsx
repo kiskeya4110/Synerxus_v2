@@ -128,9 +128,9 @@ const editorialSeries: Series[] = [
       {
         type: "Explainer",
         readTime: "5 min read",
-        title: "What makes a claim audit-ready?",
+        title: "What makes a claim review-ready?",
         description:
-          "The evidence requirements, confirmation records, and custody history that support an audit-ready review.",
+          "The evidence requirements, confirmation records, and custody history that support an assurance-preparation review.",
       },
     ],
   },
@@ -184,7 +184,7 @@ const editorialSeries: Series[] = [
       {
         type: "Explainer",
         readTime: "5 min read",
-        title: "What audit-ready ESG evidence actually means",
+        title: "What review-ready ESG evidence actually means",
         description:
           "A practical view of source files, confirmations, custody history, and disclosure status.",
       },
@@ -204,7 +204,7 @@ const editorialSeries: Series[] = [
       {
         type: "Guide",
         readTime: "4 min read",
-        title: "Frameworks tell you what to disclose. Evidence proves what happened.",
+        title: "Frameworks tell you what to disclose. Evidence supports what happened.",
         description:
           "The distinction between disclosure requirements and the underlying evidence records they depend on.",
       },
@@ -213,7 +213,7 @@ const editorialSeries: Series[] = [
         readTime: "5 min read",
         title: "How one Evidence Object can support multiple reporting pathways",
         description:
-          "How a single confirmed claim can support GRI, CSRD/ESRS, SDG, and internal scorecard needs simultaneously.",
+          "How a single claim-linked evidence packet can support GRI, CSRD/ESRS, SDG, and internal scorecard review when mappings are clearly labeled.",
       },
     ],
   },
@@ -400,7 +400,7 @@ const evidenceObjectArticle: FullArticleSection[] = [
           },
           {
             title: "Partner Confirmation",
-            body: "Validation from the organization closest to the work: an NGO, school, supplier, contractor, or community partner. This moves the record beyond internal self-reporting.",
+            body: "Confirmation from the organization closest to the work: an NGO, school, supplier, contractor, or community partner. This helps distinguish partner-confirmed records from internal self-reporting.",
           },
           {
             title: "Time and Verification Details",
@@ -741,7 +741,7 @@ const anatomyEvidenceObjectArticle: FullArticleSection[] = [
     ],
   },
   {
-    title: "Layer 3: Partner Confirmation - Independent Validation",
+    title: "Layer 3: Partner Confirmation - Partner Confirmation",
     blocks: [
       {
         kind: "example",
@@ -1545,7 +1545,7 @@ export default function InsightsPage() {
                   </h2>
                   <p className="mt-4 max-w-xl text-sm leading-relaxed text-slate-600 md:text-base">
                     Get practical field notes on evidence-first ESG reporting, claim defensibility,
-                    Evidence Objects, partner confirmation, and audit-ready sustainability evidence.
+                    Evidence Objects, partner confirmation, and review-ready sustainability evidence.
                   </p>
                 </div>
                 <Button

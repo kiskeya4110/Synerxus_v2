@@ -31,7 +31,7 @@ const allUseCases = [
     frameworks: ["CSRD / ESRS", "Scope 3 workflows", "SASB / ISSB"],
   },
   {
-    title: "NGO and Partner Validation",
+    title: "NGO and Partner Confirmation",
     body: "Give trusted external partners a structured way to confirm the outcomes they helped deliver.",
     detail:
       "NGOs, implementation partners, and community organizations are often the best source of confirmation for corporate ESG claims. Synerxus gives them a focused review workflow that preserves their response as part of the Evidence Object.",

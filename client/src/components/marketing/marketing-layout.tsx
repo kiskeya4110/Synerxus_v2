@@ -9,17 +9,15 @@ const navItems = [
   { label: "Platform", href: "/platform" },
   { label: "Evidence Ladder", href: "/evidence-ladder" },
   { label: "Use Cases", href: "/use-cases" },
-  { label: "Validation", href: "/validation-framework" },
   { label: "Resources", href: "/resources" },
 ];
 
 const ASSURANCE_FOOTER_NOTE =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.";
+  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, or establish causal attribution.";
 
 const footerLinks = [
   ["Platform", "/platform"],
   ["Use Cases", "/use-cases"],
-  ["Validation", "/validation-framework"],
   ["Privacy", "/privacy"],
   ["Terms", "/terms"],
 ] as const;

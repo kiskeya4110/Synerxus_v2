@@ -53,6 +53,7 @@ export interface ReportMetrics {
 
   // Rates
   verificationRate: number; // 0-100
+  eligibleCompletionRate: number; // 0-100
   averageVerificationTime: string; // "Xh" or "N/A"
 
   // Partner-reported (not independently verified)
@@ -132,7 +133,8 @@ function computeWeightedQualityScore(
     "Activity Date Completeness": 10,
     "Source Attachment Availability": 10,
     "Location Context Availability": 10,
-    "Framework Mapping Availability": 10,
+    "SDG Mapping Availability": 5,
+    "Formal Framework Mapping Availability": 5,
   };
   let score = 0;
   for (const [label, , pctStr] of checks) {
@@ -182,10 +184,16 @@ export function computeReportMetrics(
   const verifiedHours = verified.reduce((sum, a) => sum + getHours(a), 0);
   const partnerReportedReach = verified.reduce((sum, a) => sum + getReach(a), 0);
 
-  // Verification rate: verified / (verified + pending + incomplete + rejected), exclude drafts
+  // Verification rate: verified / total submitted records.
+  // Drafts should not be included in this submitted-record input set.
+  const totalSubmitted = activities.length;
+  const verificationRate =
+    totalSubmitted > 0 ? Math.round((verified.length / totalSubmitted) * 100) : 0;
+
+  // Eligible completion rate is retained separately for workflow diagnostics.
   const eligible =
     verified.length + pending.length + incomplete.length + rejected.length;
-  const verificationRate =
+  const eligibleCompletionRate =
     eligible > 0 ? Math.round((verified.length / eligible) * 100) : 0;
 
   // Average verification time: avg(verifiedAt – submittedAt/createdAt) for verified records
@@ -283,12 +291,16 @@ export function computeReportMetrics(
         verified.filter((a) => a.location || a.geolocation || a.region).length,
       ),
       check(
-        "Framework Mapping Availability",
+        "SDG Mapping Availability",
         verified.filter((a) => {
           if (Array.isArray(a.sdgTags) && a.sdgTags.length > 0) return true;
           const proj = projectMap.get(a.projectId);
           return Array.isArray(proj?.sdgGoals) && proj.sdgGoals.length > 0;
         }).length,
+      ),
+      check(
+        "Formal Framework Mapping Availability",
+        frameworksIncluded.length > 0 ? verified.length : 0,
       ),
     );
   }
@@ -393,6 +405,7 @@ export function computeReportMetrics(
     rejectedRecords: rejected.length,
     submittedRecords: activities.length,
     verificationRate,
+    eligibleCompletionRate,
     averageVerificationTime,
     partnerReportedReach,
     communitiesServed: countries.length,

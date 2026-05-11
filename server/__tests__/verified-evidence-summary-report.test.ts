@@ -36,17 +36,46 @@ function renderReport() {
 }
 
 describe("Verified Evidence Summary report", () => {
-  it("renders the required 8-page report structure and boundary acknowledgement", () => {
+  it("renders the required sample report structure and boundary acknowledgement", () => {
     const html = renderReport();
 
-    expect(html.match(/class="report-page"/g)).toHaveLength(8);
+    expect(html.match(/class="report-page"/g)).toHaveLength(11);
     expect(html).toContain("<title>Verified Evidence Summary</title>");
-    expect(html).toContain("Prepared for ESG / CSR Reporting and Assurance Support");
+    expect(html).toContain("Demonstration Report for ESG / CSR Reporting and Assurance Preparation");
+    expect(html).toContain("Sample Data Notice");
+    expect(html).toContain("Claim-to-Evidence Traceability");
+    expect(html).toContain("Evidence Quality and Confidence Scores");
+    expect(html).toContain("Exceptions and Exclusions");
+    expect(html).toContain("Partner-Reported Reach");
+    expect(html).toContain("SDG-Aligned Activity Mapping");
+    expect(html).toContain("Methodology, Definitions, and Report Boundaries");
+    expect(html).toContain("Evidence Register Appendix");
+    expect(html).toContain("Evidence Strength and Limitations");
     expect(html).toContain("Evidence Readiness Assessment");
     expect(html).toContain("I acknowledge and agree to the boundary statement");
     expect(html).toContain(
-      "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.",
+      "Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Synerxus does not provide formal assurance opinions, certify SDG impact, guarantee regulatory compliance, independently verify all partner-reported reach figures, or establish causal attribution.",
     );
+  });
+
+  it("renders the report sections in the required streamlined order", () => {
+    const html = renderReport();
+    const sectionOrder = [
+      "<h1>Sample Verified Evidence Summary</h1>",
+      "<h2>Executive Evidence Snapshot</h2>",
+      '<div class="mix-title">Evidence Status Reconciliation</div>',
+      "<h2>Claim-to-Evidence Traceability</h2>",
+      "<h2>Evidence Quality and Confidence Scores</h2>",
+      "<h2>Exceptions and Exclusions</h2>",
+      "<h2>Partner-Reported Reach &amp; Framework Alignment</h2>",
+      "<h2>SDG-Aligned Activity Mapping &amp; Contribution Context</h2>",
+      "<h2>Methodology, Definitions, and Report Boundaries</h2>",
+      "<h2>Evidence Register Appendix</h2>",
+    ];
+
+    const positions = sectionOrder.map((section) => html.indexOf(section));
+    positions.forEach((position) => expect(position).toBeGreaterThanOrEqual(0));
+    expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
   it("keeps verified totals separate from partner-reported, pending, rejected, and incomplete records", () => {
@@ -55,10 +84,10 @@ describe("Verified Evidence Summary report", () => {
     // Both "approved" records count as verified (canonical definition: approved || verified, matching dashboard)
     // Record 1: approved, verifiedAt set, hours=12, beneficiaryCount=50
     // Record 2: approved, verifiedAt=null, hours=20, beneficiaryCount=80
-    expect(html).toContain('<div class="metric-label">Verified Evidence Records</div>');
-    expect(html).toContain('<div class="metric-label">Verified Hours</div>');
-    expect(html).toContain('<div class="metric-label">Partner-Reported Reach</div>');
-    expect(html).toContain('<div class="metric-label">Incomplete Records</div>');
+    expect(html).toContain('<div class="metric-label">Partner-Confirmed Records</div>');
+    expect(html).toContain('<div class="metric-label">Verified Workflow Hours</div>');
+    expect(html).toContain('<div class="metric-label">Sample Partner-Reported Reach</div>');
+    expect(html).toContain('<div class="metric-label">Pending / Incomplete</div>');
     expect(html).toContain('<div class="metric-label">Rejected Records</div>');
     expect(html).toContain('<div class="metric-value">2</div>');
     expect(html).toContain('<div class="metric-value">32</div>');
@@ -87,7 +116,7 @@ describe("Verified Evidence Summary report", () => {
   it("separates the reporting entity from included partner organizations", () => {
     const html = renderReport();
 
-    expect(html).toContain('<div class="info-label">Prepared for</div><div class="info-value">Acme Foundation</div>');
+    expect(html).toContain('<div class="info-label">Prepared for</div><div class="info-value">Acme Foundation — Sample Organization</div>');
     expect(html).not.toContain('<span class="scope-label">Reporting Entity</span>');
     expect(html).not.toContain('<span class="scope-label">Organization</span><span class="scope-val">Acme Foundation</span>');
     expect(html).toContain('<span class="scope-label">Organizations</span><span class="scope-val">Green Future Alliance<br>Eastside Community Works</span>');

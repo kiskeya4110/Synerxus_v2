@@ -652,7 +652,7 @@ export function AssessmentCta() {
       <div className="mx-auto grid max-w-7xl gap-8 px-4 md:grid-cols-[1fr_auto] md:items-center md:px-8">
         <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl md:p-8">
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-            Regulatory Readiness Assessment
+            Evidence Assessment
           </p>
           <h2 className="mt-3 text-3xl font-extrabold text-[#0A1F44] md:text-4xl">
             Assess the defensibility of your ESG claims.
@@ -672,7 +672,7 @@ export function AssessmentCta() {
               "Partner confirmation readiness",
               "Framework mapping review",
               "Negative impact screening review",
-              "Disclosure-readiness summary",
+              "Review-readiness summary",
             ].map((item) => (
               <li key={item} className="flex items-center gap-2">
                 <CheckCircle2 className="h-4 w-4 text-[#8A5A00]" />

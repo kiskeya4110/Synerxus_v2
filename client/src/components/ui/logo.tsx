@@ -56,11 +56,6 @@ export default function Logo({
     }
   };
 
-  const handleVerifiedClick = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigate('/ngo-verification');
-  };
-
   const wordmark = (
     <div style={{
       display: 'flex',
@@ -93,14 +88,8 @@ export default function Logo({
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: '#8A5A00' }}>Impacts.</span>{' '}
-        <span
-          onClick={handleVerifiedClick}
-          style={{ cursor: 'pointer', color: '#0A2463' }}
-          title="Partner Confirmation"
-        >
-          Verified!
-        </span>
+        <span style={{ color: '#8A5A00' }}>Evidence.</span>{' '}
+        <span style={{ color: '#0A2463' }}>Structured.</span>
       </span>
     </div>
   );
@@ -135,7 +124,7 @@ export default function Logo({
         />
       </div>
 
-      {/* Wordmark with independent "Verified" link (uses stopPropagation) */}
+      {/* Wordmark */}
       <div>{wordmark}</div>
     </div>
   );

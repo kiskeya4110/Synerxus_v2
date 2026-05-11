@@ -3,12 +3,12 @@ import { MarketingLayout } from "@/components/marketing/marketing-layout";
 import { Button } from "@/components/ui/button";
 
 const BOUNDARY_STATEMENT =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.";
+  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, or establish causal attribution.";
 
 const useCases = [
   ["Corporate Volunteering", "Track employee volunteering hours and evidence records."],
   ["Community Investment", "Capture and report on community programs and outputs."],
-  ["NGO / Partner Verification", "Verify partner capacity, activities, and output data."],
+  ["NGO / Partner Verification", "Confirm partner activity and output records with appropriate source support."],
   ["Assurance Preparation", "Organize evidence for third-party assurance and audit preparation."],
   ["SDG / Framework Mapping", "Map outputs to global goals and reporting frameworks."],
 ] as const;
@@ -17,8 +17,8 @@ const checkboxes = {
   programType: ["Employee Volunteering", "Community Investment", "Grantmaking", "Capacity Building", "Other"],
   evidenceProblem: [
     "Data is scattered across systems",
-    "Hard to verify partner impact",
-    "Lack of audit-ready documentation",
+    "Hard to confirm partner activity and output records",
+    "Lack of reviewable source documentation",
     "Inconsistent reporting",
     "Time-consuming to prepare reports",
     "Other",
@@ -26,7 +26,7 @@ const checkboxes = {
   evidenceSources: ["Spreadsheets", "Surveys / Forms", "Partner Reports", "CRM / PM Tools", "Financial Systems", "Photos / Documents", "Other"],
   frameworks: ["CSRD / ESRS", "GRI 413", "ISAE 3000", "UN SDGs", "SASB / ISSB", "Internal Reporting", "Other"],
   verificationScope: ["Projects", "Partners / NGOs", "Volunteers", "Countries / Locations"],
-  reportOutput: ["Verified Evidence Summary", "Board Summary", "Assurance Preparation Package"],
+  reportOutput: ["Evidence Summary", "Board Summary", "Assurance Preparation Package"],
 } as const;
 
 export default function ContactPage() {
@@ -93,7 +93,7 @@ export default function ContactPage() {
             `Program Type: ${selected.programType.join(", ")}`,
             `Evidence Problem: ${selected.evidenceProblem.join(", ")}`,
             `Current Evidence Sources: ${selected.evidenceSources.join(", ")}`,
-            `Verification Scope: ${selected.verificationScope.join(", ")}`,
+            `Evidence Scope: ${selected.verificationScope.join(", ")}`,
             `Report Output Needed: ${selected.reportOutput.join(", ")}`,
             `Comments: ${form.comments}`,
             `Boundary acknowledgement: ${form.acknowledgement ? "Accepted" : "Not accepted"}`,
@@ -133,7 +133,7 @@ export default function ContactPage() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 md:grid-cols-[0.9fr_1.1fr] md:px-8">
           <aside className="rounded-xl border border-slate-200 bg-slate-50 p-5">
             <h2 className="text-xl font-extrabold text-[#0A1F44]">
-              Configure Your Evidence Workflow
+              Describe Your Evidence Needs
             </h2>
             <div className="mt-5 grid gap-3">
               {useCases.map(([title, description]) => (
@@ -144,7 +144,7 @@ export default function ContactPage() {
               ))}
             </div>
             <p className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm leading-relaxed text-amber-900">
-              This assessment helps us recommend the right configuration, data model, and evidence workflows for your organization.
+              This assessment helps Synerxus understand your current records, evidence gaps, reporting needs, and review boundaries.
             </p>
           </aside>
 
@@ -176,7 +176,7 @@ export default function ContactPage() {
               <CheckboxGroup title="Evidence Problem" group="evidenceProblem" values={selected.evidenceProblem} onToggle={toggle} />
               <CheckboxGroup title="Current Evidence Sources" group="evidenceSources" values={selected.evidenceSources} onToggle={toggle} />
               <CheckboxGroup title="Frameworks of Interest" group="frameworks" values={selected.frameworks} onToggle={toggle} />
-              <CheckboxGroup title="Verification Scope" group="verificationScope" values={selected.verificationScope} onToggle={toggle} />
+              <CheckboxGroup title="Evidence Scope" group="verificationScope" values={selected.verificationScope} onToggle={toggle} />
               <CheckboxGroup title="Report Output Needed" group="reportOutput" values={selected.reportOutput} onToggle={toggle} />
 
               <FormSection title="Timing">

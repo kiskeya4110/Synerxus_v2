@@ -2,7 +2,10 @@ import { isFullyVerified } from "@shared/validation";
 import { escapeReportHtml as escapeHtml } from "./report-html-escape";
 
 const BOUNDARY_STATEMENT =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.";
+  "Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Synerxus does not provide formal assurance opinions, certify SDG impact, guarantee regulatory compliance, independently verify all partner-reported reach figures, or establish causal attribution.";
+
+const SAMPLE_DATA_NOTICE =
+  "Sample Data Notice: This report uses demonstration data for product and stakeholder discussion only. Record counts, verified hours, verification rates, reach figures, quality scores, SDG mappings, and framework references are illustrative and should not be interpreted as actual impact verification, formal assurance evidence, SDG impact certification, regulatory compliance support, or production performance.";
 
 export type ReportStatus =
   | "Draft"
@@ -185,6 +188,58 @@ function getHours(activity: any): number {
   return isNaN(parsed) ? 0 : parsed;
 }
 
+function hasSourceArtifact(activity: any): boolean {
+  const artifacts = [
+    activity.evidenceLinks,
+    activity.attachments,
+    activity.sourceArtifacts,
+    activity.sourceArtifactReferences,
+    activity.documents,
+  ];
+  return artifacts.some((value) => Array.isArray(value) && value.length > 0);
+}
+
+function verifierRoleLabel(activity: any): string {
+  if (activity.verificationStatus === "pending") return "Pending confirmation";
+  if (activity.verificationStatus === "rejected" || activity.verificationStatus === "incomplete") return "Not verified";
+  const raw = String(activity.verifierRole || activity.verifierType || activity.verifierName || "").toLowerCase();
+  if (raw.includes("internal") || raw.includes("gfa verification team")) return "Internal verification team";
+  if (raw.includes("program lead") || raw.includes("partner lead")) return "Partner program lead";
+  if (raw.includes("program")) return "Program verifier";
+  if (activity.verifiedBy || activity.verifierName) return "Authorized partner verifier";
+  return "Not verified";
+}
+
+function verifierTypeLabel(activity: any): string {
+  if (activity.verificationStatus === "pending") return "Pending";
+  if (activity.verificationStatus === "rejected" || activity.verificationStatus === "incomplete") return "Not verified";
+  const raw = String(activity.verifierType || activity.verifierRole || activity.verifierName || "").toLowerCase();
+  if (raw.includes("independent")) return "Independent";
+  if (raw.includes("internal") || raw.includes("team")) return "Internal";
+  if (raw.includes("system")) return "System";
+  if (activity.verifiedBy || activity.verifierName) return "Partner";
+  return "Not shown";
+}
+
+function verifierRelationshipLabel(activity: any): string {
+  if (activity.verificationStatus === "pending") return "Pending confirmation";
+  if (activity.verificationStatus === "rejected" || activity.verificationStatus === "incomplete") return "Not verified";
+  const raw = String(activity.verifierRelationship || activity.verifierType || activity.verifierRole || "").toLowerCase();
+  if (raw.includes("independent")) return "Independent reviewer";
+  if (raw.includes("internal")) return "Internal reviewer";
+  if (raw.includes("fund")) return "Fund recipient";
+  if (raw.includes("delivery") || raw.includes("partner")) return "Delivery partner";
+  if (activity.verifiedBy || activity.verifierName) return "Authorized partner";
+  return "Not shown";
+}
+
+function evidenceConfidenceLabel(activity: any): string {
+  if (hasSourceArtifact(activity)) return "Source-supported";
+  if (activity.verificationStatus === "approved" || activity.verificationStatus === "verified") return "Partner-confirmed";
+  if (activity.verificationStatus === "pending") return "Self-reported / pending";
+  return "Excluded";
+}
+
 /** Resolve SDG tags for an activity, falling back to project sdgGoals */
 function resolveActivitySdgs(activity: any, projectMap: Map<number, any>): number[] {
   if (Array.isArray(activity.sdgTags) && activity.sdgTags.length > 0) return activity.sdgTags;
@@ -200,14 +255,14 @@ function renderBrandLockup(logoDataUri?: string): string {
       <img src="${logoDataUri}" alt="Synerxus" class="brand-logo" />
       <div class="brand-text">
         <div class="brand-wordmark"><span class="brand-syner">SYNER</span><span class="brand-xus">XUS</span></div>
-        <div class="brand-tag">Impacts. <span>Verified.</span></div>
+        <div class="brand-tag">Evidence. <span>Structured.</span></div>
       </div>
     </div>`;
   }
   return `<div class="brand-lockup">
     <div class="brand-text">
       <div class="brand-wordmark"><span class="brand-syner">SYNER</span><span class="brand-xus">XUS</span></div>
-      <div class="brand-tag">Impacts. <span>Verified.</span></div>
+      <div class="brand-tag">Evidence. <span>Structured.</span></div>
     </div>
   </div>`;
 }
@@ -267,7 +322,7 @@ const ICON = {
 
 // ─── Status bar rendering ────────────────────────────────────────────────────
 
-function renderStatusBar(status: ReportStatus): string {
+function renderStatusBar(status: string): string {
   const isReady = status === "Ready for Review" || status === "Exported";
   const isNeeds = status === "Needs Data" || status === "Needs Review";
   const borderColor = isReady ? "#86EFAC" : isNeeds ? "#FCD34D" : "#CBD5E1";
@@ -303,10 +358,14 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
   // KPIs (use verified = approved, matching dashboard)
   const verifiedHours = verified.reduce((sum, a) => sum + getHours(a), 0);
   const partnerReportedReach = verified.reduce((sum, a) => sum + getReach(a), 0);
+  const sourceSupported = verified.filter(hasSourceArtifact);
 
-  // Verification rate: eligible = verified + pending + incomplete + rejected (no drafts)
+  // Verification rate: verified / total submitted records.
+  // Draft records should not be passed into this submitted-record report input.
+  const totalSubmitted = activities.length;
+  const verificationRate = totalSubmitted > 0 ? Math.round((verified.length / totalSubmitted) * 100) : 0;
   const eligible = verified.length + pending.length + incomplete.length + rejected.length;
-  const verificationRate = eligible > 0 ? Math.round((verified.length / eligible) * 100) : 0;
+  const eligibleCompletionRate = eligible > 0 ? Math.round((verified.length / eligible) * 100) : 0;
 
   const verificationTimes = verified
     .filter((a) => a.verifiedAt && (a.submittedAt || a.createdAt))
@@ -351,11 +410,12 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
   // Frameworks: use provided list, or empty (no hardcoded defaults)
   const frameworksDisplay: string[] = input.frameworksIncluded ?? [];
 
-  // Evidence sources: use provided list, or derive label
-  const evidenceSources: string[] =
+  // Input sources are separate from source artifacts.
+  const inputSources: string[] =
     input.evidenceSources && input.evidenceSources.length > 0
       ? input.evidenceSources
-      : ["Volunteer Activity Records", "Partner-Confirmed Outputs"];
+      : ["Volunteer Activity Records", "Partner Submissions"];
+  const confirmationSources = ["Partner / Verifier Confirmation"];
 
   // Completeness checks for quality scorecard
   const completenessChecks: Array<[string, boolean, string]> = [];
@@ -369,9 +429,15 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
       chk("Partner Confirmation Completeness", verified.filter((a) => !!a.verifiedBy).length),
       chk("Verification Timestamp Completeness", verified.filter((a) => !!a.verifiedAt).length),
       chk("Activity Date Completeness", verified.filter((a) => !!a.date).length),
-      chk("Source Attachment Availability", verified.filter((a) => (a.evidenceLinks || a.attachments || []).length > 0).length),
-      chk("Location Context Availability", (verified.filter((a) => a.location || a.geolocation || a.region).length > 0 || countries.length > 0) ? verified.filter((a) => a.location || a.geolocation || a.region || countries.length > 0).length : 0),
-      chk("Framework Mapping Availability", verified.filter((a) => resolveActivitySdgs(a, projectMap).length > 0).length),
+      chk("Source Attachment Availability", sourceSupported.length),
+      chk("Location Context Availability", verified.filter((a) => a.location || a.geolocation || a.region).length),
+      chk("SDG Mapping Availability", verified.filter((a) => resolveActivitySdgs(a, projectMap).length > 0).length),
+      chk(
+        "Formal Framework Mapping Availability",
+        frameworksDisplay.length > 0 ? verified.length : 0,
+      ),
+      chk("Exception Visibility", verified.length),
+      chk("Sensitive Metadata Handling", verified.length),
     );
   }
 
@@ -383,7 +449,10 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     "Activity Date Completeness": 10,
     "Source Attachment Availability": 10,
     "Location Context Availability": 10,
-    "Framework Mapping Availability": 10,
+    "SDG Mapping Availability": 5,
+    "Formal Framework Mapping Availability": 5,
+    "Exception Visibility": 5,
+    "Sensitive Metadata Handling": 5,
   };
   let rawQuality = 0;
   for (const [label, , pctStr] of completenessChecks) {
@@ -391,8 +460,6 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     const pctNum = parseInt(pctStr.replace("%", ""), 10);
     if (!isNaN(pctNum)) rawQuality += w * (pctNum / 100);
   }
-  rawQuality += 5; // incomplete excluded
-  rawQuality += 5; // metadata redacted
   const qualityScore = Math.min(100, Math.max(0, Math.round(rawQuality)));
 
   // Report status (calculated, not static)
@@ -401,6 +468,10 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     qualityScore < 70 ? "Needs Review" :
     "Ready for Review"
   );
+  const reportStatusDisplay = "Sample Report — For Discussion Only";
+  const readinessDisplay = qualityScore >= 70
+    ? "Structurally Reviewable; not assurance ready"
+    : "Demonstration Review Only";
 
   // Pipeline status breakdown: percentages over ALL submitted activities
   const totalForBar = activities.length || 1;
@@ -444,10 +515,16 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
           <th>Project</th>
           <th>Output Description</th>
           <th>Hours</th>
-          <th>Verifier</th>
-          <th>Verified</th>
+          <th>Status</th>
+          <th>Verifier Type</th>
+          <th>Verifier Role</th>
+          <th>Verifier Relationship</th>
+          <th>Verification Date</th>
           <th>Location</th>
-          <th>SDG / Framework</th>
+          <th>Source Support</th>
+          <th>Confidence</th>
+          <th>SDG Mapping</th>
+          <th>Exception Flag</th>
         </tr></thead>`;
 
   const evidenceRowArr: string[] = verified.map((record, index) => {
@@ -464,10 +541,16 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
             <td>${escapeHtml(projName)}</td>
             <td>${escapeHtml(getOutputText(record))}</td>
             <td>${number(getHours(record))}h</td>
-            <td>${escapeHtml(record.verifierName || (record.verifiedBy ? "Authorized partner" : "Pending"))}</td>
+            <td>Verified / Partner-confirmed</td>
+            <td>${escapeHtml(verifierTypeLabel(record))}</td>
+            <td>${escapeHtml(verifierRoleLabel(record))}</td>
+            <td>${escapeHtml(verifierRelationshipLabel(record))}</td>
             <td>${escapeHtml(dateLabel(record.verifiedAt))}</td>
-            <td>${escapeHtml(record.region || record.location || (record.geolocation ? "Region captured" : "—"))}</td>
+            <td>${escapeHtml(record.region || record.location || (record.geolocation ? "Location redacted" : "Not configured"))}</td>
+            <td>${hasSourceArtifact(record) ? "Source-supported" : "Missing source artifact"}</td>
+            <td>${escapeHtml(evidenceConfidenceLabel(record))}</td>
             <td>${sdgChips}</td>
+            <td>${hasSourceArtifact(record) && (record.location || record.geolocation || record.region) ? "None shown" : "Context gap"}</td>
           </tr>`;
   });
 
@@ -520,7 +603,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
       }).join("")
     : `<div class="card soft"><p>No SDG mappings found in included evidence records.</p></div>`;
 
-  // SDG contribution examples: top 3 SDGs by verified record count from actual data
+  // SDG alignment examples: top 3 SDGs by verified record count from actual data
   const topSdgs = Object.entries(sdgRecordCounts)
     .sort((a, b) => b[1].count - a[1].count || b[1].hours - a[1].hours)
     .slice(0, 3)
@@ -592,7 +675,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
           </div>
         </div>`;
       }).join("")
-    : `<div class="card soft"><p>No SDG contribution examples available for this reporting period.</p></div>`;
+    : `<div class="card soft"><p>No SDG alignment examples available for this reporting period.</p></div>`;
 
   // Framework alignment table: derived from frameworksDisplay (not hardcoded)
   const frameworkTableRows = frameworksDisplay.length > 0
@@ -611,11 +694,11 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
           <td>${escapeHtml(def.limitation)}</td>
         </tr>`;
       }).join("")
-    : `<tr><td colspan="4" style="text-align:center;color:#94A3B8;padding:16px">No frameworks selected for this report. Select frameworks in the Evidence Readiness Assessment or report generation settings.</td></tr>`;
+    : `<tr><td colspan="4" style="text-align:center;color:#94A3B8;padding:16px">SDG mapping is enabled for demonstration. No formal CSRD, GRI, SASB, ISSB, or TCFD reporting framework has been selected for this sample report.</td></tr>`;
 
   const formChecks = {
     program: ["Employee Volunteering", "Community Investment", "Grantmaking", "Capacity Building", "Other"],
-    problem: ["Data scattered", "Hard to verify partner output", "Lack of audit-ready docs", "Inconsistent reporting", "Time-consuming reports", "Other"],
+    problem: ["Data scattered", "Hard to verify partner output", "Lack of reviewable evidence records", "Lack of assurance-preparation documentation", "Inconsistent reporting", "Time-consuming reports"],
     sources: ["Spreadsheets", "Surveys / Forms", "Partner Reports", "CRM / PM Tools", "Photos / Documents", "Financial Systems"],
     frameworks: ["CSRD / ESRS", "ESRS S3", "GRI 413", "ISAE 3000", "UN SDGs", "SASB / ISSB", "TCFD", "Internal ESG / CSR reporting", "Other"],
     scope: ["Projects", "Partners / NGOs", "Volunteers", "Countries / Locations"],
@@ -630,6 +713,75 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     : `<div class="reach-stat"><span class="icon-circle">${ICON.users}</span><div class="reach-label-block"><div class="reach-label">People Reached (Partner-Reported)</div><div class="reach-num">${number(partnerReportedReach)}</div></div></div>
        <div class="reach-stat"><span class="icon-circle">${ICON.globe}</span><div class="reach-label-block"><div class="reach-label">Communities Served</div><div class="reach-num">${number(communitiesServed)}</div></div></div>
        <div class="reach-stat"><span class="icon-circle">${ICON.folder}</span><div class="reach-label-block"><div class="metric-label">Programs Included</div><div class="metric-value">${number(projectsIncluded)}</div></div></div>`;
+
+  const preparedForDisplay = `${input.organizationName}${input.organizationName.includes("Sample Organization") ? "" : " — Sample Organization"}`;
+  const reportIdDisplay = input.reportId.startsWith("DEMO-") ? input.reportId : `DEMO-${input.reportId}`;
+  const periodDisplay = input.periodDisplay.toLowerCase() === "all time"
+    ? `Demonstration dataset through ${input.dataCutoffDate || input.generatedDate}`
+    : input.periodDisplay;
+  const geographicScopeDisplay = countries.length > 0
+    ? "Client-configurable; location data redacted in this sample report"
+    : "Location data not configured in sample dataset";
+  const frameworkScopeDisplay = frameworksDisplay.length > 0
+    ? `SDG-aligned activity mapping shown; formal framework selections: ${frameworksDisplay.slice(0, 3).join(", ")}`
+    : "SDG-aligned activity mapping only; no formal CSRD, GRI, SASB, ISSB, or TCFD reporting framework selected";
+  const sourceAttachmentMissingCount = Math.max(verified.length - sourceSupported.length, 0);
+  const missingLocationCount = verified.filter((a) => !(a.location || a.geolocation || a.region)).length;
+
+  const statusRows = [
+    ["Verified / Partner-confirmed", verified.length, "Yes", "Completed the configured verification workflow and included in verified evidence totals.", "Retain for report output"],
+    ["Pending verification", pending.length, "No", "Submitted record awaiting partner or verifier confirmation.", "Request or complete confirmation"],
+    ["Incomplete", incomplete.length, "No", "Missing required fields or supporting context.", "Complete required fields"],
+    ["Rejected", rejected.length, "No", "Failed minimum evidence, consistency, or verification checks.", "Retain as excluded or correct and resubmit"],
+    ["Partner-reported only", partnerReportedReach > 0 ? 1 : 0, "No", "Reach, beneficiary, community, or participation figures reported by partners and retained separately.", "Keep separate from verified evidence totals"],
+    ["Derived / mapped only", sdgsDisplay.length, "No", "Classification layer only. Not evidence of impact by itself.", "Use only as reporting context"],
+  ].map(([status, count, included, meaning, next]) => `<tr><td>${escapeHtml(String(status))}</td><td>${number(Number(count))}</td><td>${escapeHtml(String(included))}</td><td>${escapeHtml(String(meaning))}</td><td>${escapeHtml(String(next))}</td></tr>`).join("");
+
+  const claimRows = [
+    {
+      id: "CLM-001",
+      statement: "Sample records indicate partner-confirmed activity related to solar energy access and maintenance training.",
+      program: "Solar Village Initiative",
+      records: "EVR-0001, EVR-0002, EVR-0012",
+      sdg: "SDG 7, SDG 11, SDG 13",
+      limitation: "Does not prove long-term energy access, emissions reduction, or causal SDG impact.",
+    },
+    {
+      id: "CLM-002",
+      statement: "Sample records indicate partner-confirmed activity related to clean water testing, well construction, and handover support.",
+      program: "Clean Wells Construction",
+      records: "EVR-0003, EVR-0035, EVR-0050",
+      sdg: "SDG 6, SDG 11, SDG 17",
+      limitation: "Does not independently verify beneficiary reach, water quality outcomes, or long-term service reliability.",
+    },
+    {
+      id: "CLM-003",
+      statement: "Sample records indicate partner-confirmed activity related to climate education, hackathon facilitation, survey validation, and youth sessions.",
+      program: "Climate Hackathon",
+      records: "EVR-0016, EVR-0037, EVR-0041",
+      sdg: "SDG 4, SDG 11, SDG 13, SDG 17",
+      limitation: "Does not prove climate resilience outcomes, behavioral change, or long-term education impact.",
+    },
+  ].map((claim) => `<tr>
+    <td>${escapeHtml(claim.id)}</td>
+    <td>${escapeHtml(claim.statement)}</td>
+    <td>${escapeHtml(filteredProjectNames.includes(claim.program) ? claim.program : claim.program)}</td>
+    <td>${escapeHtml(claim.records)}</td>
+    <td>Partner-confirmed</td>
+    <td>${sourceSupported.length > 0 ? "Source support tracked where configured" : "Not source-supported in this sample unless attachments are configured"}</td>
+    <td>${escapeHtml(claim.sdg)}</td>
+    <td>${frameworksDisplay.length > 0 ? escapeHtml(frameworksDisplay.slice(0, 3).join(", ")) : "N/A - no formal framework selected"}</td>
+    <td>${escapeHtml(claim.limitation)}</td>
+  </tr>`).join("");
+
+  const exceptionRows = [
+    ["Pending verification", pending.length, "Awaiting confirmation", "No"],
+    ["Incomplete records", incomplete.length, "Excluded until complete", "No"],
+    ["Rejected records", rejected.length, "Excluded", "No"],
+    ["Missing source attachments", sourceAttachmentMissingCount, "Partner-confirmed only, not source-supported", "No, for source-supported totals"],
+    ["Missing location context", missingLocationCount, "Location not used as verification basis", "No"],
+    ["Partner-reported reach", partnerReportedReach, "Reported separately", "No"],
+  ].map(([type, count, treatment, included]) => `<tr><td>${escapeHtml(String(type))}</td><td>${number(Number(count))}</td><td>${escapeHtml(String(treatment))}</td><td>${escapeHtml(String(included))}</td></tr>`).join("");
 
   // ─── HTML ────────────────────────────────────────────────────────────────
 
@@ -903,39 +1055,49 @@ PAGES_PLACEHOLDER
 
   // Page 1 — Cover
   pageBodies.push(`
-  <h1>Verified Evidence Summary</h1>
-  <div class="subtitle">Prepared for ESG / CSR Reporting and Assurance Support</div>
+  <h1>Sample Verified Evidence Summary</h1>
+  <div class="subtitle">Demonstration Report for ESG / CSR Reporting and Assurance Preparation</div>
   <div class="gold-divider"></div>
 
-  <div class="cover-info">
-    <div class="info-list">
-      <div class="info-item"><span class="ico">${ICON.user}</span><div><div class="info-label">Prepared for</div><div class="info-value">${escapeHtml(input.organizationName)}</div></div></div>
-      <div class="info-item"><span class="ico">${ICON.badgeId}</span><div><div class="info-label">Report ID</div><div class="info-value">${escapeHtml(input.reportId)}</div></div></div>
-      <div class="info-item"><span class="ico">${ICON.calendar}</span><div><div class="info-label">Reporting Period</div><div class="info-value">${escapeHtml(input.periodDisplay)}</div></div></div>
-      <div class="info-item"><span class="ico">${ICON.doc}</span><div><div class="info-label">Generated Date</div><div class="info-value">${escapeHtml(input.generatedDate)}</div></div></div>
-      <div class="info-item"><span class="ico">${ICON.clock}</span><div><div class="info-label">Data Cutoff</div><div class="info-value">${escapeHtml(input.dataCutoffDate || input.generatedDate)}</div></div></div>
-    </div>
-    <div class="scope-card">
-      <div class="scope-head">${ICON.target}<strong>Scope Summary</strong></div>
-      <div class="scope-desc">This report includes verified evidence records collected and processed for the reporting period and data cutoff date.</div>
-      <div class="scope-divider"></div>
-      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Organizations</span><span class="scope-val">${organizationScopeValue}</span></div>
-      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Program Scope</span><span class="scope-val">${escapeHtml(filteredProjectNames.slice(0, 3).join(", ") || "All programs")}</span></div>
-      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Geographic Scope</span><span class="scope-val">${escapeHtml(countries.length ? countries.slice(0, 3).join(", ") : "Global")}</span></div>
-      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Frameworks</span><span class="scope-val">${escapeHtml(frameworksDisplay.length > 0 ? frameworksDisplay.slice(0, 3).join(", ") : "No frameworks selected")}</span></div>
-      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Evidence Sources</span><span class="scope-val">${escapeHtml(evidenceSources.slice(0, 3).join(", "))}</span></div>
+  <div class="card boundary" style="margin-bottom:14px">
+    <div class="info-row">
+      <span class="info-icon">${ICON.alert}</span>
+      <p>${escapeHtml(SAMPLE_DATA_NOTICE)}</p>
     </div>
   </div>
 
-  ${renderStatusBar(resolvedStatus)}
+  <div class="cover-info">
+    <div class="info-list">
+      <div class="info-item"><span class="ico">${ICON.user}</span><div><div class="info-label">Prepared for</div><div class="info-value">${escapeHtml(preparedForDisplay)}</div></div></div>
+      <div class="info-item"><span class="ico">${ICON.badgeId}</span><div><div class="info-label">Report ID</div><div class="info-value">${escapeHtml(reportIdDisplay)}</div></div></div>
+      <div class="info-item"><span class="ico">${ICON.calendar}</span><div><div class="info-label">Sample Reporting Period</div><div class="info-value">${escapeHtml(periodDisplay)}</div></div></div>
+      <div class="info-item"><span class="ico">${ICON.doc}</span><div><div class="info-label">Generated Date</div><div class="info-value">${escapeHtml(input.generatedDate)}</div></div></div>
+      <div class="info-item"><span class="ico">${ICON.clock}</span><div><div class="info-label">Sample Data Through</div><div class="info-value">${escapeHtml(input.dataCutoffDate || input.generatedDate)}</div></div></div>
+    </div>
+    <div class="scope-card">
+      <div class="scope-head">${ICON.target}<strong>Scope Summary</strong></div>
+      <div class="scope-desc">This sample report shows how structured evidence records can be organized for reporting support and assurance preparation.</div>
+      <div class="scope-divider"></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Organizations</span><span class="scope-val">${organizationScopeValue}</span></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Program Scope</span><span class="scope-val">${escapeHtml(filteredProjectNames.slice(0, 3).join(", ") || "All programs")}</span></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Geographic Scope</span><span class="scope-val">${escapeHtml(geographicScopeDisplay)}</span></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Framework Scope</span><span class="scope-val">${escapeHtml(frameworkScopeDisplay)}</span></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Input Sources</span><span class="scope-val">${escapeHtml(inputSources.slice(0, 3).join(", "))}</span></div>
+      <div class="scope-row"><span class="scope-check">${ICON.check}</span><span class="scope-label">Confirmation Sources</span><span class="scope-val">${escapeHtml(confirmationSources.join(", "))}</span></div>
+    </div>
+  </div>
+
+  ${renderStatusBar(reportStatusDisplay)}
 
   <div class="section-title">Summary at a Glance<div class="gold-divider"></div></div>
 
   <div class="metric-grid">
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.doc}</span><div class="metric-label">Verified Evidence Records</div><div class="metric-value">${number(verified.length)}</div><div class="metric-note">Records with verified status</div></div>
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.clock}</span><div class="metric-label">Verified Hours</div><div class="metric-value">${number(verifiedHours)}</div><div class="metric-note">Hours in verified records</div></div>
-    <div class="metric-card"><span class="metric-icon-circle">${ICON.users}</span><div class="metric-label">Partner-Reported Reach</div><div class="metric-value">${number(partnerReportedReach)}</div><div class="metric-note">Partner-reported, not independently verified</div></div>
+    <div class="metric-card"><span class="metric-icon-circle">${ICON.doc}</span><div class="metric-label">Sample Records With Verified Status</div><div class="metric-value">${number(verified.length)}</div><div class="metric-note">Configured partner-confirmation workflow completed</div></div>
+    <div class="metric-card"><span class="metric-icon-circle">${ICON.clock}</span><div class="metric-label">Sample Hours In Verified Records</div><div class="metric-value">${number(verifiedHours)}</div><div class="metric-note">Source support tracked separately</div></div>
+    <div class="metric-card"><span class="metric-icon-circle">${ICON.users}</span><div class="metric-label">Sample Partner-Reported Reach</div><div class="metric-value">${number(partnerReportedReach)}</div><div class="metric-note">Not independently verified</div></div>
   </div>
+
+  <p style="font-size:10px;color:#64748B;margin-top:10px;line-height:1.5">Verified status means the record completed Synerxus' configured verification workflow. It does not mean the record has been independently assured, certified, or validated for causal impact.</p>
 
   <div class="card boundary" style="margin-top:18px">
     <div class="info-row">
@@ -948,35 +1110,36 @@ PAGES_PLACEHOLDER
   // Page 2 — Executive Evidence Snapshot
   pageBodies.push(`
   <h2>Executive Evidence Snapshot</h2>
-  <div class="subtitle">Verified, Partner-Reported, and Derived / Mapped data kept separate.</div>
+  <div class="subtitle">Partner-confirmed, partner-reported, and derived / mapped data kept separate.</div>
   <div class="gold-divider"></div>
 
   <div class="metric-row-6">
-    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.doc}</span><div class="metric-label">Verified Evidence Records</div></div><div class="metric-value">${number(verified.length)}</div></div>
-    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.clock}</span><div class="metric-label">Verified Hours</div></div><div class="metric-value">${number(verifiedHours)}</div></div>
-    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.award}</span><div class="metric-label">Verification Rate</div></div><div class="metric-value">${eligible > 0 ? verificationRate : "N/A"}${eligible > 0 ? "%" : ""}</div></div>
-    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.target}</span><div class="metric-label">Average Verification Time</div></div><div class="metric-value">${escapeHtml(avgVerificationTime)}</div></div>
-    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle amber">${ICON.alert}</span><div class="metric-label">Incomplete Records</div></div><div class="metric-value">${number(incomplete.length)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.doc}</span><div class="metric-label">Partner-Confirmed Records</div></div><div class="metric-value">${number(verified.length)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.clock}</span><div class="metric-label">Verified Workflow Hours</div></div><div class="metric-value">${number(verifiedHours)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.award}</span><div class="metric-label">Verification Rate</div></div><div class="metric-value">${totalSubmitted > 0 ? verificationRate : "N/A"}${totalSubmitted > 0 ? "%" : ""}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle">${ICON.target}</span><div class="metric-label">Source-Supported Records</div></div><div class="metric-value">${number(sourceSupported.length)}</div></div>
+    <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle amber">${ICON.alert}</span><div class="metric-label">Pending / Incomplete</div></div><div class="metric-value">${number(pending.length + incomplete.length)}</div></div>
     <div class="metric-card"><div class="metric-card-top"><span class="metric-icon-circle red">${ICON.x}</span><div class="metric-label">Rejected Records</div></div><div class="metric-value">${number(rejected.length)}</div></div>
   </div>
 
-  <div class="section-title" style="margin-top:18px">Evidence Confidence Tiers</div>
+  <div class="section-title" style="margin-top:18px">Evidence Confidence Categories</div>
 
   <div class="tier-grid">
     <div class="tier-card verified">
-      <div class="tier-head"><span class="tier-icon-circle">${ICON.shield}</span><div class="tier-title">Verified</div></div>
-      <div class="tier-desc">Records with verified status and full evidence chain.</div>
+      <div class="tier-head"><span class="tier-icon-circle">${ICON.shield}</span><div class="tier-title">Partner-Confirmed / Verified Workflow Records</div></div>
+      <div class="tier-desc">Records that completed the configured Synerxus verification workflow and were confirmed by an authorized partner, verifier, or designated review role. These records are not equivalent to independent assurance unless reviewed by an external assurance provider.</div>
       <div class="tier-metrics-title">Metrics</div>
       <ul class="tier-metrics">
-        <li>Verified Evidence Records: ${number(verified.length)}</li>
-        <li>Verified Hours: ${number(verifiedHours)}</li>
-        <li>Verification Rate: ${eligible > 0 ? verificationRate + "%" : "N/A"}</li>
-        <li>Avg. Verification Time: ${escapeHtml(avgVerificationTime)}</li>
+        <li>Partner-confirmed records: ${number(verified.length)}</li>
+        <li>Verified workflow hours: ${number(verifiedHours)}</li>
+        <li>Source-supported records: ${number(sourceSupported.length)}</li>
+        <li>Verification Rate: ${totalSubmitted > 0 ? verificationRate + "%" : "N/A"} (verified / total submitted)</li>
+        <li>Eligible Completion Rate: ${eligible > 0 ? eligibleCompletionRate + "%" : "N/A"} (verified / eligible records)</li>
       </ul>
     </div>
     <div class="tier-card partner">
-      <div class="tier-head"><span class="tier-icon-circle">${ICON.users}</span><div class="tier-title">Partner-Reported</div></div>
-      <div class="tier-desc">Reported by partners and not independently verified by Synerxus.</div>
+      <div class="tier-head"><span class="tier-icon-circle">${ICON.users}</span><div class="tier-title">Partner-Reported Figures</div></div>
+      <div class="tier-desc">Reach, community, beneficiary, or participation figures reported by partners and retained separately from verified evidence totals. These figures are not independently verified by Synerxus unless explicitly stated.</div>
       <div class="tier-metrics-title">Metrics</div>
       <ul class="tier-metrics">
         <li>Partner-Reported Reach: ${number(partnerReportedReach)}</li>
@@ -987,18 +1150,18 @@ PAGES_PLACEHOLDER
     </div>
     <div class="tier-card derived">
       <div class="tier-head"><span class="tier-icon-circle">${ICON.globe}</span><div class="tier-title">Derived / Mapped</div></div>
-      <div class="tier-desc">SDG and framework alignment derived from record classification.</div>
+      <div class="tier-desc">SDG, framework, or reporting-category mappings generated from classification rules, user selections, or Synerxus mapping logic. Mapping indicates thematic or reporting relevance; it does not certify impact, prove SDG contribution, or determine compliance.</div>
       <div class="tier-metrics-title">Metrics</div>
       <ul class="tier-metrics">
         <li>SDGs Mapped: ${number(sdgsDisplay.length)}</li>
         <li>Frameworks Selected: ${number(frameworksDisplay.length)}</li>
         <li>Pending Records: ${number(pending.length)}</li>
-        <li>Contribution Pathways: ${number(sdgsDisplay.length > 0 ? sdgsDisplay.length : 0)}</li>
+        <li>SDG mapping contexts: ${number(sdgsDisplay.length > 0 ? sdgsDisplay.length : 0)}</li>
       </ul>
     </div>
   </div>
 
-  <div class="mix-title">Record Verification Status</div>
+  <div class="mix-title">Evidence Status Reconciliation</div>
   ${activities.length > 0
     ? `<div class="mix-bar">
         <div class="seg verified" style="width:${Math.max(verifiedPct, verifiedPct > 0 ? 3 : 0)}%" title="Verified: ${verified.length}">${verifiedPct > 10 ? verifiedPct + "%" : ""}</div>
@@ -1013,38 +1176,13 @@ PAGES_PLACEHOLDER
         <span><span class="legend-dot" style="background:#EF4444"></span>Rejected</span>
       </div>
       <table class="pipeline-table">
-        <thead><tr><th>Status</th><th>Records</th><th>% of Submitted</th><th style="text-align:left;padding-left:18px">Pipeline bar</th></tr></thead>
-        <tbody>
-          <tr>
-            <td><span class="status-dot" style="background:var(--navy)"></span>Verified</td>
-            <td>${verified.length}</td>
-            <td>${verifiedPct}%</td>
-            <td style="text-align:left;padding-left:18px"><span class="pct-bar" style="width:${Math.round(verifiedPct * 1.4)}px;background:var(--navy);opacity:0.85"></span></td>
-          </tr>
-          <tr>
-            <td><span class="status-dot" style="background:var(--gold)"></span>Pending Verification</td>
-            <td>${pending.length}</td>
-            <td>${pendingPct}%</td>
-            <td style="text-align:left;padding-left:18px"><span class="pct-bar" style="width:${Math.round(pendingPct * 1.4)}px;background:var(--gold)"></span></td>
-          </tr>
-          <tr>
-            <td><span class="status-dot" style="background:#F97316"></span>Incomplete</td>
-            <td>${incomplete.length}</td>
-            <td>${incompletePct}%</td>
-            <td style="text-align:left;padding-left:18px"><span class="pct-bar" style="width:${Math.round(incompletePct * 1.4)}px;background:#F97316"></span></td>
-          </tr>
-          <tr>
-            <td><span class="status-dot" style="background:#EF4444"></span>Rejected</td>
-            <td>${rejected.length}</td>
-            <td>${rejectedPct}%</td>
-            <td style="text-align:left;padding-left:18px"><span class="pct-bar" style="width:${Math.round(rejectedPct * 1.4)}px;background:#EF4444"></span></td>
-          </tr>
-        </tbody>
+        <thead><tr><th>Status</th><th>Count</th><th>Included in Verified Totals?</th><th>Meaning</th><th>Required Next Action</th></tr></thead>
+        <tbody>${statusRows}</tbody>
         <tfoot>
-          <tr class="total-row"><td>Total Submitted</td><td>${activities.length}</td><td>100%</td><td></td></tr>
+          <tr class="total-row"><td>Total Submitted</td><td>${totalSubmitted}</td><td colspan="3">Verification Rate = verified workflow records / total submitted records. Pending, incomplete, rejected, partner-reported-only, and derived/mapped-only records are not included in verified evidence totals.</td></tr>
         </tfoot>
       </table>
-      <p style="font-size:9.5px;color:#64748B;margin-top:8px;line-height:1.5">Verified totals include only records with completed verification status. Pending, incomplete, and rejected records are excluded from verified evidence totals.</p>`
+      <p style="font-size:9.5px;color:#64748B;margin-top:8px;line-height:1.5">Records in this sample report are partner-confirmed but not source-supported unless an attachment or source artifact is listed. Source-supported evidence requires attached or referenced documentation such as photos, forms, attendance logs, inspection records, partner reports, or CRM exports.</p>`
     : `<div class="card soft"><p>No activity records found for this reporting period.</p></div>`
   }
 
@@ -1052,16 +1190,35 @@ PAGES_PLACEHOLDER
     <div class="info-row">
       <span class="info-icon">${ICON.info}</span>
       <div>
-        <p style="font-weight:800;color:#92400E;margin-bottom:3px">Auditor View</p>
+        <p style="font-weight:800;color:#92400E;margin-bottom:3px">Review Boundary</p>
         <p style="margin:0">Metrics are separated by confidence tier to avoid overstatement and support transparent reporting.</p>
       </div>
     </div>
   </div>
 `);
 
-  // Page 3 — Evidence Quality Scorecard
+  // Page 3 — Claim-to-Evidence Traceability
   pageBodies.push(`
-  <h2>Evidence Quality Scorecard</h2>
+  <h2>Claim-to-Evidence Traceability</h2>
+  <div class="subtitle">How reportable claims connect to evidence records, partner confirmation, source support, and SDG or framework mapping.</div>
+  <div class="gold-divider"></div>
+
+  <table class="framework-table">
+    <thead><tr><th>Claim ID</th><th>Claim Statement</th><th>Program</th><th>Supporting Evidence Records</th><th>Evidence Confidence</th><th>Source Support</th><th>SDG Mapping</th><th>Formal Framework Mapping</th><th>Limitation</th></tr></thead>
+    <tbody>${claimRows}</tbody>
+  </table>
+
+  <div class="card boundary" style="margin-top:16px">
+    <div class="info-row">
+      <span class="info-icon">${ICON.info}</span>
+      <p>Claim-to-evidence traceability shows the evidence basis for sample reportable claims. It does not certify impact, prove causal attribution, or replace assurance, audit, legal, or disclosure review.</p>
+    </div>
+  </div>
+`);
+
+  // Page 4 — Evidence Quality and Confidence Scores
+  pageBodies.push(`
+  <h2>Evidence Quality and Confidence Scores</h2>
   <div class="subtitle">Data Completeness, Confirmation, and Traceability</div>
   <div class="gold-divider"></div>
 
@@ -1070,19 +1227,19 @@ PAGES_PLACEHOLDER
       <div class="quality-card">
         <div class="quality-top">
           <div>
-            <div class="qt-title">Evidence Quality Score</div>
+            <div class="qt-title">Review Readiness Score</div>
             <div class="qt-score">${qualityScore}<small> / 100</small></div>
           </div>
           <div>
-            <div class="qt-title">Readiness Status</div>
+            <div class="qt-title">Report Status</div>
             <div class="readiness">
               <span class="ready-icon">${ICON.check}</span>
-              <span class="ready-val">${escapeHtml(resolvedStatus)}</span>
+              <span class="ready-val">${escapeHtml(readinessDisplay)}</span>
             </div>
           </div>
         </div>
         <table class="quality-table">
-          <thead><tr><th>Quality Matrix</th><th>Score / Status</th></tr></thead>
+          <thead><tr><th>Review Readiness Score Methodology</th><th>Score / Status</th></tr></thead>
           <tbody>
             ${completenessChecks.length > 0
               ? completenessChecks.map(([label, ok, pct]) => {
@@ -1092,10 +1249,9 @@ PAGES_PLACEHOLDER
                 }).join("")
               : `<tr><td colspan="2" style="text-align:center;color:#94A3B8">No verified records to score in this reporting period.</td></tr>`
             }
-            <tr><td>Incomplete Records Excluded from Verified Totals</td><td><span class="yes">${ICON.check}Yes</span></td></tr>
-            <tr><td>Sensitive Metadata Redacted</td><td><span class="yes">${ICON.check}Yes</span></td></tr>
           </tbody>
         </table>
+        <p style="font-size:10px;color:#64748B;margin-top:10px;line-height:1.5">The Review Readiness Score measures reporting-readiness of the sample evidence package. It does not represent assurance readiness, regulatory compliance, or verified impact quality.</p>
       </div>
     </div>
 
@@ -1111,7 +1267,7 @@ PAGES_PLACEHOLDER
       </div>
       <div class="vscope-card">
         <span class="vscope-icon">${ICON.globe}</span>
-        <div><div class="metric-label">Countries / Regions</div><div class="metric-value">${number(countries.length)}</div></div>
+        <div><div class="metric-label">Location Context Available</div><div class="metric-value">${number(verified.length - missingLocationCount)}</div></div>
       </div>
       <div class="vscope-card">
         <span class="vscope-icon">${ICON.heart}</span>
@@ -1123,45 +1279,28 @@ PAGES_PLACEHOLDER
   <div class="card boundary" style="margin-top:18px">
     <div class="info-row">
       <span class="info-icon">${ICON.info}</span>
-      <p>Only records within the reporting period and with verified status are included in verified totals. Incomplete and rejected records are excluded.</p>
+      <p>${escapeHtml(BOUNDARY_STATEMENT)}</p>
     </div>
   </div>
 `);
 
-  // Evidence Record pages — one HTML page per chunk of 15 rows
-  if (evidenceRowArr.length === 0) {
-    pageBodies.push(`
-  <h2>Verified Evidence Records</h2>
-  <div class="subtitle">No verified records in this reporting period.</div>
+  pageBodies.push(`
+  <h2>Exceptions and Exclusions</h2>
+  <div class="subtitle">Pending, incomplete, rejected, unsupported, and contextual figures retained outside verified evidence totals.</div>
   <div class="gold-divider"></div>
-  <div class="card soft"><p>No Verified Evidence Records are available for this reporting period. Pending, incomplete, rejected, and unverified records are excluded from verified totals.</p></div>
-`);
-  } else {
-    evidenceChunks.forEach((chunk, ci) => {
-      const isFirst = ci === 0;
-      const isLast = ci === evidenceChunks.length - 1;
-      const continuedLabel = evidenceChunks.length > 1 ? ` (${ci + 1} of ${evidenceChunks.length})` : "";
-      pageBodies.push(`
-  <h2>Verified Evidence Records${isFirst ? "" : " (continued)"}</h2>
-  <div class="subtitle">${isFirst
-    ? `${number(verified.length)} verified record${verified.length !== 1 ? "s" : ""} included in this reporting package${evidenceChunks.length > 1 ? ` — page ${ci + 1} of ${evidenceChunks.length}` : ""}.`
-    : `Continued${continuedLabel} — ${number(verified.length)} total verified records.`
-  }</div>
-  ${isFirst ? '<div class="gold-divider"></div>' : ""}
-  <div class="table-wrap evidence-records-table"><table>
-    ${EVIDENCE_TABLE_HEAD}
-    <tbody>${chunk.join("")}</tbody>
-  </table></div>
-  ${isLast ? hoursBarChart : ""}
-  ${isLast ? `<div class="card boundary" style="margin-top:14px">
+
+  <table class="pipeline-table">
+    <thead><tr><th>Exception Type</th><th>Count</th><th>Treatment</th><th>Included in Verified Totals?</th></tr></thead>
+    <tbody>${exceptionRows}</tbody>
+  </table>
+
+  <div class="card boundary" style="margin-top:16px">
     <div class="info-row">
-      <span class="info-icon">${ICON.info}</span>
-      <p>Sensitive technical metadata is retained internally and redacted from this management report. Records marked "Unmapped" in SDG / Framework Alignment have been flagged in the Evidence Quality Scorecard.</p>
+      <span class="info-icon">${ICON.alert}</span>
+      <p>Excluded and pending records are retained for transparency but are not included in verified evidence totals. Missing source attachments mean the record is partner-confirmed only, not source-supported.</p>
     </div>
-  </div>` : ""}
+  </div>
 `);
-    });
-  }
 
 
   // Partner-Reported Reach & Framework Alignment — always its own page
@@ -1173,7 +1312,7 @@ PAGES_PLACEHOLDER
   <div class="reach-grid">
     <div class="reach-card">
       <div class="reach-head"><span class="icon-circle">${ICON.users}</span><strong>Partner-Reported<br/>Reach</strong></div>
-      <div class="reach-desc">These figures are reported by partners and are not verified by Synerxus unless explicitly stated.</div>
+      <div class="reach-desc">These figures are reported by partners and are retained separately from verified records. They are not independently verified by Synerxus unless explicitly stated.</div>
       <div class="reach-divider"></div>
       ${partnerReachSection}
       <div class="reach-divider"></div>
@@ -1182,8 +1321,8 @@ PAGES_PLACEHOLDER
           <span class="info-icon" style="width:22px;height:22px">${ICON.alert}</span>
           <p style="font-size:10px;line-height:1.4">${
             noPartnerReach
-              ? "No partner-reported reach data was submitted for this reporting period."
-              : "These are partner-reported figures and are not independently verified by Synerxus unless explicitly stated."
+              ? "Communities served were not configured, not reported, or not included in this sample dataset."
+              : "Partner-reported reach should not be added to verified totals or presented as independently confirmed beneficiary impact."
           }</p>
         </div>
       </div>
@@ -1199,34 +1338,41 @@ PAGES_PLACEHOLDER
       <div class="card boundary" style="margin-top:14px">
         <div class="info-row">
           <span class="info-icon">${ICON.info}</span>
-          <p>Framework alignment supports reporting preparation, <strong>not certification or endorsement</strong>. It does not determine compliance, replace organization disclosure judgment, or imply formal assurance.</p>
+          <p>SDG mapping indicates thematic alignment between the activity record and selected SDG goals or targets. It does not prove causal contribution, long-term impact, SDG performance certification, compliance with a framework, or formal assurance.</p>
         </div>
       </div>
     </div>
   </div>
 `);
 
-  // SDG Mapping Context & Contribution Pathways
+  // SDG-Aligned Activity Mapping
   pageBodies.push(`
-  <h2>SDG Mapping Context &amp; Contribution Pathways</h2>
-  <div class="subtitle">How partner-confirmed outputs connect to SDG-aligned reporting context.</div>
+  <h2>SDG-Aligned Activity Mapping &amp; Contribution Context</h2>
+  <div class="subtitle">How partner-confirmed activity records may be mapped to SDG themes for reporting context.</div>
   <div class="gold-divider"></div>
+
+  <div class="card boundary" style="margin-bottom:12px">
+    <div class="info-row">
+      <span class="info-icon">${ICON.info}</span>
+      <p>SDG mapping is a classification layer. It does not certify SDG impact, prove causal contribution, or confirm long-term outcomes.</p>
+    </div>
+  </div>
 
   <div class="section-title" style="margin-top:8px"><span class="num-step">1</span>SDG Context</div>
   <div class="sdg-strip">
     ${sdgStripHtml}
   </div>
 
-  <div class="section-title"><span class="num-step">2</span>Contribution Pathway</div>
+  <div class="section-title"><span class="num-step">2</span>SDG Mapping Pathway</div>
   <div class="pathway">
-    <div class="step"><span class="step-icon">${ICON.user}</span><strong>Volunteer Activity Recorded</strong>Activities are logged with details, location, and context.</div>
-    <div class="step"><span class="step-icon">${ICON.doc}</span><strong>Output Submitted</strong>Partners submit outputs and supporting documents or data.</div>
-    <div class="step"><span class="step-icon">${ICON.users}</span><strong>Authorized Partner Confirmation</strong>An authorized partner verifies accuracy and completeness.</div>
-    <div class="step"><span class="step-icon">${ICON.shield}</span><strong>Evidence Record Created</strong>Synerxus structures records with metadata, tags, and links.</div>
-    <div class="step"><span class="step-icon">${ICON.database}</span><strong>Included in Verified Evidence Summary</strong>Verified records roll up into reports aligned to SDG frameworks.</div>
+    <div class="step"><span class="step-icon">${ICON.user}</span><strong>Activity recorded</strong>Activities are logged with details and context.</div>
+    <div class="step"><span class="step-icon">${ICON.doc}</span><strong>Output submitted</strong>Partners submit outputs and supporting documents or data.</div>
+    <div class="step"><span class="step-icon">${ICON.users}</span><strong>Partner confirmation completed</strong>An authorized partner confirms, clarifies, or flags the record.</div>
+    <div class="step"><span class="step-icon">${ICON.shield}</span><strong>Evidence record structured</strong>Synerxus structures records with metadata, tags, and links.</div>
+    <div class="step"><span class="step-icon">${ICON.database}</span><strong>SDG mapping applied for reporting context</strong>Mapped records support thematic reporting context only.</div>
   </div>
 
-  <div class="section-title"><span class="num-step">3</span>SDG Contribution Examples</div>
+  <div class="section-title"><span class="num-step">3</span>SDG Mapping Examples</div>
   <div class="sdg-example">
     ${sdgExamplesHtml}
   </div>
@@ -1242,6 +1388,44 @@ PAGES_PLACEHOLDER
   </table>
 `);
 
+  pageBodies.push(`
+  <h2>Evidence Strength and Limitations</h2>
+  <div class="subtitle">What this sample report can and cannot support.</div>
+  <div class="gold-divider"></div>
+
+  <div class="grid grid-2">
+    <div class="card soft">
+      <h3>What this report supports</h3>
+      <ul class="lim-list" style="column-count:1">
+        <li>Organizing ESG / CSR / social-impact activity records.</li>
+        <li>Separating verified workflow records from partner-reported figures.</li>
+        <li>Showing partner confirmation status.</li>
+        <li>Summarizing verified workflow hours.</li>
+        <li>Mapping activities to SDG themes.</li>
+        <li>Preparing structured records for internal review or assurance preparation.</li>
+      </ul>
+    </div>
+    <div class="card boundary">
+      <h3>What this report does not support</h3>
+      <ul class="lim-list" style="column-count:1">
+        <li>Formal assurance opinion.</li>
+        <li>Certification of impact.</li>
+        <li>Proof of causal attribution.</li>
+        <li>Regulatory compliance determination.</li>
+        <li>Independent verification of all beneficiary or reach figures.</li>
+        <li>Proof of SDG contribution or long-term outcomes.</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="card boundary" style="margin-top:16px">
+    <div class="info-row">
+      <span class="info-icon">${ICON.info}</span>
+      <p>${escapeHtml(BOUNDARY_STATEMENT)}</p>
+    </div>
+  </div>
+`);
+
   // Methodology, Definitions, and Report Boundaries
   pageBodies.push(`
   <h2>Methodology, Definitions, and Report Boundaries</h2>
@@ -1249,23 +1433,26 @@ PAGES_PLACEHOLDER
   <div class="gold-divider"></div>
 
   <div class="section-title"><span class="num-step">1</span>Methodology Overview</div>
+  <p>Synerxus structures evidence records so organizations can trace a claim back to submitted activity data, partner confirmation, source artifacts where available, SDG or framework mapping, and report inclusion status.</p>
   <div class="method-steps">
-    <div class="method-step"><div class="num">1</div><strong>Activity Captured</strong>Projects and partner activities are logged with core details and context.</div>
-    <div class="method-step"><div class="num">2</div><strong>Output Documented</strong>Partners submit outputs and supporting documents following defined templates.</div>
-    <div class="method-step"><div class="num">3</div><strong>Partner Confirmation</strong>Authorized partners review and confirm outputs for accuracy and completeness.</div>
-    <div class="method-step"><div class="num">4</div><strong>Evidence Record Created</strong>Synerxus structures records with metadata, tags, and links.</div>
-    <div class="method-step"><div class="num">5</div><strong>Reporting Support</strong>Verified records are organized to support reporting and assurance preparation.</div>
+    <div class="method-step"><div class="num">1</div><strong>Create the claim</strong>Define the claim, owner, program, period, and evidence requirement.</div>
+    <div class="method-step"><div class="num">2</div><strong>Attach or reference source evidence</strong>Add documents, photos, logs, forms, reports, or exports where available.</div>
+    <div class="method-step"><div class="num">3</div><strong>Invite partner confirmation</strong>Ask authorized partners or verifiers to confirm, clarify, or flag records.</div>
+    <div class="method-step"><div class="num">4</div><strong>Map to SDGs or frameworks</strong>Apply thematic or reporting classifications as a derived layer.</div>
+    <div class="method-step"><div class="num">5</div><strong>Preserve traceable evidence record</strong>Retain metadata, source references, exceptions, and report inclusion status.</div>
   </div>
 
   <div class="section-title"><span class="num-step">2</span>Key Definitions</div>
   <table class="def-table">
     <thead><tr><th>Term</th><th>Definition</th></tr></thead>
     <tbody>
-      <tr><td>Verified Evidence Record</td><td>A structured record that has completed required verification checks and can support reporting workflows.</td></tr>
-      <tr><td>Partner-Confirmed Output</td><td>An output submitted by a partner and confirmed by an authorized partner or verifier.</td></tr>
+      <tr><td>Verified Evidence Record</td><td>A structured evidence record that completed the configured Synerxus verification workflow and can support reporting or review workflows. This does not mean the record has been independently assured or certified.</td></tr>
+      <tr><td>Partner-Confirmed Output</td><td>An activity or output submitted by a partner, volunteer, or program user and confirmed by an authorized partner or verifier.</td></tr>
+      <tr><td>Source-Supported Record</td><td>A partner-confirmed record that includes attached or referenced source material, such as a form, photo, attendance log, inspection record, partner report, or CRM export.</td></tr>
       <tr><td>Verified Hours</td><td>Hours attached to records with a completed verified status.</td></tr>
       <tr><td>Partner-Reported Reach</td><td>The number of individuals, communities, or entities reached as reported by partners and not independently verified by Synerxus unless explicitly stated.</td></tr>
-      <tr><td>Derived / Mapped Alignment</td><td>Alignment to frameworks or standards derived from Synerxus classification and mapping rules.</td></tr>
+      <tr><td>Derived / Mapped Alignment</td><td>SDG, framework, or reporting-category alignment generated from classification rules, user selections, or Synerxus mapping logic. This is not certification, assurance, or proof of impact.</td></tr>
+      <tr><td>Assurance Preparation</td><td>Organization of evidence records, metadata, source references, exceptions, and summaries to support internal review or third-party assurance preparation. Synerxus does not provide the assurance opinion.</td></tr>
       <tr><td>Incomplete Record</td><td>A record missing required information or documentation and not yet eligible for verification.</td></tr>
       <tr><td>Rejected Record</td><td>A record that does not meet minimum quality or consistency requirements and is excluded from verified totals.</td></tr>
     </tbody>
@@ -1274,7 +1461,7 @@ PAGES_PLACEHOLDER
   <div class="card boundary" style="margin-top:16px">
     <div class="info-row">
       <span class="info-icon">${ICON.info}</span>
-      <p>Synerxus provides structured evidence records for reporting and assurance preparation. <strong>It does not</strong> provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</p>
+      <p>${escapeHtml(BOUNDARY_STATEMENT)}</p>
     </div>
   </div>
 
@@ -1289,6 +1476,41 @@ PAGES_PLACEHOLDER
   </ul>
 `);
 
+  // Evidence register appendix — one HTML page per chunk of 15 rows
+  if (evidenceRowArr.length === 0) {
+    pageBodies.push(`
+  <h2>Evidence Register Appendix</h2>
+  <div class="subtitle">No verified records in this reporting period.</div>
+  <div class="gold-divider"></div>
+  <div class="card soft"><p>No partner-confirmed evidence records are available for this reporting period. Pending, incomplete, rejected, and unverified records are excluded from verified totals.</p></div>
+`);
+  } else {
+    evidenceChunks.forEach((chunk, ci) => {
+      const isFirst = ci === 0;
+      const isLast = ci === evidenceChunks.length - 1;
+      const continuedLabel = evidenceChunks.length > 1 ? ` (${ci + 1} of ${evidenceChunks.length})` : "";
+      pageBodies.push(`
+  <h2>Evidence Register Appendix${isFirst ? "" : " (continued)"}</h2>
+  <div class="subtitle">${isFirst
+    ? `${number(verified.length)} partner-confirmed workflow record${verified.length !== 1 ? "s" : ""} included in this sample reporting package${evidenceChunks.length > 1 ? ` — page ${ci + 1} of ${evidenceChunks.length}` : ""}.`
+    : `Continued${continuedLabel} — ${number(verified.length)} total partner-confirmed workflow records.`
+  }</div>
+  ${isFirst ? '<div class="gold-divider"></div>' : ""}
+  <div class="table-wrap evidence-records-table"><table>
+    ${EVIDENCE_TABLE_HEAD}
+    <tbody>${chunk.join("")}</tbody>
+  </table></div>
+  ${isLast ? hoursBarChart : ""}
+  ${isLast ? `<div class="card boundary" style="margin-top:14px">
+    <div class="info-row">
+      <span class="info-icon">${ICON.info}</span>
+      <p>Verifier names may be redacted or replaced with role categories in management-facing reports. Full verifier metadata may be retained internally for authorized review. Partner confirmation does not necessarily mean independent verification. Independence depends on the verifier's relationship to the activity. Sensitive technical metadata may be redacted from this management report, but metadata status should be retained in the internal evidence packet. Location fields are redacted or not configured in this sample management report.</p>
+    </div>
+  </div>` : ""}
+`);
+    });
+  }
+
   // Evidence Readiness Assessment
   pageBodies.push(`
   <h2>Evidence Readiness Assessment</h2>
@@ -1302,14 +1524,14 @@ PAGES_PLACEHOLDER
 
       <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>Corporate Volunteering</strong><p>Track employee volunteering hours and evidence records.</p></div></div>
       <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>Community Investment</strong><p>Capture and report on community programs and outputs.</p></div></div>
-      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>NGO / Partner Verification</strong><p>Verify partner capacity, activities, and output data.</p></div></div>
-      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>Assurance Preparation</strong><p>Organize evidence for third-party assurance preparation.</p></div></div>
-      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>SDG / Framework Mapping</strong><p>Map outputs to global goals and reporting frameworks.</p></div></div>
+      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>NGO / Partner Confirmation</strong><p>Confirm partner activities and output data.</p></div></div>
+      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>Assurance Preparation</strong><p>Organize evidence records, source references, and exceptions for internal review or third-party assurance preparation.</p></div></div>
+      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>SDG and Framework Mapping</strong><p>Map activity and output records to SDGs, reporting frameworks, or internal categories for reporting context. Mapping does not certify impact or determine compliance.</p></div></div>
 
       <div class="card boundary" style="margin-top:10px;padding:10px">
         <div class="info-row">
           <span class="info-icon" style="width:22px;height:22px">${ICON.info}</span>
-          <p style="font-size:10.5px;margin:0">This assessment helps recommend the right configuration, data model, and evidence workflow.</p>
+          <p style="font-size:10.5px;margin:0">This assessment identifies evidence structure, source references, exception visibility, and assurance-preparation documentation needs.</p>
         </div>
       </div>
     </div>

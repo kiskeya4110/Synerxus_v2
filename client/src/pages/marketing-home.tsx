@@ -59,17 +59,17 @@ const evidencePreviewTabs = [
   },
   {
     id: "reporting",
-    label: "Reporting",
+    label: "Preserve",
     step: 4,
-    title: "Disclosure-ready context",
-    body: "Map the Evidence Object to frameworks and preserve a reviewable record for reporting and disclosure review.",
+    title: "Preserved review record",
+    body: "Map the Evidence Object to frameworks and preserve a reviewable record for reporting support and internal review.",
     headerStatus: "Review-ready",
     headerStatusStyle: "border-emerald-200 bg-emerald-50 text-emerald-700",
     fields: [
       { label: "Evidence Ladder", value: "Level 4 — Framework-Mapped", type: "text" },
       { label: "Chain of custody", value: "Active", type: "text" },
       { label: "GRI", value: "Social impact indicators", type: "framework" },
-      { label: "Disclosure status", value: "Review-ready", type: "status" },
+      { label: "Report inclusion status", value: "Review-ready", type: "status" },
       { label: "SDG 7", value: "Mapped", type: "framework" },
       { label: "SDG 8", value: "Mapped", type: "framework" },
     ],
@@ -95,7 +95,7 @@ const heroSlides = [
   {
     desktopSrc: "/optimized/hero-evidence-4-1920.webp",
     mobileSrc: "/optimized/hero-evidence-4-960.webp",
-    alt: "Disclosure-ready ESG evidence record and reporting infrastructure",
+    alt: "Reviewable ESG evidence record and reporting infrastructure",
   },
 ];
 
@@ -103,14 +103,42 @@ const heroStatusChips = [
   { label: "Partner-Confirmed", slideIndex: 2 },
   { label: "Evidence Ladder: Level 4", slideIndex: 1 },
   { label: "Chain of Custody Active", slideIndex: 0 },
-  { label: "Framework-Mapped", slideIndex: 3 },
+  { label: "Mapped With Limits", slideIndex: 3 },
 ];
 
 const evidenceProgressSteps = [
   "Claim scoped",
   "Evidence attached",
   "Partner-confirmed",
-  "Disclosure-ready",
+  "Preserved",
+];
+
+const evidenceCategoryCards = [
+  {
+    title: "Self-reported",
+    body: "Submitted activity or output data that has not yet been confirmed.",
+    treatment: "Kept out of verified totals",
+  },
+  {
+    title: "Partner-confirmed",
+    body: "Records confirmed by an authorized partner or verifier through the configured workflow.",
+    treatment: "Can support verified workflow totals",
+  },
+  {
+    title: "Source-supported",
+    body: "Partner-confirmed records with attached or referenced source artifacts.",
+    treatment: "Tracked separately from confirmation",
+  },
+  {
+    title: "Partner-reported",
+    body: "Reach, beneficiary, community, or participation figures reported by partners.",
+    treatment: "Reported separately",
+  },
+  {
+    title: "Mapped",
+    body: "SDG, framework, or reporting-category alignment generated as classification context.",
+    treatment: "Thematic alignment only",
+  },
 ];
 
 const evidenceGapCards = [
@@ -154,7 +182,7 @@ const evidenceGapCards = [
     body: "Claims without reviewable evidence create reputational and regulatory exposure.",
     response: {
       subtitle: "Evidence Ladder status shows whether a claim is source-backed, partner-confirmed, framework-mapped, or ready for review.",
-      checklist: ["Evidence Ladder status", "Source record", "Partner confirmation", "Framework alignment", "Disclosure readiness", "Review history"],
+      checklist: ["Evidence Ladder status", "Source record", "Partner confirmation", "Framework alignment", "Review readiness", "Review history"],
       badge: "Structured for reporting and assurance support",
       card: {
         claim: "Community program output",
@@ -170,27 +198,27 @@ const evidenceGapCards = [
 const howSteps = [
   {
     title: "Create the claim",
-    body: "Define the exact ESG claim, reporting period, owner, location, and scope before evidence is attached.",
+    body: "Define the claim text, reporting entity, program, reporting period, claim type, owner, and evidence requirement.",
     Icon: FileCheck2,
   },
   {
     title: "Attach source evidence",
-    body: "Connect the claim to files, logs, certificates, reports, photos, exports, and partner documentation.",
+    body: "Attach source artifacts such as logs, forms, photos, partner reports, CRM exports, certificates, and supporting documents.",
     Icon: Paperclip,
   },
   {
     title: "Invite partner confirmation",
-    body: "Send a focused review request so partners can confirm, comment, request clarification, or flag an issue.",
+    body: "Ask the authorized partner or verifier to confirm, comment on, or flag the activity and output record.",
     Icon: UserCheck,
   },
   {
     title: "Map to frameworks",
-    body: "Cross-walk one Evidence Object to reporting frameworks, SDGs, investor summaries, and internal scorecards.",
+    body: "Apply SDG and framework mappings as a derived classification layer with rationale, evidence basis, and confidence.",
     Icon: GitBranch,
   },
   {
-    title: "Preserve disclosure-ready record",
-    body: "Retain chain-of-custody history, reviewer actions, version history, and disclosure-readiness status.",
+    title: "Preserve reviewable record",
+    body: "Preserve the claim-linked evidence packet with confidence tier, exception status, source references, boundary notes, and review history.",
     Icon: ShieldCheck,
   },
 ];
@@ -200,7 +228,7 @@ const valueCards = [
     title: "Defensible claims",
     body: "Move from unsupported ESG language to evidence-backed claim records.",
     detail: "Each claim carries source documentation, owner context, review status, and disclosure-readiness signals.",
-    structured: ["Source documentation", "Owner context", "Review status", "Disclosure-readiness signals"],
+    structured: ["Source documentation", "Owner context", "Review status", "Report-use boundaries"],
   },
   {
     title: "Partner-confirmed outcomes",
@@ -217,7 +245,7 @@ const valueCards = [
   {
     title: "Framework-ready evidence",
     body: "Use one Evidence Object across multiple reporting pathways.",
-    detail: "A confirmed claim can support GRI, CSRD/ESRS, SDG, investor, board, and internal scorecard needs.",
+    detail: "A claim-linked evidence packet can support GRI, CSRD/ESRS, SDG, investor, board, and internal scorecard review when mappings are clearly labeled.",
     structured: ["GRI alignment", "CSRD/ESRS mapping", "SDG crosswalk", "Investor summary support"],
   },
 ];
@@ -227,7 +255,7 @@ const useCaseDetail = [
     claimType: "Annual ESG statement",
     evidenceSources: ["Audit reports", "Utility data", "Governance records"],
     framework: "GRI / ESRS / TCFD",
-    status: "Disclosure-ready",
+    status: "Review-ready",
   },
   {
     claimType: "Sustainability marketing statement",
@@ -598,17 +626,16 @@ export default function MarketingHome() {
                 SYNERXUS · ESG EVIDENCE INFRASTRUCTURE
               </p>
               <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
-                The{" "}
+                Claim-level evidence for{" "}
                 <span style={{ fontFamily: "Georgia, 'Times New Roman', serif", color: "#D4980C" }}>
-                  ESG Evidence Layer
+                  defensible
                 </span>{" "}
-                for Defensible Disclosures.
+                ESG and social-impact reporting.
               </h1>
               <p className="mt-5 max-w-xl text-lg leading-relaxed text-slate-600">
-                Transform sustainability claims into structured Evidence Objects
-                with source records, partner confirmation, chain-of-custody
-                history, and framework mapping — so every claim is easier to
-                review, support, and defend.
+                Synerxus turns each claim into a structured evidence record:
+                what evidence supports it, who confirmed it, what remains
+                unverified, and what the claim does not prove.
               </p>
               <div className="mt-7 flex flex-col gap-3 sm:flex-row">
                 <Button asChild size="lg" className="bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
@@ -621,7 +648,7 @@ export default function MarketingHome() {
                 </Button>
               </div>
               <p className="mt-5 text-sm font-semibold text-[#0A1F44]">
-                From claim language to review-ready evidence.
+                No ESG or social-impact claim should be reported without knowing the evidence behind it.
               </p>
               <div className="mt-4 rounded-lg bg-slate-50/80 px-3 py-2 text-xs leading-relaxed text-slate-500">
                 <strong className="font-semibold text-slate-600">
@@ -837,7 +864,7 @@ export default function MarketingHome() {
       <section className="bg-white py-6 md:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="mb-8 text-center text-base font-semibold text-slate-500">
-            Frameworks tell you what to disclose. Synerxus helps show what happened.
+            ESG and social-impact claims are hard to defend when evidence, confirmation, reach, and mapping are blurred.
           </p>
           <div className="grid gap-6 md:grid-cols-2 md:items-start">
             {/* Left column — Evidence Gap */}
@@ -934,8 +961,8 @@ export default function MarketingHome() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="How Synerxus Works"
-            title="Create claim. Attach evidence. Confirm. Map. Report."
-            body="Select any step to see what happens at that stage of the evidence workflow."
+            title="Create claim. Attach evidence. Confirm. Map. Preserve."
+            body="Select any step to see how the evidence workflow keeps the claim connected to support, confirmation, classification, and limitations."
           />
           <div className="relative">
             <div className="absolute left-[5%] right-[5%] top-5 hidden h-px bg-slate-200 md:block" />
@@ -982,6 +1009,27 @@ export default function MarketingHome() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white py-7 md:py-10">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <SectionHeader
+            eyebrow="Evidence Categories"
+            title="Separate evidence records from reach figures and mappings."
+            body="Synerxus keeps each evidence category visible so reporting teams do not treat self-reported activity, partner-reported reach, source artifacts, and SDG mapping as the same thing."
+          />
+          <div className="grid gap-3 md:grid-cols-5">
+            {evidenceCategoryCards.map((category) => (
+              <div key={category.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <h3 className="text-sm font-extrabold text-[#0A1F44]">{category.title}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">{category.body}</p>
+                <p className="mt-4 rounded-lg bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#8A5A00]">
+                  {category.treatment}
+                </p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
@@ -1253,7 +1301,7 @@ export default function MarketingHome() {
                     "Claim-by-claim risk exposure",
                     "Evidence gaps and documentation coverage",
                     "Framework alignment (GRI, CSRD, SDGs)",
-                    "Disclosure-readiness by claim type",
+                    "Review readiness by claim type",
                   ].map((item) => (
                     <li key={item} className="flex items-start gap-3 text-sm text-slate-200">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-[#D4980C]" />

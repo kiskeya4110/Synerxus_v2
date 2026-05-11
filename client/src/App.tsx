@@ -13,7 +13,6 @@ const Landing = lazy(() => import("@/pages/marketing-home"));
 const Platform = lazy(() => import("@/pages/platform"));
 const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
 const UseCases = lazy(() => import("@/pages/use-cases"));
-const ValidationFramework = lazy(() => import("@/pages/validation-framework"));
 const Resources = lazy(() => import("@/pages/insights"));
 const Contact = lazy(() => import("@/pages/contact"));
 const LoginDemo = lazy(() => import("@/pages/login")); // Legacy demo login for reference
@@ -106,7 +105,6 @@ export default function App() {
           <Route path="/platform" component={Platform} />
           <Route path="/evidence-ladder" component={EvidenceLadder} />
           <Route path="/use-cases" component={UseCases} />
-          <Route path="/validation-framework" component={ValidationFramework} />
           <Route path="/resources" component={Resources} />
           <Route path="/request-assessment" component={Contact} />
           <Route path="/contact">{() => <Redirect to="/request-assessment" />}</Route>
@@ -181,6 +179,7 @@ export default function App() {
           <Route path="/ngo/projects/:id" component={ProjectDetail} />
           <Route path="/log-volunteer-hours" component={LogVolunteerHours} />
           <Route path="/post-core-opportunity" component={PostCoreOpportunity} />
+          <Route path="/post-urgent-opportunity">{() => <Redirect to="/post-core-opportunity" />}</Route>
           <Route path="/organization-profile-settings" component={OrganizationProfileSettings} />
 
           {/* ================================================================ */}

@@ -1,5 +1,6 @@
 import { Route, Router, Switch, Redirect } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
+import Platform from "@/pages/platform";
 
 // ============================================================================
 // SYNERXUS MVP - VERIFIED IMPACT DATA PIPELINE
@@ -10,7 +11,6 @@ import { useEffect, lazy, Suspense } from "react";
 
 // Core pages - lazy loaded
 const Landing = lazy(() => import("@/pages/marketing-home"));
-const Platform = lazy(() => import("@/pages/platform"));
 const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
 const UseCases = lazy(() => import("@/pages/use-cases"));
 const Resources = lazy(() => import("@/pages/insights"));

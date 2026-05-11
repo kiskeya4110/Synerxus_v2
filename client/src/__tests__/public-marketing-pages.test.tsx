@@ -83,9 +83,10 @@ describe("public marketing pages", () => {
   it("does not render derived SDG mapping details before that platform category is active", () => {
     const html = renderPublicPage("/platform", Platform);
 
-    expect(html).toContain("What can be counted as partner-confirmed evidence");
+    expect(html).toContain("Partner-confirmed evidence totals");
     expect(html).toContain("Mapping Review Panel");
-    expect(html).toContain("An SDG or framework tag should never stand alone.");
+    expect(html).toContain("Map activity records without turning tags into evidence.");
+    expect(html).toContain("The mapping is visible as classification context, not as proof of impact.");
     expect(html).toContain("provide formal assurance");
     expect(html).not.toContain("Mapped theme");
     expect(html).not.toContain("SDG Target 7.b: Expand infrastructure and upgrade technology for sustainable energy services.");

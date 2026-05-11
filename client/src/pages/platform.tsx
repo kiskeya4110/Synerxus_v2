@@ -6,12 +6,9 @@ import {
   CheckCircle2,
   ClipboardCheck,
   DatabaseZap,
-  FileCheck2,
   Fingerprint,
-  FolderSearch,
   ListChecks,
   ShieldCheck,
-  UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
@@ -19,158 +16,52 @@ import { AssessmentCta, BoundaryNotice } from "@/components/marketing/marketing-
 
 const moduleCards = [
   {
-    title: "Claim Register",
-    eyebrow: "Define what will be reported",
+    title: "Claim-to-Evidence Workspace",
+    eyebrow: "Connect claims to records",
     icon: ListChecks,
-    body: "A central workspace for the exact social-impact or ESG claim, owner, program, reporting period, evidence requirement, and review status.",
+    body: "Define the claim, attach activity records, connect source artifacts, and preserve the evidence trail behind each reportable statement.",
     fields: [
-      "Claim ID",
-      "Claim owner",
-      "Program",
-      "Reporting period",
-      "Claim type",
-      "Evidence requirement",
-      "Framework mapping",
-      "Review status",
+      "Claim register",
+      "Evidence packet",
+      "Source artifacts",
+      "Record metadata",
     ],
   },
   {
-    title: "Evidence Packet Detail View",
-    eyebrow: "Connect records to claims",
-    icon: FileCheck2,
-    body: "Transforms partner records, activity metadata, and source artifacts into structured evidence packets tied to a specific claim.",
-    fields: [
-      "Evidence ID",
-      "Linked claim",
-      "Partner / verifier",
-      "Activity date",
-      "Verification date",
-      "Source artifact",
-      "Location / site",
-      "Confidence tier",
-      "Exception status",
-      "Hash / integrity reference",
-    ],
-  },
-  {
-    title: "Partner Confirmation Workflow",
-    eyebrow: "Control who can confirm",
-    icon: UsersRound,
-    body: "Routes focused confirmation requests to authorized partners or verifiers and preserves responses, comments, flags, and timestamps.",
-    fields: [
-      "Verifier role",
-      "Organization",
-      "Authority basis",
-      "Verification method",
-      "Conflict-of-interest flag",
-      "Confirmation history",
-    ],
-  },
-  {
-    title: "Source Artifact Index",
-    eyebrow: "Organize supporting documents",
-    icon: FolderSearch,
-    body: "Indexes the documents and source files that reporting, legal, and assurance-preparation teams need to review.",
-    fields: [
-      "Attendance logs",
-      "Inspection forms",
-      "Photos",
-      "Partner reports",
-      "Surveys",
-      "CRM exports",
-      "Signed handovers",
-      "Water quality tests",
-      "Training records",
-    ],
-  },
-  {
-    title: "Status Reconciliation",
-    eyebrow: "Separate status buckets",
-    icon: AlertTriangle,
-    body: "Separates submitted, pending, verified, incomplete, rejected, partner-reported-only, and mapped-only records before totals are used.",
-    fields: [
-      "Submitted",
-      "Pending verification",
-      "Verified / partner-confirmed",
-      "Incomplete",
-      "Rejected",
-      "Partner-reported only",
-      "Derived / mapped only",
-      "Verified-total inclusion",
-    ],
-  },
-  {
-    title: "Exception Log",
-    eyebrow: "Separate clean records from risk",
-    icon: AlertTriangle,
-    body: "Surfaces complete, pending, incomplete, rejected, late, duplicate, and partner-reported-only records before claims move into reporting materials.",
-    fields: [
-      "Complete",
-      "Pending",
-      "Incomplete",
-      "Rejected",
-      "Late",
-      "Duplicate",
-      "Partner-reported only",
-      "Needs source support",
-    ],
-  },
-  {
-    title: "Confidence Tiers",
-    eyebrow: "Show evidence strength",
+    title: "Confirmation and Evidence Quality",
+    eyebrow: "Separate evidence strength",
     icon: ShieldCheck,
-    body: "Labels records by evidence confidence so reviewers can distinguish self-reported, partner-confirmed, source-supported, and review-ready records.",
+    body: "Track partner confirmation, verification status, confidence tier, exception flags, and source-support status without treating every record as equal.",
     fields: [
-      "Tier 0: Self-reported",
-      "Tier 1: Partner-confirmed",
-      "Tier 2: Source-supported",
-      "Tier 3: Review-ready",
-      "Source artifact status",
-      "Verifier relationship",
+      "Partner confirmation",
+      "Status reconciliation",
+      "Exception log",
+      "Confidence tiers",
     ],
   },
   {
-    title: "SDG / Framework Mapping",
+    title: "Mapping and Reporting Support",
     eyebrow: "Classify without overclaiming",
-    icon: DatabaseZap,
-    body: "Maps evidence records to SDGs, reporting frameworks, or internal categories as derived classification context with limitations.",
-    fields: [
-      "Primary SDG",
-      "Relevant target",
-      "Mapping rationale",
-      "Formal framework",
-      "Mapping confidence",
-      "Boundary note",
-    ],
-  },
-  {
-    title: "Report Generator",
-    eyebrow: "Package review outputs",
     icon: ClipboardCheck,
-    body: "Generates summaries and exports that help internal teams prepare reporting files without overstating what the evidence can support.",
+    body: "Map records to SDGs, frameworks, or internal categories while keeping partner-reported figures and derived mappings separate from confirmed evidence totals.",
     fields: [
-      "Management summary",
-      "Evidence summary",
-      "Assurance-preparation pack",
-      "Claim-to-evidence export",
-      "Framework mapping register",
-      "Exception log",
+      "SDG mapping",
+      "Framework mapping",
+      "Report summaries",
+      "Assurance-preparation export",
     ],
   },
-  {
-    title: "Assurance-Preparation Export",
-    eyebrow: "Export review packets",
-    icon: Fingerprint,
-    body: "Packages evidence records, source references, confirmation metadata, exceptions, and limitations for internal review or third-party assurance preparation.",
-    fields: [
-      "Claim-to-evidence export",
-      "Evidence register appendix",
-      "Source artifact index",
-      "Verifier metadata status",
-      "Exception log",
-      "Boundary statement",
-    ],
-  },
+];
+
+const workspaceTrailFields = [
+  "Claim ID",
+  "Evidence records",
+  "Partner confirmation",
+  "Source support",
+  "Confidence tier",
+  "Exceptions",
+  "SDG / framework mapping",
+  "Limitations",
 ];
 
 const evidenceFlow = [
@@ -261,33 +152,33 @@ const reviewOutputs = [
 
 const sdgEvidenceCategories = [
   {
-    title: "What can be counted as partner-confirmed evidence",
-    note: "Review which activity records completed the configured confirmation workflow and can be included in partner-confirmed evidence totals.",
+    title: "Partner-confirmed evidence totals",
+    note: "Activity records that completed the configured confirmation workflow are shown separately from pending, incomplete, rejected, partner-reported-only, and mapped-only records.",
     badge: "Partner-confirmed",
     panel: [
-      ["User needs to know", "Which records were confirmed, who confirmed them, when they were confirmed, and whether they meet the rules for inclusion."],
+      ["Record context", "Confirmed records, verifier role, confirmation date, and inclusion status."],
       ["Visible evidence", "Record ID, activity description, activity date, hours, verification status, verifier role, confirmation method, confirmation date."],
       ["Not shown as", "Independent assurance, certified impact, causal contribution, or regulatory compliance."],
       ["Inclusion rule", "Only records with completed confirmation status are included. Pending, incomplete, rejected, partner-reported-only, and mapped-only records are excluded."],
     ],
   },
   {
-    title: "What must stay separate from confirmed evidence totals",
-    note: "Keep reach, beneficiary, community, and participation figures separate when they are partner-reported but not independently checked by Synerxus.",
+    title: "Partner-reported figures",
+    note: "Reach, beneficiary, community, and participation figures remain separate when they are reported by partners but not independently checked by Synerxus.",
     badge: "Reported separately",
     panel: [
-      ["User needs to know", "Which figures came from partners, which activity records they relate to, and whether they were independently checked."],
+      ["Record context", "Partner-reported figures, related activity records, source status, and independent-check status."],
       ["Visible evidence", "Reported reach, reporting partner, related activity record, source status, reporting date, and limitation note."],
       ["Not included in", "Partner-confirmed evidence totals, source-supported totals, or independently verified impact totals."],
       ["Treatment", "Partner-reported figures may provide context, but they must remain separate from confirmed activity records unless a separate verification process is completed."],
     ],
   },
   {
-    title: "What the SDG or framework tag actually means",
-    note: "Inspect why a record was mapped to an SDG, framework, or internal reporting category, and confirm the evidence basis, confidence level, and limitation before the tag is used.",
+    title: "Mapping basis and limitations",
+    note: "Each SDG, framework, or internal reporting-category tag is displayed with the evidence basis, confidence level, and limitation attached to the mapped record.",
     badge: "Mapping confidence: Medium",
     panel: [
-      ["User needs to know", "Whether the tag is thematic context, formal framework mapping, or both."],
+      ["Mapping context", "Whether the tag is thematic context, formal framework mapping, or both."],
       ["Visible evidence", "Mapped goal or framework, related target or disclosure, mapping rationale, evidence basis, confidence level, and supporting evidence tier."],
       ["Not evidence of", "Causal contribution, compliance, certification, formal assurance, or long-term outcome."],
     ],
@@ -297,7 +188,7 @@ const sdgEvidenceCategories = [
       ["Why this tag appears", "The activity record describes solar maintenance training and support activities related to clean-energy access."],
       ["Evidence used", "Partner confirmation, training log, maintenance checklist."],
       ["Record strength", "Tier 2: Source-supported"],
-      ["Reviewer check", "Confirm that the activity description, source artifacts, verifier role, and mapping rationale support the selected tag."],
+      ["Review basis", "Activity description, source artifacts, verifier role, and mapping rationale are retained with the selected tag."],
       ["Limitation", "This mapping supports SDG-aligned reporting context only. It does not prove energy access outcomes, emissions reduction, SDG contribution, or long-term impact."],
     ],
   },
@@ -390,19 +281,22 @@ export default function PlatformPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-5 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              Platform Modules
+              PLATFORM WORKSPACE
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              Each module keeps the claim connected to its evidence trail.
+              Keep every claim connected to its evidence trail.
             </h2>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
-              The platform is designed around claim-level evidence, partner confirmation,
-              source artifacts, exception handling, and reporting support.
+              Synerxus organizes ESG, CSR, volunteering, community-investment, and
+              social-impact records around the claim they support. Each workspace
+              shows what was submitted, who confirmed it, what source evidence
+              exists, what remains separate, and what limitations apply before
+              anything appears in a report.
             </p>
           </div>
 
           <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
-            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+            <div className="grid gap-3">
               {moduleCards.map((module, index) => {
                 const Icon = module.icon;
                 const selected = activeModule === index;
@@ -429,10 +323,20 @@ export default function PlatformPage() {
                       <span className={`block text-sm font-extrabold ${selected ? "text-white" : "text-[#0A1F44]"}`}>
                         {module.title}
                       </span>
-                      <span className={`mt-1 block text-xs font-semibold uppercase tracking-[0.12em] ${
+                      <span className={`mt-2 block text-sm leading-relaxed ${
+                        selected ? "text-slate-200" : "text-slate-600"
+                      }`}>
+                        {module.body}
+                      </span>
+                      <span className={`mt-3 block text-xs font-semibold uppercase tracking-[0.12em] ${
                         selected ? "text-[#FFD95A]" : "text-[#8A5A00]"
                       }`}>
-                        {module.eyebrow}
+                        Includes
+                      </span>
+                      <span className={`mt-1 block text-xs leading-relaxed ${
+                        selected ? "text-slate-200" : "text-slate-500"
+                      }`}>
+                        {module.fields.join(" · ")}
                       </span>
                     </span>
                   </button>
@@ -444,10 +348,10 @@ export default function PlatformPage() {
               <div className="flex items-start justify-between gap-4">
                 <div>
                   <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-                    Active Module
+                    ACTIVE WORKSPACE
                   </p>
                   <h3 className="mt-2 text-2xl font-extrabold text-[#0A1F44]">
-                    {moduleCards[activeModule].title}
+                    Claim-to-Evidence Trail
                   </h3>
                 </div>
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-[#0A1F44] text-[#FFD95A]">
@@ -455,10 +359,13 @@ export default function PlatformPage() {
                 </span>
               </div>
               <p className="mt-4 max-w-2xl text-sm leading-relaxed text-slate-600">
-                {moduleCards[activeModule].body}
+                A claim should not leave the platform without a visible evidence
+                trail. Synerxus links each claim to the activity records, partner
+                confirmation, source support, confidence tier, exceptions, and
+                mapping context behind it.
               </p>
               <div className="mt-5 grid gap-2 sm:grid-cols-2">
-                {moduleCards[activeModule].fields.map((field) => (
+                {workspaceTrailFields.map((field) => (
                   <div key={field} className="flex items-center gap-2 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5">
                     <CheckCircle2 className="h-4 w-4 shrink-0 text-[#0A1F44]" />
                     <span className="text-sm font-semibold text-slate-700">{field}</span>
@@ -467,6 +374,10 @@ export default function PlatformPage() {
               </div>
             </aside>
           </div>
+          <p className="mt-5 max-w-4xl text-base font-semibold leading-relaxed text-[#0A1F44]">
+            Every output is organized around one question: what evidence supports
+            this claim, and what does it not prove?
+          </p>
         </div>
       </section>
 
@@ -558,13 +469,12 @@ export default function PlatformPage() {
               SDG AND FRAMEWORK MAPPING
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              Show what a mapping means before it appears in a report.
+              Map activity records without turning tags into evidence.
             </h2>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
-              An SDG or framework tag should never stand alone. Reporting teams need
-              to see which activity record was mapped, what evidence supports the
-              mapping, what confidence level applies, and what the mapping does not
-              prove.
+              Synerxus displays each SDG or framework tag beside the mapped activity
+              record, supporting evidence, confidence level, and limitation. The
+              mapping is visible as classification context, not as proof of impact.
             </p>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
               Synerxus separates partner-confirmed activity, partner-reported reach,
@@ -609,9 +519,9 @@ export default function PlatformPage() {
               ))}
             </div>
             <p className="mt-5 text-base leading-relaxed text-slate-600">
-              The goal is simple: before a claim leaves the platform, users should
-              be able to see the mapped record, the supporting evidence, the
-              confidence level, and the limitation attached to that mapping.
+              Before a mapped claim is reused in a report, the platform shows the
+              mapped record, supporting evidence, confidence level, and limitation
+              attached to that mapping.
             </p>
             <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm font-semibold leading-relaxed text-amber-950">
               SDG and framework mapping is a classification layer. It supports

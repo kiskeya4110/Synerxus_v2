@@ -117,12 +117,12 @@ const evidenceCategoryCards = [
   {
     title: "Self-reported",
     body: "Submitted activity or output data that has not yet been confirmed.",
-    treatment: "Kept out of verified totals",
+    treatment: "Kept out of confirmed evidence totals",
   },
   {
     title: "Partner-confirmed",
     body: "Records confirmed by an authorized partner or verifier through the configured workflow.",
-    treatment: "Can support verified workflow totals",
+    treatment: "Can support partner-confirmed totals",
   },
   {
     title: "Source-supported",

@@ -555,10 +555,10 @@ export default function PlatformPage() {
         <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-start">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              SDG and Framework Mapping
+              SDG AND FRAMEWORK MAPPING
             </p>
             <h2 className="mt-2 text-3xl font-extrabold tracking-tight text-[#0A1F44]">
-              Show what the mapping means before it appears in a report.
+              Show what a mapping means before it appears in a report.
             </h2>
             <p className="mt-3 text-base leading-relaxed text-slate-600">
               An SDG or framework tag should never stand alone. Reporting teams need

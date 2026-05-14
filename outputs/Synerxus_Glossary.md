@@ -31,7 +31,7 @@
 
 ### AIU (Attributable Impact Unit)
 
-**Definition:** A standardized measure of verified impact created by volunteer contributions. AIUs are calculated based on the work performed, the attribution weight assigned to the role, and verification by the organization.
+**Definition:** A standardized measure of partner-confirmed activity created by volunteer contributions. AIUs are calculated based on the work performed, the attribution weight assigned to the role, and verification by the organization.
 
 **How it works:**
 ```
@@ -313,7 +313,7 @@ Project: "Teach 500 Students"
 ```
 1. Corporate defines rate (e.g., "$50 per verified student")
 2. Partner delivers program with own resources
-3. Submits verified impact claims
+3. Submits partner-confirmed evidence claims
 4. Corporate reviews and reimburses
 ```
 

@@ -27,7 +27,7 @@ export const REPORT_CLASSIFICATION_LINE =
  */
 export const SAMPLE_REPORT_BANNER =
   "This is a sample report using fictitious data to demonstrate the Synerxus verification architecture. " +
-  "All names, figures, and organisations are illustrative.";
+  "All names, figures, and organizations are illustrative.";
 
 /**
  * Closing evidence boundary block placed at the end of every generated report.
@@ -48,7 +48,7 @@ export const REPORT_CLOSING_BOUNDARY = [
 export const REPORT_METHODOLOGY_PARAGRAPH =
   `Volunteer time is recorded as an input. ` +
   `${PRODUCT_LABELS.PARTNER_CONFIRMED_OUTPUT} records carry partner attestation and a verification timestamp. ` +
-  `${PRODUCT_LABELS.PARTNER_REPORTED_REACH} reflects beneficiary reach as reported by the partner organisation and is not independently verified unless explicitly noted. ` +
+  `${PRODUCT_LABELS.PARTNER_REPORTED_REACH} reflects beneficiary reach as reported by the partner organization and is not independently verified unless explicitly noted. ` +
   `${PRODUCT_LABELS.DERIVED_MAPPED_ALIGNMENT} shows how partner-confirmed records map to reporting frameworks and is classification support, not compliance certification.`;
 
 /**

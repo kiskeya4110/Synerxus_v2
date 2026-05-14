@@ -288,7 +288,7 @@ function renderBrandLockup(logoDataUri?: string): string {
 function renderCornerOrnament(): string {
   return `<svg class="corner-ornament" viewBox="0 0 200 200" preserveAspectRatio="none" aria-hidden="true">
     <polygon points="40,0 200,0 200,160" fill="#0A1F44" />
-    <polygon points="120,0 200,0 200,80" fill="#D4980C" />
+    <polygon points="120,0 200,0 200,80" fill="#ffcc33" />
     <polygon points="135,0 200,0 200,65" fill="#0A1F44" />
   </svg>`;
 }
@@ -801,42 +801,50 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
     ["Derived / mapped only", "SDG mapping contexts", "No", "Classification layer only", "Do not treat as evidence by itself"],
   ].map(([status, count, included, meaning, next]) => `<tr><td>${escapeHtml(String(status))}</td><td>${escapeHtml(String(count))}</td><td>${escapeHtml(String(included))}</td><td>${escapeHtml(String(meaning))}</td><td>${escapeHtml(String(next))}</td></tr>`).join("");
 
-  const claimRows = [
-    {
-      id: "CLM-001",
-      statement: "Sample records indicate partner-confirmed activity related to solar energy access and maintenance training.",
-      program: "Solar Village Initiative",
-      records: "EVR-0001, EVR-0002, EVR-0012",
-      sdg: "SDG 7, SDG 11, SDG 13",
-      limitation: "Does not prove long-term energy access, emissions reduction, or causal SDG impact.",
-    },
-    {
-      id: "CLM-002",
-      statement: "Sample records indicate partner-confirmed activity related to clean water testing, well construction, and handover support.",
-      program: "Clean Wells Construction",
-      records: "EVR-0003, EVR-0035, EVR-0050",
-      sdg: "SDG 6, SDG 11, SDG 17",
-      limitation: "Does not independently verify beneficiary reach, water quality outcomes, or long-term service reliability.",
-    },
-    {
-      id: "CLM-003",
-      statement: "Sample records indicate partner-confirmed activity related to climate education, hackathon facilitation, survey validation, and youth sessions.",
-      program: "Climate Hackathon",
-      records: "EVR-0016, EVR-0037, EVR-0041",
-      sdg: "SDG 4, SDG 11, SDG 13, SDG 17",
-      limitation: "Does not prove climate resilience outcomes, behavioral change, or long-term education impact.",
-    },
-  ].map((claim) => `<tr>
-    <td>${escapeHtml(claim.id)}</td>
-    <td>${escapeHtml(claim.statement)}</td>
-    <td>${escapeHtml(filteredProjectNames.includes(claim.program) ? claim.program : claim.program)}</td>
-    <td>${escapeHtml(claim.records)}</td>
-    <td>Partner-confirmed</td>
-    <td>${sourceSupported.length > 0 ? "Source support tracked where configured" : "Not source-supported in this sample unless attachments are configured"}</td>
-    <td>${escapeHtml(claim.sdg)}</td>
-    <td>${frameworksDisplay.length > 0 ? escapeHtml(frameworksDisplay.slice(0, 3).join(", ")) : "N/A — no formal framework selected"}</td>
-    <td>${escapeHtml(claim.limitation)}</td>
-  </tr>`).join("");
+  const traceabilityRowsSource = [...verified]
+    .sort((a, b) => {
+      const aTime = new Date(a.verifiedAt ?? a.date ?? a.createdAt ?? 0).getTime();
+      const bTime = new Date(b.verifiedAt ?? b.date ?? b.createdAt ?? 0).getTime();
+      return bTime - aTime;
+    })
+    .slice(0, 3);
+
+  const claimRows = traceabilityRowsSource.length > 0
+    ? traceabilityRowsSource.map((record, index) => {
+        const projectName = projectMap.get(record.projectId)?.name || filteredProjectNames[0] || "Community program";
+        const outputText = getOutputText(record);
+        const recordId = `EVR-${String(index + 1).padStart(4, "0")}`;
+        const sdgNums = resolveActivitySdgs(record, projectMap);
+        const sdgDisplay = sdgNums.length > 0 ? sdgNums.map((num) => `SDG ${num}`).join(", ") : "Unmapped";
+        const frameworkDisplay = frameworksDisplay.length > 0
+          ? frameworksDisplay.slice(0, 3).join(", ")
+          : "SDG mapping only";
+        const sourceStatus = hasSourceArtifact(record)
+          ? "Source support tracked where configured"
+          : "Source support not attached in this record";
+        const limitation = [
+          record.verificationStatus === "approved" || record.verificationStatus === "verified"
+            ? "Partner-confirmed"
+            : "Not partner-confirmed",
+          record.verifiedAt ? "verification timestamp present" : "no verification timestamp",
+          record.verifiedBy ? "verifier metadata retained" : "no verifier metadata",
+        ].join("; ");
+
+        return `<tr>
+          <td>${escapeHtml(recordId)}</td>
+          <td>${escapeHtml(outputText)}</td>
+          <td>${escapeHtml(projectName)}</td>
+          <td>${escapeHtml(record.id ? `Record ${record.id}` : recordId)}</td>
+          <td>Partner-confirmed</td>
+          <td>${escapeHtml(sourceStatus)}</td>
+          <td>${escapeHtml(sdgDisplay)}</td>
+          <td>${escapeHtml(frameworkDisplay)}</td>
+          <td>${escapeHtml(limitation)}</td>
+        </tr>`;
+      }).join("")
+    : `<tr>
+        <td colspan="9" style="text-align:center;color:#94A3B8;padding:16px">No verified records are available in the selected reporting scope.</td>
+      </tr>`;
 
   const exceptionRows = [
     ["Pending verification", pending.length, "Awaiting confirmation", "No"],
@@ -855,7 +863,7 @@ export function buildVerifiedEvidenceSummaryReport(input: VerifiedEvidenceSummar
   <meta charset="utf-8" />
   <title>Verified Evidence Summary</title>
   <style>
-    :root{--navy:#0A1F44;--navy2:#0A2463;--gold:#D4980C;--green:#059669;--amber:#D97706;--red:#DC2626;--ink:#111827;--muted:#64748B;--line:#E5E7EB;--soft:#F8FAFC;--page-pad:.55in;}
+    :root{--navy:#0A1F44;--navy2:#0A2463;--gold:#ffcc33;--green:#059669;--amber:#D97706;--red:#DC2626;--ink:#111827;--muted:#64748B;--line:#E5E7EB;--soft:#F8FAFC;--page-pad:.55in;}
     *{box-sizing:border-box}
     body{margin:0;background:#E5E7EB;color:var(--ink);font-family:Inter,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-page{width:8.5in;min-height:11in;height:auto;margin:18px auto;background:#fff;border:1px solid #dbe1ea;display:flex;flex-direction:column;page-break-after:always;break-after:page;position:relative;overflow:visible;break-inside:avoid-page}
@@ -1594,7 +1602,7 @@ PAGES_PLACEHOLDER
       <tr><td>Source-Supported Record</td><td>A partner-confirmed record that includes attached or referenced source material, such as a form, photo, attendance log, inspection record, partner report, or CRM export.</td></tr>
       <tr><td>Hours in Partner-Confirmed Records</td><td>Hours attached to records with completed partner-confirmed status.</td></tr>
       <tr><td>Partner-Reported Reach</td><td>The number of individuals, communities, or entities reached as reported by partners and not independently verified by Synerxus unless explicitly stated.</td></tr>
-      <tr><td>Derived / Mapped Alignment</td><td>SDG, framework, or reporting-category alignment generated from classification rules, user selections, or Synerxus mapping logic. This is not certification, assurance, or proof of impact.</td></tr>
+      <tr><td>Derived / Mapped Alignment</td><td>SDG, framework, or reporting-category alignment generated from classification rules, user selections, or Synerxus mapping logic. This is not certification, assurance, or causal impact evidence.</td></tr>
       <tr><td>Assurance Preparation</td><td>Organization of evidence records, metadata, source references, exceptions, and summaries to support internal review or third-party assurance preparation. Synerxus does not provide the assurance opinion.</td></tr>
       <tr><td>Incomplete Record</td><td>A record missing required information or documentation and not yet eligible for verification.</td></tr>
       <tr><td>Rejected Record</td><td>A record that does not meet minimum quality or consistency requirements and is excluded from partner-confirmed totals.</td></tr>
@@ -1683,7 +1691,7 @@ PAGES_PLACEHOLDER
       <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>Community Investment</strong><p>Program activity, outputs, and source support.</p></div></div>
       <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>NGO / Partner Confirmation</strong><p>Partner-confirmed activity and output records.</p></div></div>
       <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>Assurance Preparation</strong><p>Evidence records, references, and limitations.</p></div></div>
-      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>SDG / Framework Mapping</strong><p>Activity records mapped without impact proof.</p></div></div>
+      <div class="use-card"><span class="use-check">${ICON.check}</span><div><strong>SDG / Framework Mapping</strong><p>Activity records mapped without causal impact claims.</p></div></div>
 
       <div class="card boundary" style="margin-top:10px;padding:10px">
         <div class="info-row">

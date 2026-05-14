@@ -70,14 +70,14 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
               >
                 {/* Active Indicator Background */}
                 {isActive && (
-                  <div className="absolute inset-0 bg-[#D4980C]/50 rounded-xl" />
+                  <div className="absolute inset-0 bg-[#ffcc33]/50 rounded-xl" />
                 )}
 
                 {/* Icon with active gradient */}
                 <div className="relative mb-0.5">
                   <item.icon className={`w-5 h-5 ${
                     isActive
-                      ? 'text-[#7a5200]'
+                      ? 'text-[#ffcc33]'
                       : ''
                   }`} />
                 </div>
@@ -85,7 +85,7 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
                 {/* Label */}
                 <span className={`text-[10px] font-medium ${
                   isActive
-                    ? 'text-[#7a5200]'
+                    ? 'text-[#ffcc33]'
                     : ''
                 }`}>
                   {item.label}
@@ -93,7 +93,7 @@ export default function WebBottomNav({ activeTab = 'home' }: WebBottomNavProps) 
 
                 {/* Active Dot Indicator */}
                 {isActive && (
-                  <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-[#D4980C]" />
+                  <div className="absolute -bottom-0.5 w-1 h-1 rounded-full bg-[#ffcc33]" />
                 )}
               </button>
             );

@@ -116,7 +116,7 @@ export default function MobileNav() {
                       className={cn(
                         "w-full flex items-center gap-3 px-4 py-3 text-left transition-colors border-l-4",
                         isActive
-                          ? "bg-[#D4980C]/50 text-[#7a5200] border-[#D4980C]"
+                          ? "bg-[#ffcc33]/50 text-[#ffcc33] border-[#ffcc33]"
                           : "text-gray-700 dark:text-gray-200 border-transparent hover:bg-gray-50 dark:hover:bg-gray-700/50"
                       )}
                       onClick={() => setIsOpen(false)}

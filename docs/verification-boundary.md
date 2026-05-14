@@ -70,7 +70,7 @@ display the tier alongside the figure — never the figure alone.
 The canonical disclosure that must appear on every generated report and
 adjacent to verified-evidence claims:
 
-> Synerxus provides structured, independently confirmed evidence that
+> Synerxus provides structured, partner-confirmed evidence records that
 > supports reporting and assurance preparation. Synerxus does not replace
 > independent assurance providers, provide formal assurance opinions,
 > guarantee regulatory compliance, or establish causal attribution.

@@ -35,17 +35,16 @@ these strings inline.
 The full machine-checkable list is in
 `shared/content/prohibited-claims.ts → PROHIBITED_CLAIMS`. The
 `prohibited-copy-scan` test asserts that none of these phrases appear in
-the canonical content modules. The phrases include (non-exhaustive):
+the canonical content modules. The phrase families include, non-exhaustively:
 
-- "guarantees compliance"
-- "proves impact" / "impact proof"
-- "certified CSRD compliant" / "CSRD compliant evidence"
-- "formal assurance opinion"
-- "causal proof"
-- "auditor-approved"
-- "fully compliant"
-- "only evidence infrastructure"
-- "immutable audit trail" *(conditional — only if technically documented)*
+- compliance guarantees
+- causal impact evidence claims
+- CSRD certification or evidence-level compliance
+- formal assurance opinions
+- auditor approval
+- complete regulatory compliance claims
+- unsupported market exclusivity
+- immutable audit-trail claims without technical documentation
 
 When new copy is added that conflicts with this list, the resolution is to
 adopt the approved alternative wording listed alongside the prohibited

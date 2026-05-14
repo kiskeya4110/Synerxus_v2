@@ -44,7 +44,7 @@ export const evidenceLadderLevels = [
     level: "Level 0",
     title: "Unsupported Claim",
     meaning: "A claim exists, but no supporting evidence has been attached.",
-    risk: "Critical",
+    risk: "Lowest evidence strength",
     action: "Do not publish. Attach source documentation.",
   },
   {
@@ -52,7 +52,7 @@ export const evidenceLadderLevels = [
     title: "Internal Assertion",
     meaning:
       "The claim is documented internally but depends primarily on internal narrative or self-reported data.",
-    risk: "High",
+    risk: "Low evidence strength",
     action:
       "Add source files, records, methodology notes, or operational data.",
   },
@@ -61,7 +61,7 @@ export const evidenceLadderLevels = [
     title: "Source Evidence Attached",
     meaning:
       "The claim includes supporting documents, photos, reports, certificates, data exports, or project records.",
-    risk: "Moderate",
+    risk: "Moderate evidence strength",
     action: "Invite external partner confirmation.",
   },
   {
@@ -69,7 +69,7 @@ export const evidenceLadderLevels = [
     title: "Partner-Confirmed",
     meaning:
       "A trusted NGO, supplier, implementation partner, or reviewer confirms that the evidence supports the claim.",
-    risk: "Lower",
+    risk: "Stronger evidence record",
     action:
       "Map the claim to relevant frameworks and reporting categories.",
   },
@@ -78,7 +78,7 @@ export const evidenceLadderLevels = [
     title: "Framework-Mapped",
     meaning:
       "The partner-confirmed claim has been mapped to relevant ESG frameworks, SDGs, reporting categories, or stakeholder reporting needs. Level 4 shows reporting alignment support; it is not a readiness determination.",
-    risk: "Low",
+    risk: "Mapped evidence record",
     action:
       "Complete chain-of-custody review, negative impact screening, version review, and management approval before using externally.",
   },
@@ -87,7 +87,7 @@ export const evidenceLadderLevels = [
     title: "Review-Ready Evidence Packet",
     meaning:
       "The claim includes source evidence, partner confirmation, chain-of-custody history, negative impact screening, framework mapping, version history, and report review status.",
-    risk: "Lowest",
+    risk: "Highest evidence readiness",
     action:
       "Use in ESG reports, investor updates, board materials, stakeholder disclosures, or assurance preparation.",
   },

@@ -68,7 +68,7 @@ export function PlanGate({ feature, hasAccess, children, inline = false }: PlanG
         <p className="text-[10px] text-slate-400 leading-tight">{label}</p>
         <a
           href="/landing#pricing"
-          className="mt-1 inline-block text-[10px] font-bold text-[#D4980C] hover:underline"
+          className="mt-1 inline-block text-[10px] font-bold text-[#ffcc33] hover:underline"
         >
           Upgrade →
         </a>

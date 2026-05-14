@@ -22,7 +22,7 @@ const sections: TermsSection[] = [
   {
     title: "2. Important Assurance and Compliance Boundary",
     paragraphs: [
-      "Synerxus provides structured, independently confirmed evidence records that support ESG, CSR, corporate volunteering, community investment, and social value reporting workflows.",
+      "Synerxus provides structured, partner-confirmed evidence records that support ESG, CSR, corporate volunteering, community investment, and social value reporting workflows.",
       "Reports generated through Synerxus are management reporting outputs unless separately reviewed by a qualified independent assurance provider.",
       "ISAE 3000 is an assurance standard for engagements other than audits or reviews of historical financial information; Synerxus may support preparation of structured evidence for such processes, but Synerxus does not perform ISAE 3000 assurance engagements.",
     ],
@@ -152,10 +152,10 @@ const sections: TermsSection[] = [
     ],
     leadList: "Accordingly, you agree not to represent that Synerxus:",
     list: [
-      "proves impact;",
+      "provides causal impact evidence;",
       "proves causality;",
       "guarantees ESG performance;",
-      "guarantees compliance;",
+      "determines regulatory compliance;",
       "certifies framework alignment;",
       "provides formal assurance;",
       "has approved your public claims;",

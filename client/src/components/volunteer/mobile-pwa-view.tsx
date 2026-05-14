@@ -379,7 +379,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     }
 
     // Fallback: calculate from volunteerActivities if server data not available
-    // Note: This fallback cannot access verified impact data, so it shows hours only
+    // Note: This fallback cannot access partner-confirmed activity data, so it shows hours only
     const currentMonth = new Date().getMonth();
     return monthNames.slice(0, currentMonth + 1).map((month, idx) => {
       const monthActivities = (volunteerActivities || []).filter((a: any) => {

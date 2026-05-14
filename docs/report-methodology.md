@@ -91,7 +91,7 @@ Each field score = weight × (passing records / total verified records).
 
 The Review Readiness Score measures reporting-readiness of the evidence
 package. It does not represent assurance readiness, regulatory compliance, or
-verified impact quality.
+causal impact evidence quality.
 
 ## Level 1–5 ESG Maturity Model
 

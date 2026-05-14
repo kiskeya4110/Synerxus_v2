@@ -259,7 +259,7 @@ Release Schedule:
 1. Define impact you'll fund: "We pay $50 per verified student tutored"
 2. Approve partner organizations
 3. Partners deliver programs with own resources
-4. Submit verified impact claims (with evidence)
+4. Submit partner-confirmed evidence claims
 5. You review and reimburse for verified outcomes
 
 **Best for:**

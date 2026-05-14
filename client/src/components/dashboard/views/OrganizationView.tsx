@@ -1324,18 +1324,18 @@ const OrganizationView = memo(function OrganizationView({
               {/* Log Outcome — primary action, always visible */}
               <button
                 onClick={() => navigate('/ngo/log-hours')}
-                className="w-full bg-[#D4980C]/10 border border-[#D4980C]/30 text-stone-800 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
+                className="w-full bg-[#ffcc33]/10 border border-[#ffcc33]/30 text-stone-800 rounded-xl p-4 flex items-center justify-between shadow-sm active:scale-[0.98] transition-all"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-9 h-9 rounded-lg bg-[#D4980C]/20 flex items-center justify-center">
-                    <Clock className="h-5 w-5 text-[#7a5200]" />
+                  <div className="w-9 h-9 rounded-lg bg-[#ffcc33]/20 flex items-center justify-center">
+                    <Clock className="h-5 w-5 text-[#ffcc33]" />
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold leading-tight text-stone-800">Log Volunteer Output</p>
                     <p className="text-[11px] text-stone-500 mt-0.5">Capture output for evidence record creation</p>
                   </div>
                 </div>
-                <ChevronRight className="h-5 w-5 text-[#7a5200]/60 flex-shrink-0" />
+                <ChevronRight className="h-5 w-5 text-[#ffcc33]/60 flex-shrink-0" />
               </button>
 
               {/* Core Metrics - 2x2 Grid (MVP KPIs) */}
@@ -1914,7 +1914,7 @@ const OrganizationView = memo(function OrganizationView({
                   <FileText className="h-7 w-7 text-[#0A1F44]" />
                 </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
-                <p className="text-[10px] font-medium text-[#D4980C] mb-2 uppercase tracking-wide">
+                <p className="text-[10px] font-medium text-[#ffcc33] mb-2 uppercase tracking-wide">
                   ESG / CSR Reporting and Assurance Support
                 </p>
                 <p className="text-xs text-gray-500 mb-3">
@@ -1936,14 +1936,14 @@ const OrganizationView = memo(function OrganizationView({
                   </Select>
                 </div>
                 {reportGenerating ? (
-                  <div className="flex items-center justify-center gap-2 text-[#D4980C]">
-                    <div className="w-4 h-4 border-2 border-[#D4980C] border-t-transparent rounded-full animate-spin" />
+                  <div className="flex items-center justify-center gap-2 text-[#ffcc33]">
+                    <div className="w-4 h-4 border-2 border-[#ffcc33] border-t-transparent rounded-full animate-spin" />
                     <span className="text-sm font-medium">Generating report…</span>
                   </div>
                 ) : (
                   <button
                     onClick={generateMobileReport}
-                    className="w-full py-2.5 px-4 bg-[#D4980C] text-white text-sm font-semibold rounded-xl hover:bg-[#b8820a] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
+                    className="w-full py-2.5 px-4 bg-[#ffcc33] text-white text-sm font-semibold rounded-xl hover:bg-[#ffcc33] active:scale-[0.98] transition-all flex items-center justify-center gap-2"
                   >
                     <FileText className="h-4 w-4" />
                     Generate Report
@@ -2389,7 +2389,7 @@ const OrganizationView = memo(function OrganizationView({
                 <FileText className="h-6 w-6 text-[#0A1F44]" />
               </div>
                 <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
-              <p className="text-xs font-medium text-[#D4980C] mb-3 uppercase tracking-wide">
+              <p className="text-xs font-medium text-[#ffcc33] mb-3 uppercase tracking-wide">
                 Prepared for ESG / CSR Reporting and Assurance Support
               </p>
               <div className="flex items-center gap-3 justify-center mb-4">
@@ -2408,12 +2408,12 @@ const OrganizationView = memo(function OrganizationView({
                 </Select>
               </div>
               {reportGenerating ? (
-                <div className="flex items-center justify-center gap-2 text-[#D4980C]">
-                  <div className="w-5 h-5 border-2 border-[#D4980C] border-t-transparent rounded-full animate-spin" />
+                <div className="flex items-center justify-center gap-2 text-[#ffcc33]">
+                  <div className="w-5 h-5 border-2 border-[#ffcc33] border-t-transparent rounded-full animate-spin" />
                   <span className="text-sm font-medium">Generating…</span>
                 </div>
               ) : (
-                <Button className="bg-[#D4980C] hover:bg-[#b8820a] text-white" onClick={generateMobileReport}>
+                <Button className="bg-[#ffcc33] hover:bg-[#ffcc33] text-white" onClick={generateMobileReport}>
                   <FileText className="h-4 w-4 mr-2" />
                   Generate Report
                 </Button>

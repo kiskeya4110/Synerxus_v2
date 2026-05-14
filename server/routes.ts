@@ -5892,7 +5892,7 @@ MANDATORY RULES - NON-NEGOTIABLE:
 - Example: DO NOT say "Students Educated: 35" then "Students Educated: 35" again
 - Example DO: "Students Educated: 70" (if there were two instances of 35)
 - Treat ALL beneficiary-type metrics as ONE "Partner-Reported Reach" figure and label it as partner-reported, not verified
-- Do not use the phrases "proves impact", "proof of impact", "guaranteed compliance", or "formal assurance"
+- Do not claim causal impact evidence, guaranteed compliance, or formal assurance
 - Format as a professional, structured evidence summary`;
 
         // Extract aggregated totals from metrics

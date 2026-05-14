@@ -62,12 +62,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-[linear-gradient(to_bottom_left,#b3d9e6_0%,#f8fbfc_100%)] text-slate-900">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
+    <div className="min-h-screen bg-white text-slate-900">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-8">
           <Logo size="sm" className="shrink-0" />
 
-          <nav className="hidden items-center gap-1 lg:flex">
+          <nav className="hidden items-center gap-7 lg:flex">
             {navItems.map((item) => {
               const active = location === item.href;
               return (
@@ -75,10 +75,10 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   key={item.href}
                   href={item.href}
                   onClick={(event) => handleLandingSectionClick(event, item.href)}
-                  className={`rounded-md px-2.5 py-2 text-xs font-semibold transition-colors ${
+                  className={`border-b-2 px-0 py-2 text-sm font-semibold transition-colors ${
                     active
-                      ? "bg-slate-100 text-[#0A1F44]"
-                      : "text-slate-600 hover:bg-slate-50 hover:text-[#0A1F44]"
+                      ? "border-[#c88914] text-[#0A1F44]"
+                      : "border-transparent text-[#0A1F44] hover:border-[#c88914]/60"
                   }`}
                 >
                   {item.label}
@@ -89,18 +89,18 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
           <div className="hidden items-center gap-2 lg:flex">
             {isLoggedIn ? (
-              <Button asChild className="bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+              <Button asChild className="bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
                 <Link href="/dashboard">
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Dashboard
+                  Access Dashboard
                 </Link>
               </Button>
             ) : (
               <>
-                <Link href="/login" className="rounded-md px-3 py-2 text-xs font-semibold text-slate-600 transition-colors hover:text-[#0A1F44]">
+                <Link href="/login" className="rounded-md px-3 py-2 text-sm font-semibold text-[#0A1F44] transition-colors hover:text-[#c88914]">
                   Sign In
                 </Link>
-                <Button asChild className="bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
                   <Link href="/request-assessment">Request Assessment</Link>
                 </Button>
               </>
@@ -131,10 +131,10 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 </Link>
               ))}
               {isLoggedIn ? (
-                <Button asChild className="mt-1 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
                   <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
                     <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Dashboard
+                    Access Dashboard
                   </Link>
                 </Button>
               ) : (
@@ -142,7 +142,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   <Link href="/login" className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => setMobileOpen(false)}>
                     Sign In
                   </Link>
-                  <Button asChild className="mt-1 bg-[#0A1F44] text-[#FFD95A] hover:bg-[#102b5a]">
+                  <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
                     <Link href="/request-assessment" onClick={() => setMobileOpen(false)}>Request Assessment</Link>
                   </Button>
                 </>
@@ -154,7 +154,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
       <main>{children}</main>
 
-      <footer className="border-t border-[#D4980C]/20 bg-gradient-to-r from-[#e7f0ff] via-[#dbe8ff] to-[#cfdfff]">
+      <footer className="border-t border-[#0A1F44]/15 bg-[#061A36] text-white">
         <div className="mx-auto max-w-7xl px-4 py-4 md:px-8 md:py-5">
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
             <div className="max-w-md">
@@ -169,7 +169,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   <Link
                     key={href}
                     href={href}
-                    className="text-[11px] font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+                    className="text-[11px] font-semibold text-white/75 transition-colors hover:text-white"
                   >
                     {label}
                   </Link>
@@ -177,7 +177,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
               </nav>
               <a
                 href="mailto:hello@synerxus.com"
-                className="text-[11px] font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+                className="text-[11px] font-semibold text-white/75 transition-colors hover:text-white"
               >
                 hello@synerxus.com
               </a>
@@ -190,7 +190,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                     rel="noopener noreferrer"
                     aria-label={label}
                     title={label}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-[#D4980C]/25 bg-white/80 text-[#0A1F44] transition-colors hover:border-[#0A1F44]/30 hover:bg-white"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/20"
                   >
                     <Icon className="h-3.5 w-3.5" />
                   </a>
@@ -199,11 +199,11 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
 
-          <div className="mt-3 border-t border-[#D4980C]/20 pt-3">
-            <p className="text-xs text-slate-600">
+          <div className="mt-3 border-t border-white/15 pt-3">
+            <p className="text-xs text-white/70">
               © 2026 Synerxus. All rights reserved.
             </p>
-            <p className="mt-1.5 max-w-5xl text-[11px] leading-snug text-slate-600">
+            <p className="mt-1.5 max-w-5xl text-[11px] leading-snug text-white/65">
               {ASSURANCE_FOOTER_NOTE}
             </p>
           </div>

@@ -92,7 +92,7 @@ Generated reports must avoid exposing:
 - proprietary verification mechanics
 - precise geolocation unless explicitly approved for an internal view
 
-Public-facing report text must not claim that Synerxus replaces independent assurance providers, provides legal/accounting advice, guarantees compliance, proves causal impact, or issues assurance conclusions.
+Public-facing report text must not claim that Synerxus replaces independent assurance providers, provides legal/accounting advice, determines regulatory compliance, establishes causal impact evidence, or issues assurance conclusions.
 
 ## Test Coverage Anchors
 

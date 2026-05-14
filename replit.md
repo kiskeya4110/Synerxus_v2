@@ -8,7 +8,7 @@
 - **Last published**: 2026-05-08
 
 ## Overview
-Synerxus is an AI-powered impact data infrastructure platform (PWA) that connects volunteers, NGOs, and corporations for ESG/SDG reporting. The core MVP flow is: volunteers log verified outcomes → NGOs verify within 72h → corporates access audit-ready data for CSRD-compliant ESG reporting. The platform vision is "Intelligent connections for sustainable development worldwide," with an outcome-first approach replacing self-reported hours and estimates.
+Synerxus is an AI-powered impact data infrastructure platform (PWA) that connects volunteers, NGOs, and corporations for ESG/SDG reporting. The core MVP flow is: volunteers log activities and outputs → NGOs confirm within 72h → corporates access structured evidence records for CSRD/ESRS disclosure preparation. The platform vision is "Intelligent connections for sustainable development worldwide," with an outcome-first approach replacing self-reported hours and estimates.
 
 ## User Preferences
 - Preferred communication style: Simple, everyday language.

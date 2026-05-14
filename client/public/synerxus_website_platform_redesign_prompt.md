@@ -65,13 +65,13 @@ Avoid or heavily qualify these terms:
 - Audit-ready
 - Compliance-ready
 - Guarantees compliance
-- Proves impact
+- Claims causal impact evidence
 - Satisfies CSRD / GRI / SASB / ISSB
-- Auditor-approved
+- Auditor certified
 - Certified impact
 - Immutable truth
 
-If the word “verified” appears, clarify what is verified: activity record, partner confirmation, source document, hours, output, or review status. Do not use “verified impact” unless causal outcome evidence exists.
+If the word “verified” appears, clarify what is verified: activity record, partner confirmation, source document, hours, output, or review status. Use “partner-confirmed evidence” unless causal outcome evidence exists.
 
 ## Website Redesign Goals
 The website must immediately answer:
@@ -933,7 +933,7 @@ Use:
 - For Discussion Only
 - Not for Assurance Submission
 
-Do not present sample data as real traction, real verification volume, or real verified impact.
+Do not present sample data as real traction, real verification volume, or real partner-confirmed evidence.
 
 ---
 

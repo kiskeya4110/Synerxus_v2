@@ -46,7 +46,7 @@ export default function Footer() {
 
   return (
     <footer
-      className="mt-auto border-t border-[#D4980C]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#f7d27a]/55"
+      className="mt-auto border-t border-[#ffcc33]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#ffcc33]/55"
       data-footer-id={instanceId.current}
     >
       <div className="mx-auto max-w-7xl px-4 py-4 md:px-10 md:py-5">
@@ -80,11 +80,11 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-3 border-t border-[#D4980C]/20 pt-3">
+        <div className="mt-3 border-t border-[#ffcc33]/20 pt-3">
           <p className="text-xs text-slate-600">
             © {currentYear}{" "}
             <span style={{ color: "#0A2463", fontWeight: 700 }}>SYNER</span>
-            <span style={{ color: "#D4980C", fontWeight: 700 }}>XUS</span>. All rights reserved.
+            <span style={{ color: "#ffcc33", fontWeight: 700 }}>XUS</span>. All rights reserved.
           </p>
           <p className="mt-1.5 max-w-5xl text-[11px] leading-snug text-slate-600">
             {ASSURANCE_FOOTER_NOTE}

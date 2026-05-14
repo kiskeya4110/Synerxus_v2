@@ -78,6 +78,16 @@ describe("Verified Evidence Summary report", () => {
     expect(positions).toEqual([...positions].sort((a, b) => a - b));
   });
 
+  it("renders claim traceability from the supplied verified records instead of canned examples", () => {
+    const html = renderReport();
+
+    expect(html).toContain("Water filters installed");
+    expect(html).toContain("Clean Water Program");
+    expect(html).not.toContain("Solar Village Initiative");
+    expect(html).not.toContain("Clean Wells Construction");
+    expect(html).not.toContain("Climate Hackathon");
+  });
+
   it("keeps partner-confirmed totals separate from partner-reported, pending, rejected, and incomplete records", () => {
     const html = renderReport();
 

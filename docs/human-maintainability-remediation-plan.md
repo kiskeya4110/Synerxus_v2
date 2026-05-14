@@ -123,7 +123,7 @@ Verification:
 
 Completion notes:
 - `server/__tests__/prohibited-copy-scan.test.ts` now scans backend and shared TypeScript sources, excluding backend tests and the prohibited-claims definition file.
-- The scan includes additional risky phrases from the audit, including `verified impact`, `proof of impact`, and `beneficiaries verified`.
+- The scan includes additional risky phrase families from the audit, including overbroad verified-impact, causal-proof, and beneficiary-verification wording.
 - Backend/shared wording was normalized away from risky claim language without editing frontend files.
 - Targeted prohibited-copy test passed.
 

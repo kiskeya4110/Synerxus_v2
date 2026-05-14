@@ -475,7 +475,7 @@ Navigate to **My Work > Log Activity**:
 
 ### 7.3 Evidence Submission
 
-For verified impact, submit evidence:
+For partner-confirmed activity, submit evidence:
 
 | Evidence Type | Best For | How to Submit |
 |---------------|----------|---------------|
@@ -603,7 +603,7 @@ A: Communicate with your organization immediately. Life happens—most organizat
 A: Organizations review your submitted evidence and approve/verify your logged activities. Verified work generates AIUs.
 
 **Q: What are AIUs used for?**
-A: AIUs (Attributable Impact Units) are verified impact credits. They appear on your profile, can be included in resumes, and some corporate partners offer rewards for high AIU earners.
+A: AIUs (Attributable Impact Units) are partner-confirmed activity credits. They appear on your profile, can be included in resumes, and some corporate partners offer rewards for high AIU earners.
 
 ---
 

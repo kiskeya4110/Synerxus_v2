@@ -260,7 +260,7 @@ function PilotCard({ pilot }: { pilot: CorporatePilot }) {
       {pilot.outcomes > 0 && (
         <div className="mt-3 pt-3 border-t border-slate-200 text-xs text-slate-500 flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-emerald-500 flex-shrink-0 inline-block"></span>
-          Both outputs + hours partner-confirmed (audit-ready evidence)
+          Outputs and hours partner-confirmed for review
         </div>
       )}
     </div>
@@ -375,7 +375,7 @@ export default function AdminPilotDashboard() {
               </div>
               <div className="text-xl font-bold">Partner confirmation rate ≥80% within 72 hours</div>
               <div className="text-cyan-100 text-sm mt-2">
-                Outputs and supporting hours are partner-confirmed as audit-ready evidence for ESG reporting
+                Outputs and supporting hours are partner-confirmed as structured evidence for ESG reporting preparation
               </div>
               <div className="flex flex-wrap gap-4 mt-3 text-sm text-cyan-100">
                 <span><span className="font-bold text-white">{stats?.totalActivities ?? 0}</span> total activities</span>
@@ -564,7 +564,7 @@ export default function AdminPilotDashboard() {
         <div className="mt-8 text-center text-sm text-slate-400 pb-4">
           <p>Every element either diagnoses <em>why verification is low</em> or proves <em>value to corporate pilots</em>.</p>
           <p className="mt-1 text-xs">
-            Hours are <strong>partner-confirmed</strong> alongside outputs — not self-reported. Both are audit-ready evidence.
+            Hours are <strong>partner-confirmed</strong> alongside outputs, not self-reported. Both are structured for review.
           </p>
         </div>
       </main>

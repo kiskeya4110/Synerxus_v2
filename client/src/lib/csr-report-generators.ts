@@ -134,7 +134,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
   <meta charset="utf-8" />
   <title>Verified Evidence Summary</title>
   <style>
-    :root{--navy:#0A1F44;--gold:#D4980C;--green:#059669;--amber:#D97706;--ink:#111827;--muted:#64748B;--line:#E5E7EB;--soft:#F8FAFC;}
+    :root{--navy:#0A1F44;--gold:#ffcc33;--green:#059669;--amber:#D97706;--ink:#111827;--muted:#64748B;--line:#E5E7EB;--soft:#F8FAFC;}
     *{box-sizing:border-box} body{margin:0;background:#E5E7EB;color:var(--ink);font-family:Inter,Arial,sans-serif;-webkit-print-color-adjust:exact;print-color-adjust:exact}
     .report-page{width:8.5in;min-height:11in;margin:18px auto;background:#fff;border:1px solid #dbe1ea;display:flex;flex-direction:column;page-break-after:always}
     .page-header{height:.72in;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 .48in;border-bottom:4px solid var(--gold)}
@@ -397,7 +397,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
           ${["Corporate Volunteering","Community Investment","NGO / Partner Verification","Assurance Preparation","SDG / Framework Mapping"].map((title, idx) => `
             <div class="use-card">
               <strong>${escapeHtml(title === "NGO / Partner Verification" ? "NGO / Partner Confirmation" : title)}</strong>
-              <p>${["Volunteer activity records with partner confirmation.","Program activity, outputs, and source support.","Partner-confirmed activity and output records.","Evidence records, references, and limitations.","Activity records mapped without impact proof."][idx]}</p>
+              <p>${["Volunteer activity records with partner confirmation.","Program activity, outputs, and source support.","Partner-confirmed activity and output records.","Evidence records, references, and limitations.","Activity records mapped without causal impact claims."][idx]}</p>
             </div>`).join("")}
         </div>
         <div class="card soft" style="margin-top:10px"><p><strong>&#9432;</strong> Select the claim types, evidence gaps, confirmation needs, source documentation, reporting context, and review boundaries that apply.</p></div>
@@ -637,7 +637,7 @@ export function generateOrgPDFContent(
                     <span style="color:#0A2463;">SYNERXUS</span>
                   </span>
                   <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
-                    <span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span>
+                    <span style="color:#ffcc33;">Impacts.</span> <span style="color:#0A2463;">Verified.</span>
                   </span>
                 </div>
               </div>
@@ -728,7 +728,7 @@ export function generateOrgPDFContent(
           <div class="footer-logo">
             <img src="${origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
           </div>
-          <div class="footer-tagline"><span style="color:#D4980C;">Impacts.</span> <span style="color:#0A2463;">Verified.</span></div>
+          <div class="footer-tagline"><span style="color:#ffcc33;">Impacts.</span> <span style="color:#0A2463;">Verified.</span></div>
           <div class="footer-generated">
             Generated on ${currentDate} • ${template.name}
           </div>
@@ -738,7 +738,7 @@ export function generateOrgPDFContent(
           <div class="footer-copyright">
             © ${new Date().getFullYear()} Synerxus. All rights reserved. | hello@synerxus.com
           </div>
-          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
+          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#ffcc33;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#ffcc33;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
         </div>
       </body>
     </html>
@@ -916,7 +916,7 @@ export function generatePDFContent(
           .framework-bar { background:linear-gradient(135deg,#0A2463 0%,#1e3a8a 100%); border-radius:10px; padding:13px 18px; margin-bottom:18px; page-break-inside:avoid; }
           .framework-bar-primary { display:flex; align-items:center; gap:10px; margin-bottom:9px; flex-wrap:wrap; }
           .framework-primary-label { font-size:10px; color:#93c5fd; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; white-space:nowrap; }
-          .wef-pill { background:#D4980C; color:white; font-size:11px; font-weight:800; padding:4px 13px; border-radius:20px; letter-spacing:0.3px; }
+          .wef-pill { background:#ffcc33; color:white; font-size:11px; font-weight:800; padding:4px 13px; border-radius:20px; letter-spacing:0.3px; }
           .framework-bar-secondary { display:flex; align-items:center; gap:7px; flex-wrap:wrap; }
           .secondary-label { font-size:10px; color:#93c5fd; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
           .fw-pill { background:rgba(255,255,255,0.12); color:#e0f2fe; font-size:10px; font-weight:600; padding:3px 9px; border-radius:12px; border:1px solid rgba(255,255,255,0.2); }
@@ -986,7 +986,7 @@ export function generatePDFContent(
           .pillar-prosperity { background:#fef3c7; color:#78350f; }
           .pillar-governance { background:#dbeafe; color:#1e3a8a; }
 
-          .evidence-block { background:#0f172a; border-radius:10px; padding:18px; margin:14px 0; page-break-inside:avoid; border-left:4px solid #D4980C; }
+          .evidence-block { background:#0f172a; border-radius:10px; padding:18px; margin:14px 0; page-break-inside:avoid; border-left:4px solid #ffcc33; }
           .evidence-title { font-size:10px; color:#94a3b8; font-weight:700; text-transform:uppercase; letter-spacing:0.8px; margin-bottom:12px; }
           .evidence-line { font-family:'Courier New',monospace; font-size:11px; line-height:1.7; }
           .ev-key { color:#7dd3fc; }
@@ -1116,7 +1116,7 @@ export function generatePDFContent(
                     <span style="color:#0A2463;">SYNERXUS</span>
                   </span>
                   <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
-                    <span style="color:#D4980C;">Evidence.</span> <span style="color:#0A2463;">Verified.</span>
+                    <span style="color:#ffcc33;">Evidence.</span> <span style="color:#0A2463;">Verified.</span>
                   </span>
                 </div>
               </div>
@@ -1146,7 +1146,7 @@ export function generatePDFContent(
           </div>
           <div class="no-break" style="background:linear-gradient(135deg,#eff6ff 0%,#dbeafe 100%);border:1.5px solid #3b82f6;border-radius:8px;padding:12px 16px;margin-top:0;">
             <div style="font-size:10px;font-weight:800;color:#1e3a8a;text-transform:uppercase;letter-spacing:0.6px;margin-bottom:6px;">⚠ Evidence Boundary Statement</div>
-            <div style="font-size:11px;color:#374151;line-height:1.6;">Synerxus provides structured, independently confirmed evidence that supports reporting and assurance preparation. <strong>Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</strong> Volunteer time is an input. Partner-confirmed outputs are the verified evidence. Beneficiary reach is partner-reported unless independently verified. Framework alignment is evidence support, not compliance certification.</div>
+            <div style="font-size:11px;color:#374151;line-height:1.6;">Synerxus provides structured, partner-confirmed evidence records that support reporting and assurance preparation. <strong>Synerxus does not replace independent assurance providers, provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.</strong> Volunteer time is an input. Partner-confirmed outputs are the verified evidence. Beneficiary reach is partner-reported unless independently verified. Framework alignment is evidence support, not compliance certification.</div>
           </div>
         </div>
 
@@ -1602,7 +1602,7 @@ export function generatePDFContent(
         <!-- ═══ SECTION 16: Audit-Support Statement ═══ -->
         <div class="report-section">
           <h2>Audit-Support Statement</h2>
-          <p style="font-size:10px;color:#374151;line-height:1.6;margin-bottom:14px;">Synerxus turns ESG activity — including volunteer time, partner-delivered outputs, and social value programs — into independently confirmed, audit-ready evidence. This report supports assurance preparation. It does not replace independent assurance per ISAE 3000 or any applicable assurance standard.</p>
+          <p style="font-size:10px;color:#374151;line-height:1.6;margin-bottom:14px;">Synerxus turns ESG activity, including volunteer time, partner-delivered outputs, and social value programs, into partner-confirmed evidence records structured for review. This report supports assurance preparation. It does not replace independent assurance per ISAE 3000 or any applicable assurance standard.</p>
           <div class="no-break" style="display:flex;flex-direction:column;align-items:center;margin-bottom:16px;padding:14px;background:#f9fafb;border:1px solid #e5e7eb;border-radius:6px;">
             <div style="width:100%;padding:10px 16px;border:1.5px solid #374151;border-radius:4px;background:#f9fafb;text-align:center;">
               <div style="font-size:10px;font-weight:700;color:#374151;">Independent Assurance — ISAE 3000 (or applicable standard) REQUIRED for formal opinions</div>
@@ -1625,7 +1625,7 @@ export function generatePDFContent(
               <div class="assurance-item"><span class="assurance-icon">✓</span><span>Framework evidence alignment for GRI, ESRS, SASB, TCFD, SDGs</span></div>
               <div class="assurance-item"><span class="assurance-icon">✓</span><span>Negative impact screening via partner-administered process</span></div>
               <div class="assurance-item"><span class="assurance-icon">✓</span><span>Tamper-evident audit trail retained in Synerxus systems</span></div>
-              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Detailed evidence records available to authorised reviewers</span></div>
+              <div class="assurance-item"><span class="assurance-icon">✓</span><span>Detailed evidence records available to authorized reviewers</span></div>
             </div>
             <div class="assurance-panel auditor">
               <div class="assurance-panel-header aud">◆ What Requires External Action</div>
@@ -1635,7 +1635,7 @@ export function generatePDFContent(
               <div class="assurance-item"><span class="assurance-icon">◆</span><span>Regulatory compliance conclusions (auditor judgment required)</span></div>
             </div>
           </div>
-          <p style="font-size:9px;color:#6b7280;font-style:italic;margin-top:10px;padding:8px 12px;background:#fffbeb;border-radius:4px;border:1px solid #fde68a;">Detailed evidence records and supporting metadata are retained in Synerxus and may be made available to authorised reviewers subject to privacy, confidentiality, and client approval. For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per applicable assurance standard remains required.</p>
+          <p style="font-size:9px;color:#6b7280;font-style:italic;margin-top:10px;padding:8px 12px;background:#fffbeb;border-radius:4px;border:1px solid #fde68a;">Detailed evidence records and supporting metadata are retained in Synerxus and may be made available to authorized reviewers subject to privacy, confidentiality, and client approval. For formal regulatory filing (CSRD, SEC, etc.), third-party auditor review per applicable assurance standard remains required.</p>
         </div>
 
         <!-- ═══ SECTION 17: Verification Limitations ═══ -->
@@ -1671,11 +1671,11 @@ export function generatePDFContent(
               </tr>
             </thead>
             <tbody>
-              <tr><td><strong>Activity</strong></td><td>Work performed, including volunteer time contributed by employees or stakeholders. Volunteer time is an input, not an outcome or proof of impact.</td></tr>
-              <tr><td><strong>Output</strong></td><td>What was delivered as a result of the activity, as confirmed by an authorised partner verifier.</td></tr>
+              <tr><td><strong>Activity</strong></td><td>Work performed, including volunteer time contributed by employees or stakeholders. Volunteer time is an input, not an outcome or causal impact evidence.</td></tr>
+              <tr><td><strong>Output</strong></td><td>What was delivered as a result of the activity, as confirmed by an authorized partner verifier.</td></tr>
               <tr><td><strong>Outcome support</strong></td><td>Near-term reported result or reach, as documented by the implementing partner according to their methodology.</td></tr>
               <tr><td><strong>Verified evidence</strong></td><td>A structured evidence record carrying partner confirmation, a verification timestamp, and a verifier role. Records without these fields are classified as Incomplete or Pending.</td></tr>
-              <tr><td><strong>Partner-confirmed output evidence</strong></td><td>Evidence records where the output description has been confirmed by an authorised partner organisation representative.</td></tr>
+              <tr><td><strong>Partner-confirmed output evidence</strong></td><td>Evidence records where the output description has been confirmed by an authorized partner organization representative.</td></tr>
               <tr><td><strong>Contribution</strong></td><td>Evidence that an activity contributed to a verified output. Does not claim sole causality.</td></tr>
               <tr><td><strong>Attribution</strong></td><td>Causal proof that the activity caused a specific outcome. Requires formal evaluation methodology (e.g. RCT, quasi-experimental study).</td></tr>
               <tr><td><strong>Impact</strong></td><td>Long-term change in people's lives or the environment. Not independently proven by Synerxus.</td></tr>
@@ -1684,7 +1684,7 @@ export function generatePDFContent(
             </tbody>
           </table>
           <div class="no-break" style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:10px 14px;margin-top:12px;font-size:10px;color:#1e3a8a;line-height:1.6;">
-            <strong>Redaction Policy:</strong> Public or management-facing reports may redact personal identifiers, precise geolocation, and sensitive technical metadata (including device identifiers, SMS routing, internal verification routing, and fraud detection logic). Full supporting records are retained in Synerxus for authorised review subject to privacy, confidentiality, and client permissions.
+            <strong>Redaction Policy:</strong> Public or management-facing reports may redact personal identifiers, precise geolocation, and sensitive technical metadata (including device identifiers, SMS routing, internal verification routing, and fraud detection logic). Full supporting records are retained in Synerxus for authorized review subject to privacy, confidentiality, and client permissions.
           </div>
         </div>
 
@@ -1697,7 +1697,7 @@ export function generatePDFContent(
             <div class="footer-logo-block">
               <img src="${origin}/synerxus-esg-logo.png" alt="Synerxus" style="height:28px;width:auto;" />
               <div style="font-size:11px;line-height:1.6;color:#6b7280;">
-                <div><span style="color:#D4980C;font-weight:700;">Evidence.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
+                <div><span style="color:#ffcc33;font-weight:700;">Evidence.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
                 <div>Assurance-Support Documentation</div>
               </div>
             </div>
@@ -1719,10 +1719,10 @@ export function generatePDFContent(
           </div>
           <div class="footer-generated">Generated on ${currentDate} · Verified Evidence Summary · Report ID: ${reportId}</div>
           <div style="text-align:center;margin-bottom:8px;">
-            <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorised personnel.</div>
+            <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorized personnel.</div>
           </div>
           <div class="footer-copyright">© ${new Date().getFullYear()} Synerxus. All rights reserved. | hello@synerxus.com</div>
-          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#D4980C;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#D4980C;font-weight:600;">Evidence.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
+          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#ffcc33;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#ffcc33;font-weight:600;">Evidence.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
         </div>
       </body>
     </html>

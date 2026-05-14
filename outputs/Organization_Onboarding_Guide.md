@@ -564,7 +564,7 @@ Your dashboard shows real-time task status:
 
 ### 7.1 Why Verification Matters
 
-Verification is where volunteer work becomes **verified impact**. Unverified activities:
+Verification is where volunteer work becomes **partner-confirmed evidence**. Unverified activities:
 - Don't generate AIUs
 - Don't count toward corporate funding metrics
 - Don't appear on official impact reports

@@ -142,7 +142,7 @@ const ACTIVITY_TEMPLATES: Record<number, Array<{ description: string; outcomeTex
     { description: "Climate resilience dataset reviewed and cleaned",                         outcomeText: "Reviewed and cleaned 1,200-row community resilience dataset; removed duplicates, standardised geographic codes",                                  sdgTags: [13,17] },
     { description: "Community survey data validated and processed",                           outcomeText: "Validated 310 survey responses for data quality; flagged 12 for follow-up and prepared clean dataset for analysis",                              sdgTags: [13,11,4] },
     { description: "Prototype review session facilitated and documented",                     outcomeText: "Facilitated structured review of 4 climate solution prototypes with mentors; documented feedback for iteration",                                  sdgTags: [13,4,17] },
-    { description: "Climate education materials developed and peer-reviewed",                 outcomeText: "Developed 2 climate literacy modules (energy and water); both peer-reviewed and approved for programme roll-out",                                sdgTags: [13,4,11] },
+    { description: "Climate education materials developed and peer-reviewed",                 outcomeText: "Developed 2 climate literacy modules (energy and water); both peer-reviewed and approved for program rollout",                                   sdgTags: [13,4,11] },
   ],
 };
 

@@ -23,7 +23,7 @@ export const CTA_BUTTONS = {
   VIEW_PRICING: "View pricing",
   EXPORT_REPORT: "Export evidence summary",
   ADD_PROJECT: "Add a project",
-  INVITE_PARTNER: "Invite a partner organisation",
+  INVITE_PARTNER: "Invite a partner organization",
   CONFIRM_OUTPUT: "Confirm partner-delivered output",
 } as const;
 
@@ -34,7 +34,7 @@ export const SECTION_HEADLINES = {
   HOW_IT_WORKS: "How Synerxus works",
   WHAT_YOU_GET: "What you get",
   FOR_CORPORATES: "For corporate ESG / CSR teams",
-  FOR_NGOS: "For NGO and partner organisations",
+  FOR_NGOS: "For NGO and partner organizations",
   FOR_VOLUNTEERS: "For volunteers",
   FRAMEWORKS_SUPPORTED: "Reporting frameworks supported",
   EVIDENCE_BOUNDARY: "What Synerxus is and is not",
@@ -47,5 +47,5 @@ export const EMPTY_STATE_COPY = {
   NO_PROJECTS:
     "No projects yet. Add a project to start capturing volunteer time and partner-delivered outputs.",
   NO_PARTNERS:
-    "No partner organisations yet. Invite a partner so they can confirm delivered outputs.",
+    "No partner organizations yet. Invite a partner so they can confirm delivered outputs.",
 } as const;

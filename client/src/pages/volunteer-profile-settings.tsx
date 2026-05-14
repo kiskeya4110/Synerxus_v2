@@ -499,7 +499,7 @@ export default function VolunteerProfileSettings() {
                 My Employer (Optional)
               </Label>
               <p className="text-xs text-gray-500 mb-2">
-                Link your volunteer hours to your employer's CSR programme so their team can track real-time impact.
+                Link your volunteer hours to your employer's CSR program so their team can track real-time impact.
               </p>
               {/* Search */}
               <div className="relative mb-2">
@@ -569,7 +569,7 @@ export default function VolunteerProfileSettings() {
               {selectedEmployerId && (
                 <p className="text-xs text-indigo-600 mt-1.5 flex items-center gap-1">
                   <Check className="h-3 w-3" />
-                  Linked — your verified impact will appear on their CSR dashboard.
+                  Linked — your partner-confirmed activity will appear on their CSR dashboard.
                 </p>
               )}
             </div>

@@ -265,7 +265,7 @@ export default function LoginAuth() {
             {/* Sign up link */}
             <p className="text-center text-sm text-gray-500 mt-6">
               Don't have an account?{" "}
-              <a href="/signup" className="text-[#0A1F44] font-semibold hover:text-[#D4980C] transition-colors">
+              <a href="/signup" className="text-[#0A1F44] font-semibold hover:text-[#ffcc33] transition-colors">
                 Sign up
               </a>
             </p>
@@ -279,7 +279,7 @@ export default function LoginAuth() {
             {[
               { label: "Volunteer", sub: "Free", href: "/signup/volunteer", color: "text-emerald-600" },
               { label: "NGO", sub: "Free", href: "/signup/organization", color: "text-blue-600" },
-              { label: "Corporate", sub: "Paid plans", href: "/signup/corporate", color: "text-[#D4980C]" },
+              { label: "Corporate", sub: "Paid plans", href: "/signup/corporate", color: "text-[#ffcc33]" },
             ].map(({ label, sub, href, color }) => (
               <a
                 key={label}

@@ -958,20 +958,20 @@ input[type="radio"] {
 /* Overrides button highlights to light gold within all PWA views.
    Logo colors (--logo-*) are preserved and unaffected. */
 .pwa-gradient-bg {
-  --primary-hsl: 46 65% 52%;           /* Light gold #D4980C */
+  --primary-hsl: 45 100% 60%;           /* Light gold #ffcc33 */
   --primary-foreground: 24 10% 10%;    /* Dark stone — gold needs dark text for contrast */
-  --ring: 46 65% 52%;                  /* Gold focus rings */
-  --primary: #D4980C;                  /* Hex alias used by @layer components */
-  --primary-hover: #B07F0A;            /* Deeper gold for hover */
+  --ring: 45 100% 60%;                  /* Gold focus rings */
+  --primary: #ffcc33;                  /* Hex alias used by @layer components */
+  --primary-hover: #ffcc33;            /* Deeper gold for hover */
 }
 
 .pwa-gradient-bg .input:focus {
-  border-color: #D4980C;
+  border-color: #ffcc33;
   box-shadow: 0 0 0 3px rgba(212, 152, 12, 0.2);
 }
 
 .pwa-gradient-bg textarea:focus {
-  border-color: #D4980C;
+  border-color: #ffcc33;
   box-shadow: 0 0 0 3px rgba(212, 152, 12, 0.2);
 }
 
@@ -987,8 +987,8 @@ input[type="radio"] {
 }
 
 .pwa-gradient-bg .card:hover {
-  border-color: #D4980C;
-  box-shadow: 0 0 0 1px #D4980C;
+  border-color: #ffcc33;
+  box-shadow: 0 0 0 1px #ffcc33;
 }
 
 .pwa-gradient-bg .glow-primary {

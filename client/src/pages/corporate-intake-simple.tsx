@@ -230,13 +230,13 @@ export default function CorporateIntakeSimple() {
         <div className="text-center mb-6">
           <Logo size="md" className="mx-auto mb-3" />
           <h1 className="text-2xl font-bold text-gray-900">Create Your Corporate Account</h1>
-          <p className="text-gray-500 mt-1">See verified impact in ~2 minutes</p>
+          <p className="text-gray-500 mt-1">See partner-confirmed activity in ~2 minutes</p>
         </div>
 
         {/* Plan context banner */}
         {selectedPlan && selectedPlan !== "pilot" ? (
           <div className="mb-5 flex items-center gap-3 bg-[#0A1F44] rounded-2xl px-5 py-3.5">
-            <span className="text-[#D4980C] text-lg">✦</span>
+            <span className="text-[#ffcc33] text-lg">✦</span>
             <div>
               <p className="text-white text-xs font-semibold capitalize">
                 {selectedPlan.charAt(0).toUpperCase() + selectedPlan.slice(1)} Plan selected
@@ -419,7 +419,7 @@ export default function CorporateIntakeSimple() {
               </Button>
 
               <p className="text-center text-xs text-gray-500 lg:col-span-2">
-                No credit card required. See verified impact in minutes.
+                No credit card required. See partner-confirmed activity in minutes.
               </p>
 
               {/* Divider */}

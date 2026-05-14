@@ -77,7 +77,7 @@ export default function Logo({
         }}
       >
         <span style={{ color: '#0A2463' }}>SYNER</span>
-        <span style={{ color: '#8A5A00' }}>XUS</span>
+        <span style={{ color: '#ffcc33' }}>XUS</span>
       </span>
       <span
         style={{
@@ -92,7 +92,7 @@ export default function Logo({
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: '#8A5A00' }}>Evidence.</span>{' '}
+        <span style={{ color: '#ffcc33' }}>Evidence.</span>{' '}
         <span style={{ color: '#0A2463' }}>Structured.</span>
       </span>
     </div>
@@ -114,7 +114,7 @@ export default function Logo({
       data-testid="button-logo"
       className={cn(
         "inline-flex items-center select-none rounded-md transition-opacity",
-        clickable && "cursor-pointer hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#D4980C] focus-visible:ring-offset-2",
+        clickable && "cursor-pointer hover:opacity-90 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#ffcc33] focus-visible:ring-offset-2",
         className,
       )}
       style={{ gap: `${Math.round(config.height * 0.25)}px` }}

@@ -716,7 +716,7 @@ logsRouter.patch("/logs/:id/verify", authMiddleware, async (req: Request, res: R
           if (monthlyCount >= planFeatures.maxMonthlyOutcomes) {
             return res.status(402).json({
               error: "Monthly outcome limit reached",
-              message: `This organisation's CSR partner has reached the ${planFeatures.maxMonthlyOutcomes} verified outcomes/month limit on their ${planFeatures.label} plan.`
+              message: `This organization's CSR partner has reached the ${planFeatures.maxMonthlyOutcomes} verified outcomes/month limit on their ${planFeatures.label} plan.`
             });
           }
         }
@@ -1610,7 +1610,8 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
   if (filterOrgIds) {
     activities = activities.filter((activity: any) => {
       const projectOrg = activity.projectId ? projectToOrgMap.get(activity.projectId) : null;
-      return projectOrg && filterOrgIds.includes(projectOrg.id);
+      const verifierOrg = activity.verifiedBy ? verifierToOrgMap.get(activity.verifiedBy) : null;
+      return [projectOrg, verifierOrg].some((org) => org && filterOrgIds.includes(org.id));
     });
   }
 
@@ -1631,8 +1632,18 @@ async function sendVerifiedEvidenceSummaryHtml(req: Request, res: Response, mode
     const org = await storage.getOrganization(orgId);
     if (org) filteredProjectOrgs.push(org);
   }
+  const filteredVerifierOrgIds = Array.from(new Set(
+    activities
+      .map((activity: any) => activity.verifiedBy ? verifierToOrgMap.get(activity.verifiedBy)?.id : null)
+      .filter(Boolean),
+  )) as number[];
+  const filteredVerifierOrgs: any[] = [];
+  for (const orgId of filteredVerifierOrgIds) {
+    const org = await storage.getOrganization(orgId);
+    if (org) filteredVerifierOrgs.push(org);
+  }
   const partnerNames = Array.from(new Set(
-    filteredProjectOrgs.map((org: any) => org.name).filter(Boolean),
+    [...filteredProjectOrgs, ...filteredVerifierOrgs].map((org: any) => org.name).filter(Boolean),
   )) as string[];
   const filteredVolunteerIds = Array.from(new Set(activities.map((activity: any) => activity.userId).filter(Boolean)));
   const corpName = partner?.companyName || "Corporation";

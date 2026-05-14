@@ -1834,7 +1834,7 @@ const VolunteerView = memo(function VolunteerView({
                 <p className="text-xs text-blue-600 mt-0.5">Verified Activities</p>
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-snug">Partner-reported reach is not independently verified. It reflects figures reported by the partner organisation and is provided as reporting context only.</p>
+            <p className="text-[11px] text-muted-foreground leading-snug">Partner-reported reach is not independently verified. It reflects figures reported by the partner organization and is provided as reporting context only.</p>
             {allLogs.filter((l: any) => l.verificationStatus === 'approved' && (l.outcomeQuantity || 0) > 0).length > 0 ? (
               <>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Verified Activities</p>

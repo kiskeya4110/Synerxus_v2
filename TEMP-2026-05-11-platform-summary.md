@@ -4,7 +4,7 @@
 
 Synerxus is organized around claim-level evidence management for ESG, CSR, community investment, volunteering, NGO, and social-impact reporting preparation.
 
-The platform does not present evidence as certification, assurance, or proof of impact. It separates confirmed activity, partner-reported figures, source-supported records, and derived mappings so reporting teams can review what is supported and what remains limited.
+The platform does not present evidence as certification, assurance, or causal impact evidence. It separates confirmed activity, partner-reported figures, source-supported records, and derived mappings so reporting teams can review what is supported and what remains limited.
 
 ## Website
 

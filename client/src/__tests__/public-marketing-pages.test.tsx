@@ -29,7 +29,7 @@ const publicPages = [
     name: "landing",
     path: "/landing",
     Component: MarketingHome,
-    expectedText: "Evidence alignment support for major ESG and assurance frameworks",
+    expectedText: "Alignment is shown as context, not as a compliance or assurance result",
   },
   {
     name: "platform",
@@ -86,7 +86,7 @@ describe("public marketing pages", () => {
     expect(html).toContain("Partner-confirmed evidence totals");
     expect(html).toContain("Mapping Review Panel");
     expect(html).toContain("Map activity records without turning tags into evidence.");
-    expect(html).toContain("The mapping is visible as classification context, not as proof of impact.");
+    expect(html).toContain("The mapping is visible as classification context, not as causal impact evidence.");
     expect(html).toContain("provide formal assurance");
     expect(html).not.toContain("Mapped theme");
     expect(html).not.toContain("SDG Target 7.b: Expand infrastructure and upgrade technology for sustainable energy services.");
@@ -96,6 +96,7 @@ describe("public marketing pages", () => {
     const html = renderPublicPage("/landing", MarketingHome);
 
     expect(html).toContain("Claim-level evidence");
+    expect(html).toContain("claim-level records that show what supports the claim");
     expect(html).toContain("ESG and social-impact claims are hard to defend");
     expect(html).toContain("Create claim. Attach evidence. Confirm. Map. Preserve.");
     expect(html).toContain("Evidence Categories");

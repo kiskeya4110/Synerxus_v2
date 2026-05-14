@@ -30,7 +30,7 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#D4980C]/20 px-1 pt-1.5 pwa-bottom-nav z-50 shadow-lg"
+      className="fixed bottom-0 left-0 right-0 bg-gradient-to-r from-amber-50 via-yellow-50 to-amber-50 border-t border-[#ffcc33]/20 px-1 pt-1.5 pwa-bottom-nav z-50 shadow-lg"
       style={{ paddingBottom: 'max(6px, env(safe-area-inset-bottom, 0px))' }}
     >
       <div className="grid grid-cols-5">
@@ -43,12 +43,12 @@ export default function CSRMobileNav({ activeTab = 'overview' }: CSRMobileNavPro
               key={item.id}
               onClick={() => handleNavClick(item)}
               className={`flex flex-col items-center justify-center py-1 px-1 w-full min-w-0 rounded transition-all ${
-                isActive ? 'text-[#7a5200] bg-[#D4980C]/50' : 'text-stone-500 hover:text-[#7a5200]'
+                isActive ? 'text-[#ffcc33] bg-[#ffcc33]/50' : 'text-stone-500 hover:text-[#ffcc33]'
               }`}
               data-testid={`csr-nav-${item.id}`}
             >
               <span data-pwa-nav-icon className="w-7 h-6 flex items-center justify-center">
-                <Icon className={`w-4 h-4 ${isActive ? 'text-[#7a5200]' : 'text-stone-500'}`} />
+                <Icon className={`w-4 h-4 ${isActive ? 'text-[#ffcc33]' : 'text-stone-500'}`} />
               </span>
               <span className="text-[9px] font-medium">{item.label}</span>
             </button>

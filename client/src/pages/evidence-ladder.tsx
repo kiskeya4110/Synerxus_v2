@@ -1,393 +1,87 @@
-import { useState } from "react";
 import { Link } from "wouter";
+import { BarChart3, CheckCircle2, Clock3, FileCheck2, FileText, Info, ShieldCheck, Target, Users, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
-import {
-  AssessmentCta,
-  EvidenceLadderSection,
-  SectionHeader,
-} from "@/components/marketing/marketing-sections";
 
-const ladderCards = [
-  {
-    title: "Triage",
-    body: "Identify unsupported or weakly supported claims before they appear in reports, websites, investor materials, or regulatory disclosures.",
-  },
-  {
-    title: "Prioritize",
-    body: "Focus evidence collection on high-visibility claims, public commitments, investor-facing metrics, and regulatory disclosure items.",
-  },
-  {
-    title: "Confirm",
-    body: "Route claims to the right NGO, supplier, contractor, implementation partner, or field operator for external review.",
-  },
-  {
-    title: "Prepare",
-    body: "Map confirmed Evidence Objects to frameworks, SDGs, internal scorecards, and stakeholder reporting categories.",
-  },
-  {
-    title: "Support Review",
-    body: "Preserve chain of custody, reviewer identity, timestamps, version history, negative impact screening, and disclosure-readiness status.",
-  },
+const levels = [
+  [5, "Review-Ready Evidence Packet", "Claim, evidence, confirmation, source support, mapping, exceptions, and limitations are packaged for review.", "Lowest risk", "text-green-700"],
+  [4, "Mapped With Context", "Claim is mapped to SDG, framework, or internal category with documented limitations.", "Lower risk", "text-green-700"],
+  [3, "Partner-Confirmed", "Authorized partner or reviewer confirmed the record.", "Lower risk", "text-green-700"],
+  [2, "Source Evidence Attached", "Claim has attached or referenced source material.", "Moderate risk", "text-[#c88914]"],
+  [1, "Internal Assertion", "Claim is internally stated but not externally confirmed.", "High risk", "text-orange-700"],
+  [0, "Unsupported Claim", "Claim has no reviewable support attached.", "Highest risk", "text-red-700"],
 ];
 
-const actionMatrix = [
-  {
-    level: "Level 5",
-    status: "Disclosure-Ready Evidence Object",
-    definition:
-      "Source evidence, partner confirmation, framework mapping, chain of custody, version history, negative impact screening, and disclosure-readiness review are complete.",
-    risk: "Lowest",
-    riskClass: "border-green-200 bg-green-50 text-green-800",
-    rowClass: "bg-green-50/40",
-    action:
-      "Use in management reports, investor updates, board materials, stakeholder disclosures, or assurance preparation with applicable boundary language.",
-  },
-  {
-    level: "Level 4",
-    status: "Framework-Mapped",
-    definition:
-      "Partner-confirmed evidence has been cross-walked to frameworks, SDGs, disclosure categories, scorecards, or stakeholder reporting needs. It shows alignment support, not final readiness.",
-    risk: "Low",
-    riskClass: "border-[#D4980C]/30 bg-[#D4980C]/10 text-[#7a5200]",
-    rowClass: "bg-[#D4980C]/10 ring-1 ring-inset ring-[#D4980C]/35",
-    action:
-      "Before external use, complete chain-of-custody review, negative impact screening, version review, owner approval, and disclosure-readiness signoff.",
-    note: "Level 4 is the bridge between partner confirmation and disclosure readiness.",
-  },
-  {
-    level: "Level 3",
-    status: "Partner-Confirmed",
-    definition:
-      "An authorized partner, NGO, supplier, implementation team, or reviewer has confirmed that the evidence supports the claim.",
-    risk: "Lower",
-    riskClass: "border-emerald-200 bg-emerald-50 text-emerald-800",
-    rowClass: "",
-    action:
-      "Map the Evidence Object to relevant frameworks, SDGs, scorecards, and reporting categories.",
-  },
-  {
-    level: "Level 2",
-    status: "Source Evidence Attached",
-    definition:
-      "The claim has source files, records, certificates, exports, photos, or project documentation attached, but no external confirmation yet.",
-    risk: "Moderate",
-    riskClass: "border-amber-200 bg-amber-50 text-amber-800",
-    rowClass: "",
-    action:
-      "Invite an external partner to confirm whether the evidence supports the claim.",
-  },
-  {
-    level: "Level 1",
-    status: "Internal Assertion",
-    definition:
-      "The claim is documented internally but depends primarily on internal narrative, self-reported activity, or incomplete support.",
-    risk: "High",
-    riskClass: "border-orange-200 bg-orange-50 text-orange-800",
-    rowClass: "",
-    action:
-      "Add source files, methodology notes, operational records, photos, reports, or supporting documentation.",
-  },
-  {
-    level: "Level 0",
-    status: "Unsupported Claim",
-    definition:
-      "A sustainability claim exists, but no source evidence has been attached or structured into an Evidence Object.",
-    risk: "Critical",
-    riskClass: "border-red-200 bg-red-50 text-red-800",
-    rowClass: "bg-red-50/50",
-    action: "Do not publish. Create an Evidence Object and attach source documentation.",
-    critical: true,
-  },
+const benefits = [
+  ["Stronger Defensibility", "Build evidence and context that can stand up to scrutiny.", ShieldCheck],
+  ["Lower Risk Over Time", "Move up the ladder to reduce claim risk and increase confidence.", BarChart3],
+  ["Clearer Documentation", "Organized records speed up reviews.", FileText],
+  ["Stakeholder Alignment", "Create a common language for evidence maturity.", Users],
+  ["Review Readiness", "Be prepared when reviews, RFPs, or inquiries arrive.", Clock3],
 ];
-
-const ladderEvidenceImage = {
-  src: "/optimized/hero-data-presentation.webp",
-  alt: "Professional review workspace with evidence records and reporting dashboards",
-  caption: "Evidence review context",
-  overlays: [
-    ["Claim status", "Source support tracked"],
-    ["Review path", "Confirm, map, preserve"],
-    ["Boundary", "Readiness score, not assurance"],
-  ],
-};
 
 export default function EvidenceLadderPage() {
-  const [activeCard, setActiveCard] = useState(0);
-
   return (
     <MarketingLayout>
-      <section className="py-7 md:py-10">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center">
+      <section className="bg-white py-10 md:py-14">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.48fr] lg:items-start">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#8A5A00]">
-              Evidence Ladder
-            </p>
-            <h1 className="mt-4 text-4xl font-extrabold tracking-tight text-[#0A1F44] md:text-5xl">
-              A maturity model for ESG claim defensibility.
-            </h1>
-            <p className="mt-5 text-lg leading-relaxed text-slate-600">
-              The Evidence Ladder helps organizations evaluate the strength of
-              each ESG claim based on evidence quality, partner confirmation,
-              chain of custody, framework mapping, and disclosure readiness.
-            </p>
-            <Button asChild className="mt-7 bg-[#0A1F44] text-[#D4980C] hover:bg-[#102b5a]">
-              <Link href="/request-assessment">Request Assessment</Link>
-            </Button>
+            <h1 className="text-5xl font-extrabold leading-tight text-[#0A1F44] md:text-6xl">The Evidence Ladder</h1>
+            <p className="mt-5 max-w-2xl text-2xl leading-relaxed text-slate-600">A maturity model for claim defensibility. Move from unsupported to review-ready.</p>
+            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-[#0A1F44]">The Evidence Ladder helps you strengthen claims over time by building better evidence, context, and confirmations so you are ready when it matters.</p>
+            <Button asChild className="mt-7 bg-[#c88914] text-white hover:bg-[#a9720f]"><Link href="/request-assessment">Request Assessment</Link></Button>
           </div>
-
-          <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-[#0A1F44]/20 p-6 shadow-xl">
-            <div className="pointer-events-none absolute -bottom-8 -right-8 h-48 w-48 rounded-full bg-[#0A1F44]/10 blur-3xl" />
-
-            <div className="relative flex justify-center">
-              <div className="flex items-center justify-center rounded-2xl bg-[#0A1F44]/8 p-4 ring-1 ring-[#0A1F44]/10">
-                <img src="/synerxus-esg-logo.png" alt="Synerxus" className="h-16 w-auto" />
-              </div>
-            </div>
-
-            <p className="relative mb-4 mt-5 text-center text-[11px] font-bold uppercase tracking-[0.18em] text-[#0A1F44]/60">
-              Evidence Ladder · 6 Levels
-            </p>
-
-            <div className="relative flex items-end justify-between gap-2" style={{ height: "112px" }}>
-              {[
-                { n: 0, color: "#dc2626", h: 19 },
-                { n: 1, color: "#ea580c", h: 38 },
-                { n: 2, color: "#d97706", h: 56 },
-                { n: 3, color: "#059669", h: 75 },
-                { n: 4, color: "#D4980C", h: 94 },
-                { n: 5, color: "#16a34a", h: 112 },
-              ].map(({ n, color, h }) => (
-                <div key={n} className="flex flex-1 flex-col items-center">
-                  <div
-                    style={{
-                      height: `${h}px`,
-                      backgroundColor: color,
-                      borderRadius: "4px 4px 2px 2px",
-                      opacity: 0.82,
-                      width: "100%",
-                    }}
-                  />
-                </div>
-              ))}
-            </div>
-
-            <div className="relative mt-2 flex justify-between">
-              {[0, 1, 2, 3, 4, 5].map((n) => (
-                <div key={n} className="flex-1 text-center">
-                  <span className="text-xs font-extrabold text-[#0A1F44]/60">{n}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="relative mt-0.5 grid grid-cols-6 text-center">
-              {["Unsupported", "Asserted", "Source", "Confirmed", "Mapped", "Ready"].map((label) => (
-                <p key={label} className="text-[8px] font-semibold leading-tight text-[#0A1F44]/35">
-                  {label}
-                </p>
-              ))}
-            </div>
-
-            <div className="relative mt-4 rounded-xl bg-[#0A1F44]/5 p-3 ring-1 ring-[#0A1F44]/10">
-              <div className="h-2 w-full rounded-full bg-gradient-to-r from-[#dc2626] via-[#d97706] to-[#16a34a]" />
-              <div className="mt-2 flex justify-between">
-                <span className="text-[10px] font-bold text-red-600">Critical</span>
-                <span className="text-[10px] font-bold text-green-700">Disclosure-Ready</span>
-              </div>
-            </div>
-          </div>
+          <aside className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#061A36] text-white"><Info className="h-5 w-5" /></span><div><h2 className="font-extrabold text-[#0A1F44]">What this page shows</h2><p className="mt-2 text-sm leading-relaxed text-slate-700">A maturity model for claim-defensibility. It illustrates how evidence, context, and confirmations reduce risk as you move up the ladder.</p></div></div>
+            <div className="my-6 border-t border-slate-200" />
+            <div className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#c88914] text-white"><XCircle className="h-5 w-5" /></span><div><h2 className="font-extrabold text-[#0A1F44]">What this page does not show</h2><p className="mt-2 text-sm leading-relaxed text-slate-700">It does not represent formal assurance, regulatory compliance, proven impact, or a guarantee of acceptance.</p></div></div>
+          </aside>
         </div>
       </section>
 
-      <section className="bg-white pb-7 md:pb-10">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <figure className="relative overflow-hidden rounded-3xl border border-slate-200 bg-slate-100 shadow-sm">
-            <img
-              src={ladderEvidenceImage.src}
-              alt={ladderEvidenceImage.alt}
-              className="h-72 w-full object-cover md:h-80 lg:h-[360px]"
-              loading="lazy"
-              decoding="async"
-            />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#061A36]/78 via-[#061A36]/10 to-transparent" aria-hidden="true" />
-            <figcaption className="absolute left-4 top-4 rounded-full border border-white/20 bg-white/90 px-3 py-1 text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#0A1F44] md:left-6 md:top-6">
-              {ladderEvidenceImage.caption}
-            </figcaption>
-            <div className="absolute inset-x-4 bottom-4 grid gap-2 sm:grid-cols-3 md:inset-x-6 md:bottom-6">
-              {ladderEvidenceImage.overlays.map(([label, value]) => (
-                <div key={label} className="rounded-lg border border-white/20 bg-white/90 px-3 py-2 backdrop-blur">
-                  <p className="text-[9px] font-bold uppercase tracking-wider text-slate-500">{label}</p>
-                  <p className="mt-0.5 text-[11px] font-extrabold leading-tight text-[#0A1F44]">{value}</p>
-                </div>
-              ))}
-            </div>
-          </figure>
-        </div>
-      </section>
-
-      <EvidenceLadderSection />
-
-      <section className="bg-white py-7 md:py-10">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <SectionHeader
-            eyebrow="How teams use the Evidence Ladder"
-            title="From claim review to disclosure readiness."
-            body="The Evidence Ladder gives teams a practical way to decide what should happen next with each ESG claim. Instead of treating every sustainability statement the same, teams can separate claims that are ready for disclosure from claims that still need evidence, confirmation, framework mapping, or risk review."
-          />
-
-          <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
-            {ladderCards.map((item, index) => (
-              <button
-                key={item.title}
-                type="button"
-                onMouseEnter={() => setActiveCard(index)}
-                onFocus={() => setActiveCard(index)}
-                onClick={() => setActiveCard(index)}
-                aria-pressed={activeCard === index}
-                className={`rounded-2xl border p-4 text-left transition-all hover:-translate-y-1 hover:shadow-xl sm:p-5 ${
-                  activeCard === index
-                    ? "border-[#0A1F44] bg-[#0A1F44]"
-                    : "border-slate-200 bg-white shadow-sm"
-                }`}
-              >
-                <span
-                  className={`flex h-9 w-9 items-center justify-center rounded-lg text-sm font-extrabold ${
-                    activeCard === index
-                      ? "bg-white/10 text-[#D4980C]"
-                      : "bg-[#D4980C]/15 text-[#0A1F44]"
-                  }`}
-                >
-                  {index + 1}
-                </span>
-                <h3
-                  className={`mt-4 font-extrabold ${
-                    activeCard === index ? "text-[#D4980C]" : "text-[#0A1F44]"
-                  }`}
-                >
-                  {item.title}
-                </h3>
-                <p
-                  className={`mt-2 text-sm leading-relaxed ${
-                    activeCard === index ? "text-[#D4980C]" : "text-slate-600"
-                  }`}
-                >
-                  {item.body}
-                </p>
-              </button>
+      <section className="bg-white pb-10">
+        <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[0.33fr_0.67fr] lg:items-center">
+          <div className="relative hidden min-h-[560px] lg:block">
+            <div className="absolute left-6 top-0 text-center text-sm font-extrabold uppercase text-[#c88914]">Higher maturity<br />Lower risk</div>
+            <div className="absolute bottom-0 left-7 text-center text-sm font-extrabold uppercase text-[#c88914]">Lower maturity<br />Higher risk</div>
+            <div className="absolute left-24 top-16 h-[460px] w-48 rounded-b-lg border-x-[18px] border-b-[18px] border-[#0A1F44]" />
+            {[5,4,3,2,1,0].map((n, index) => <div key={n} className="absolute left-[138px] flex h-12 w-12 items-center justify-center rounded-full bg-[#0A1F44] text-2xl font-extrabold text-white" style={{ top: 95 + index * 68 }}>{n}</div>)}
+          </div>
+          <div className="grid gap-3">
+            {levels.map(([n, title, meaning, risk, riskClass]) => (
+              <article key={title as string} className="grid gap-4 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:grid-cols-[80px_64px_1fr_150px] sm:items-center">
+                <div className="rounded-md bg-[#061A36] px-3 py-2 text-center text-white"><p className="text-xs font-bold uppercase">Level</p><p className="text-4xl font-extrabold">{n as number}</p></div>
+                <span className="flex h-14 w-14 items-center justify-center rounded-full bg-slate-100"><FileCheck2 className="h-7 w-7 text-[#0A1F44]" /></span>
+                <div><h2 className="text-lg font-extrabold text-[#0A1F44]">{title as string}</h2><p className="mt-1 text-sm leading-relaxed text-slate-700">{meaning as string}</p></div>
+                <p className={`text-sm font-extrabold uppercase ${riskClass as string}`}>● {risk as string}</p>
+              </article>
             ))}
           </div>
+        </div>
+      </section>
 
-          <div className="mt-14">
-            <SectionHeader
-              eyebrow="Evidence Ladder Action Matrix"
-              title="See what each claim level means and what must happen next."
-              body="Level 4 is intentionally distinct from Level 5: a Level 4 claim is partner-confirmed and framework-mapped, but it still needs custody, screening, version, owner, and disclosure-readiness review before external use."
-            />
-            <div className="grid gap-3 md:hidden">
-              {actionMatrix.map((item) => (
-                <div
-                  key={item.level}
-                  className={`rounded-2xl border border-slate-200 bg-white p-4 shadow-sm ${item.rowClass}`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-extrabold text-[#0A1F44]">{item.level}</p>
-                    <span className={`rounded-full border px-2.5 py-1 text-xs font-bold ${item.riskClass}`}>
-                      {item.risk}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm font-semibold text-slate-700">{item.status}</p>
-                  {item.note && <p className="mt-1 text-xs font-bold text-[#7a5200]">{item.note}</p>}
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{item.definition}</p>
-                  <div className="mt-3 border-t border-slate-100 pt-3">
-                    <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400">Next action</p>
-                    <p className={`mt-1 text-sm leading-relaxed ${item.critical ? "font-bold text-red-800" : "text-slate-600"}`}>
-                      {item.action}
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="hidden overflow-x-auto rounded-xl border border-slate-200 shadow-sm md:block">
-              <table className="w-full min-w-[980px] text-left text-sm">
-                <thead className="bg-[#0A1F44] text-[#D4980C]">
-                  <tr>
-                    <th className="px-4 py-3 font-bold">Level</th>
-                    <th className="px-4 py-3 font-bold">Claim status</th>
-                    <th className="px-4 py-3 font-bold">Definition</th>
-                    <th className="px-4 py-3 font-bold">Disclosure risk</th>
-                    <th className="px-4 py-3 font-bold">Required next action</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {actionMatrix.map((item) => (
-                    <tr
-                      key={item.level}
-                      className={`border-t border-slate-200 ${item.rowClass}`}
-                    >
-                      <td className="whitespace-nowrap px-4 py-3 font-extrabold text-[#0A1F44]">
-                        {item.level}
-                      </td>
-                      <td className="px-4 py-3 font-semibold text-slate-700">
-                        <div>{item.status}</div>
-                        {item.note && (
-                          <div className="mt-1 text-xs font-bold text-[#7a5200]">
-                            {item.note}
-                          </div>
-                        )}
-                      </td>
-                      <td className="max-w-md px-4 py-3 leading-relaxed text-slate-600">
-                        {item.definition}
-                      </td>
-                      <td className="px-4 py-3">
-                        <span
-                          className={`rounded-full border px-2.5 py-1 text-xs font-bold ${item.riskClass}`}
-                        >
-                          {item.risk}
-                        </span>
-                      </td>
-                      <td
-                        className={`px-4 py-3 leading-relaxed ${
-                          item.critical ? "font-bold text-red-800" : "text-slate-600"
-                        }`}
-                      >
-                        {item.action}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="mt-5 rounded-2xl border border-[#D4980C]/30 bg-[#D4980C]/10 p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#7a5200]">
-                Level 4 clarity
-              </p>
-              <h3 className="mt-2 text-lg font-extrabold text-[#0A1F44]">
-                Level 4 means framework-mapped, not disclosure-ready.
-              </h3>
-              <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
-                  <p className="text-sm font-bold text-[#0A1F44]">Level 4 includes</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700">
-                    <li>Source evidence attached</li>
-                    <li>Authorized partner confirmation completed</li>
-                    <li>Framework, SDG, disclosure, or scorecard mapping completed</li>
-                  </ul>
-                </div>
-                <div className="rounded-xl border border-white/70 bg-white/70 p-4">
-                  <p className="text-sm font-bold text-[#0A1F44]">Before Level 5</p>
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm leading-relaxed text-slate-700">
-                    <li>Chain-of-custody and version history reviewed</li>
-                    <li>Negative impact screening completed</li>
-                    <li>Disclosure owner signs off on readiness and boundary language</li>
-                  </ul>
-                </div>
+      <section className="bg-white pb-10">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm md:grid-cols-5">
+            {benefits.map(([title, body, Icon]) => (
+              <div key={title as string} className="border-b border-slate-200 p-6 text-center md:border-b-0 md:border-r md:last:border-r-0">
+                <Icon className="mx-auto h-10 w-10 text-[#0A1F44]" />
+                <h3 className="mt-3 text-sm font-extrabold text-[#0A1F44]">{title as string}</h3>
+                <p className="mt-2 text-xs leading-relaxed text-slate-600">{body as string}</p>
               </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
 
-      <AssessmentCta />
+      <section className="bg-white pb-12">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="flex gap-5 rounded-lg bg-[#f8efe0] p-8">
+            <ShieldCheck className="h-16 w-16 shrink-0 text-[#0A1F44]" />
+            <div><h2 className="text-xl font-extrabold text-[#0A1F44]">The Evidence Ladder shows claim-defensibility maturity.</h2><p className="mt-2 text-lg text-[#0A1F44]">It does not represent formal assurance, regulatory compliance, or proven impact.</p></div>
+          </div>
+        </div>
+      </section>
     </MarketingLayout>
   );
 }

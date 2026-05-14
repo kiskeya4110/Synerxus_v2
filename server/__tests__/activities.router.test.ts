@@ -40,6 +40,7 @@ const mockStorage = {
   updateAIUSetting: vi.fn(),
   // For permission checking in approval routes
   listOrganizationMembers: vi.fn(),
+  getOrganizationMemberByUserAndOrg: vi.fn(),
   markNotificationsReadByEntity: vi.fn().mockResolvedValue(undefined),
   createVerificationAuditLog: vi.fn().mockResolvedValue({ id: 1 }),
   listVolunteerEmployerLinks: vi.fn().mockResolvedValue([]),
@@ -110,6 +111,9 @@ describe('Activities Router', () => {
     mockStorage.listOrganizationMembers.mockResolvedValue([
       { userId: 200, organizationId: 10, canApproveHours: true, canApproveApplications: true }
     ]);
+    mockStorage.getOrganizationMemberByUserAndOrg.mockResolvedValue(
+      { userId: 100, organizationId: 10, role: "member" },
+    );
     // Default mock: project belongs to user's organization
     mockStorage.getProject.mockResolvedValue({ id: 50, organizationId: 10, sdgGoals: [] });
   });

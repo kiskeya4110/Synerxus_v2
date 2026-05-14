@@ -217,7 +217,7 @@
 │                                                                             │
 │   📊 KEY DASHBOARD METRICS                                                  │
 │   ─────────────────────────                                                 │
-│   • AIUs Generated — Verified impact units                                  │
+│   • AIUs Generated — Partner-confirmed activity units                       │
 │   • Budget Deployed — % of CSR budget used                                  │
 │   • Employee Participation — % of workforce engaged                         │
 │   • Partner Performance — Projects on track                                 │
@@ -226,7 +226,7 @@
 │   💰 FUNDING MODEL CHEAT SHEET                                              │
 │   ─────────────────────────────                                             │
 │   BOUNTY: You set goal → Fund escrow → Release on milestones               │
-│   RETROACTIVE: Partner delivers → Submits verified impact → You pay        │
+│   RETROACTIVE: Partner delivers → Submits confirmed evidence → You pay     │
 │                                                                             │
 │   ⚡ TRUST SCORE GUIDE                                                       │
 │   ─────────────────────                                                     │

@@ -7,7 +7,7 @@ const ROLE_OPTIONS = [
   {
     id: "volunteer",
     title: "Volunteer",
-    description: "Log your impact and contribute to verified, audit-ready outcomes.",
+    description: "Log your activity and contribute to partner-confirmed evidence records.",
     icon: Heart,
     href: "/signup/volunteer",
     free: true,
@@ -40,11 +40,11 @@ const ROLE_OPTIONS = [
     href: "/signup/corporate",
     free: false,
     freeLabel: null,
-    accent: "#D4980C",
+    accent: "#ffcc33",
     accentBg: "bg-[#FFFBF0]",
-    accentBorder: "border-[#D4980C]/40 hover:border-[#D4980C]/80",
-    accentIcon: "bg-[#D4980C]/15 text-[#D4980C]",
-    accentText: "text-[#D4980C]",
+    accentBorder: "border-[#ffcc33]/40 hover:border-[#ffcc33]/80",
+    accentIcon: "bg-[#ffcc33]/15 text-[#ffcc33]",
+    accentText: "text-[#ffcc33]",
   },
 ];
 
@@ -72,14 +72,14 @@ export default function SignupLanding() {
           </a>
           <h1 className="text-2xl font-extrabold text-[#0A1F44]">Join the Verification Network</h1>
           <p className="text-slate-500 mt-1.5 text-sm">
-            Choose how you contribute to verified impact evidence
+            Choose how you contribute to partner-confirmed evidence records
           </p>
         </div>
 
         {/* Plan context banner — shown when coming from pricing CTAs */}
         {selectedPlan && PLAN_LABELS[selectedPlan] && (
           <div className="mb-5 flex items-center gap-3 bg-[#0A1F44] rounded-2xl px-5 py-3.5">
-            <ShieldCheck className="h-4 w-4 text-[#D4980C] flex-shrink-0" />
+            <ShieldCheck className="h-4 w-4 text-[#ffcc33] flex-shrink-0" />
             <div>
               <p className="text-white text-xs font-semibold">You selected: {PLAN_LABELS[selectedPlan]}</p>
               <p className="text-blue-200 text-[11px] mt-0.5">Complete your corporate account below to continue.</p>
@@ -115,7 +115,7 @@ export default function SignupLanding() {
                       </span>
                     )}
                     {!role.free && selectedPlan && (
-                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#D4980C]/15 text-[#D4980C]`}>
+                      <span className={`inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-[#ffcc33]/15 text-[#ffcc33]`}>
                         {PLAN_LABELS[selectedPlan]?.split(" — ")[0]}
                       </span>
                     )}
@@ -137,7 +137,7 @@ export default function SignupLanding() {
         {/* Login link */}
         <p className="text-center text-sm text-slate-500 mt-4">
           Already have an account?{" "}
-          <a href="/login" className="text-[#0A1F44] font-semibold hover:text-[#D4980C] transition-colors">
+          <a href="/login" className="text-[#0A1F44] font-semibold hover:text-[#ffcc33] transition-colors">
             Log in
           </a>
         </p>

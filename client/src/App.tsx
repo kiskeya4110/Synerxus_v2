@@ -1,6 +1,5 @@
 import { Route, Router, Switch, Redirect } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
-import Platform from "@/pages/platform";
 
 // ============================================================================
 // SYNERXUS MVP - VERIFIED IMPACT DATA PIPELINE
@@ -11,6 +10,7 @@ import Platform from "@/pages/platform";
 
 // Core pages - lazy loaded
 const Landing = lazy(() => import("@/pages/marketing-home"));
+const Platform = lazy(() => import("@/pages/platform"));
 const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
 const UseCases = lazy(() => import("@/pages/use-cases"));
 const Resources = lazy(() => import("@/pages/insights"));
@@ -94,8 +94,8 @@ export default function App() {
     <Suspense fallback={<PageLoader />}>
       <Router>
         <Switch>
-          {/* Public preview root */}
-          <Route path="/" component={Platform} />
+          {/* Public landing root */}
+          <Route path="/" component={Landing} />
 
           {/* Auth */}
           <Route path="/login" component={LoginAuth} />

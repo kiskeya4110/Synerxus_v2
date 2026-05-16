@@ -71,7 +71,7 @@ export default function OrganizationPWALayout({
         />
 
         {/* Spacer for sticky header - matches header height (pb-3 = 12px + h-10 logo = 40px + safe-area + pt = 12px) */}
-        <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 64px)' }} />
+        <div className="flex-shrink-0" style={{ height: 'calc(env(safe-area-inset-top, 0px) + 58px)' }} />
 
         {/* Main Content - scrollable area between header and nav */}
         <main

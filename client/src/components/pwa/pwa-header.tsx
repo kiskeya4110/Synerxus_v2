@@ -366,24 +366,24 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
         {/* Safe area padding for notched devices */}
         <div className="pt-[max(0.5rem,env(safe-area-inset-top))]" />
 
-        <div className="flex items-center justify-between px-4 py-3.5 pwa-compact-x">
+        <div className="flex items-center justify-between px-4 py-3 pwa-compact-x">
           {/* Logo — 40% */}
-          <div className="flex-shrink min-w-0" style={{ width: '40%' }}>
-            <Logo size="xs" variant="full" theme="light" />
+          <div className="flex-shrink min-w-0" style={{ width: '36%' }}>
+            <Logo size="xs" variant="icon" theme="light" />
           </div>
           {/* Type label — 30% */}
-          <div className="flex-shrink min-w-0 flex justify-center" style={{ width: '30%' }}>
-            <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 uppercase tracking-wide truncate">Impact Wallet</span>
+          <div className="flex-shrink min-w-0 flex justify-center" style={{ width: '28%' }}>
+            <span className="text-[9px] sm:text-[10px] font-semibold text-stone-400 uppercase tracking-wide truncate">Impact Wallet</span>
           </div>
           {/* Actions — 20% */}
-          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '26%' }}>
+          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '22%' }}>
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95 sm:w-10 sm:h-10"
               style={{ WebkitTapHighlightColor: 'transparent' }}
             >
-              <Bell className="w-4 h-4 text-stone-500 pointer-events-none" />
+              <Bell className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-500 pointer-events-none" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -393,12 +393,12 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setMenuOpen(true)}
-              className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95 sm:w-10 sm:h-10"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               data-testid="button-pwa-hamburger-menu"
               aria-label="Open navigation menu"
             >
-              <Menu className="w-4 h-4 text-stone-600 pointer-events-none" />
+              <Menu className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-stone-600 pointer-events-none" />
             </button>
           </div>
         </div>

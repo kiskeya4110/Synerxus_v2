@@ -13,6 +13,7 @@ const Landing = lazy(() => import("@/pages/marketing-home"));
 const Platform = lazy(() => import("@/pages/platform"));
 const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
 const UseCases = lazy(() => import("@/pages/use-cases"));
+const UseCaseGrantFunder = lazy(() => import("@/pages/use-case-grant-funder"));
 const Resources = lazy(() => import("@/pages/insights"));
 const Contact = lazy(() => import("@/pages/contact"));
 const LoginDemo = lazy(() => import("@/pages/login")); // Legacy demo login for reference
@@ -105,6 +106,7 @@ export default function App() {
           <Route path="/platform" component={Platform} />
           <Route path="/evidence-ladder" component={EvidenceLadder} />
           <Route path="/use-cases" component={UseCases} />
+          <Route path="/use-cases/grant-funder-reporting" component={UseCaseGrantFunder} />
           <Route path="/resources" component={Resources} />
           <Route path="/request-assessment" component={Contact} />
           <Route path="/contact">{() => <Redirect to="/request-assessment" />}</Route>

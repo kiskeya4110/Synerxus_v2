@@ -168,26 +168,26 @@ export default function CSRPWAHeader({
           borderColor: "rgba(16, 185, 129, 0.2)",
         }}
       >
-        <div className="flex items-center justify-between px-5 py-3">
+        <div className="flex items-center justify-between px-4 py-2.5 sm:px-5 sm:py-3">
           {/* Logo — 40% */}
-          <div className="flex-shrink-0" style={{ width: '40%' }}>
-            <Logo size="xs" variant="full" theme="light" />
+          <div className="flex-shrink-0" style={{ width: '36%' }}>
+            <Logo size="xs" variant="icon" theme="light" />
           </div>
           {/* Type label — 30% */}
-          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
-            <span className="text-[11px] font-semibold text-emerald-600/70 uppercase tracking-widest">ESG Console</span>
+          <div className="flex-shrink-0 flex justify-center" style={{ width: '28%' }}>
+            <span className="text-[10px] font-semibold text-emerald-600/70 uppercase tracking-widest sm:text-[11px]">ESG Console</span>
           </div>
           {/* Actions — 20% */}
-          <div className="flex-shrink-0 flex justify-end items-center gap-1.5" style={{ width: '20%' }}>
+          <div className="flex-shrink-0 flex justify-end items-center gap-1.5" style={{ width: '22%' }}>
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setShowMenu(true)}
-              className="w-10 h-10 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95"
+              className="w-9 h-9 rounded-lg bg-white/80 backdrop-blur flex items-center justify-center shadow-sm border border-emerald-100 touch-manipulation cursor-pointer active:scale-95 sm:w-10 sm:h-10"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Open navigation menu"
               data-testid="button-csr-pwa-hamburger-menu"
             >
-              <Menu className="w-5 h-5 text-emerald-600 pointer-events-none" />
+              <Menu className="w-4 h-4 text-emerald-600 pointer-events-none sm:w-5 sm:h-5" />
             </button>
           </div>
         </div>
@@ -229,7 +229,7 @@ export default function CSRPWAHeader({
             </div>
 
             {/* Menu Items */}
-            <div className="p-3 space-y-0.5 overflow-y-auto max-h-[calc(100vh-180px)]">
+            <div className="p-3 space-y-0.5 overflow-y-auto max-h-[calc(100vh-168px)]">
               {menuItems.map((item) => (
                 <button
                   key={item.path}

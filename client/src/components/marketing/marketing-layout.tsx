@@ -17,7 +17,9 @@ const ASSURANCE_FOOTER_NOTE =
 
 const footerLinks = [
   ["Platform", "/platform"],
+  ["Evidence Ladder", "/evidence-ladder"],
   ["Use Cases", "/use-cases"],
+  ["Resources", "/resources"],
   ["Privacy", "/privacy"],
   ["Terms", "/terms"],
 ] as const;
@@ -64,14 +66,14 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-white text-slate-900">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/95 backdrop-blur">
-        <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 md:px-8">
+        <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-8 md:py-4">
           <Logo size="sm" className="shrink-0" />
 
           <nav className="hidden items-center gap-7 lg:flex">
             {navItems.map((item) => {
               const active = location === item.href;
               return (
-                <a
+                <Link
                   key={item.href}
                   href={item.href}
                   onClick={(event) => handleLandingSectionClick(event, item.href)}
@@ -82,7 +84,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   }`}
                 >
                   {item.label}
-                </a>
+                </Link>
               );
             })}
           </nav>
@@ -155,11 +157,11 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       <main>{children}</main>
 
       <footer className="border-t border-[#0A1F44]/15 bg-[#061A36] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-4 md:px-8 md:py-5">
+        <div className="mx-auto max-w-7xl px-4 py-3 md:px-8 md:py-5">
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
             <div className="max-w-md">
-              <Logo size="sm" clickable={false} />
-              <p className="mt-2 text-xs leading-snug text-slate-600">
+              <Logo size="sm" clickable={false} theme="dark" />
+              <p className="mt-2 text-xs leading-snug text-white/60">
                 Structured evidence records for ESG reporting and assurance preparation.
               </p>
             </div>
@@ -190,7 +192,7 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                     rel="noopener noreferrer"
                     aria-label={label}
                     title={label}
-                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/15 bg-white/10 text-white transition-colors hover:bg-white/20"
+                    className="inline-flex h-7 w-7 items-center justify-center rounded-md border border-white/30 bg-white/15 text-white transition-colors hover:bg-white/25"
                   >
                     <Icon className="h-3.5 w-3.5" />
                   </a>

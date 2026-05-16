@@ -67,7 +67,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
   return (
     <>
       {/* Bottom Navigation Bar */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-2 pb-[max(0.5rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
+      <nav className="fixed bottom-0 left-0 right-0 bg-slate-100 border-t border-slate-200 px-1 pt-1.5 pb-[max(0.375rem,env(safe-area-inset-bottom))] z-40 shadow-lg">
         <div className="grid grid-cols-4 max-w-md mx-auto">
           {navItems.map((item) => {
             const isActive = currentTab === item.id;
@@ -86,7 +86,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                       navigate(item.path);
                     }
                   }
-                }}
+              }}
                 className={`flex flex-col items-center justify-center py-1 mx-auto w-full rounded-xl transition-all touch-manipulation cursor-pointer active:scale-95 ${
                   isActive
                     ? 'text-sky-700 bg-sky-200'
@@ -95,10 +95,10 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                 style={{ WebkitTapHighlightColor: 'transparent' }}
                 data-testid={`nav-${item.id}`}
               >
-                <div className="w-8 h-8 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
+                <div className="w-7 h-7 rounded-lg bg-stone-50 flex items-center justify-center mb-0.5 pointer-events-none">
                   <item.icon className={`w-4 h-4 pointer-events-none ${isActive ? 'stroke-[2.5]' : ''}`} />
                 </div>
-                <span className="text-[9px] font-medium pointer-events-none">{item.label}</span>
+                <span className="text-[8px] font-medium pointer-events-none leading-none">{item.label}</span>
               </button>
             );
           })}
@@ -117,13 +117,13 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
           {/* Menu Panel */}
           <div className="relative w-full max-w-md bg-white rounded-t-3xl shadow-2xl animate-in slide-in-from-bottom duration-300 pb-[env(safe-area-inset-bottom)]">
             {/* Handle */}
-            <div className="flex justify-center pt-3 pb-2">
+            <div className="flex justify-center pt-2.5 pb-1.5">
               <div className="w-10 h-1 bg-slate-300 rounded-full" />
             </div>
 
             {/* Header */}
-            <div className="flex items-center justify-between px-5 pb-3 border-b border-slate-100">
-              <h3 className="text-lg font-semibold text-slate-800">More Options</h3>
+            <div className="flex items-center justify-between px-4 pb-2.5 border-b border-slate-100">
+              <h3 className="text-base font-semibold text-slate-800">More Options</h3>
               <button
                 onClick={() => setShowMore(false)}
                 className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center hover:bg-slate-200 transition-colors touch-manipulation cursor-pointer active:scale-95"
@@ -134,7 +134,7 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
             </div>
 
             {/* Menu Items */}
-            <div className="grid grid-cols-3 gap-2 p-4">
+            <div className="grid grid-cols-3 gap-2 p-3">
               {moreMenuItems.map((item, index) => (
                 <button
                   key={index}
@@ -148,13 +148,13 @@ export default function VolunteerPWANav({ userId: propUserId, activeTab }: Volun
                       navigate(item.path);
                     }
                   }}
-                  className="flex flex-col items-center gap-2 p-4 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 bg-slate-50 hover:bg-slate-100"
+                  className="flex flex-col items-center gap-2 p-3 rounded-2xl transition-colors touch-manipulation cursor-pointer active:scale-95 bg-slate-50 hover:bg-slate-100"
                   style={{ WebkitTapHighlightColor: 'transparent' }}
                 >
-                  <div className="w-12 h-12 rounded-xl shadow-sm flex items-center justify-center pointer-events-none bg-white">
-                    <item.icon className="w-6 h-6 pointer-events-none text-slate-600" />
+                  <div className="w-11 h-11 rounded-xl shadow-sm flex items-center justify-center pointer-events-none bg-white">
+                    <item.icon className="w-5 h-5 pointer-events-none text-slate-600" />
                   </div>
-                  <span className="text-xs font-medium text-center pointer-events-none text-slate-700">{item.label}</span>
+                  <span className="text-[11px] font-medium text-center pointer-events-none text-slate-700 leading-tight">{item.label}</span>
                 </button>
               ))}
             </div>

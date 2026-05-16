@@ -180,6 +180,7 @@ section[id] {
     -moz-osx-font-smoothing: grayscale;
     min-height: 100vh;
     min-height: 100dvh;
+    overflow-x: hidden;
   }
 
   /* Typography defaults */
@@ -1074,6 +1075,39 @@ input[type="radio"] {
   .pwa-bottom-nav span {
     font-size: 0.5rem !important;
     line-height: 0.75rem !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .card {
+    padding: 16px;
+    border-radius: 12px;
+  }
+
+  .btn {
+    min-height: 44px;
+    padding: 10px 16px;
+  }
+
+  .modal-content {
+    max-width: calc(100vw - 1rem);
+    max-height: calc(100vh - 1rem);
+    padding: 16px;
+    border-radius: 14px;
+  }
+
+  .pwa-compact-x {
+    padding-left: 1rem !important;
+    padding-right: 1rem !important;
+  }
+
+  .pwa-bottom-nav button {
+    min-height: 44px !important;
+  }
+
+  .pwa-bottom-nav span {
+    font-size: 0.55rem !important;
+    line-height: 0.8rem !important;
   }
 }
 

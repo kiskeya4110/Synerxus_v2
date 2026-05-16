@@ -60,6 +60,10 @@ export default function Logo({
     }
   };
 
+  const navyColor = theme === 'dark' ? '#e2e8f0' : '#0A2463';
+  const showImage = variant !== "wordmark";
+  const showWordmark = variant !== "icon";
+
   const wordmark = (
     <div style={{
       display: 'flex',
@@ -76,7 +80,7 @@ export default function Logo({
           lineHeight: 1,
         }}
       >
-        <span style={{ color: '#0A2463' }}>SYNER</span>
+        <span style={{ color: navyColor }}>SYNER</span>
         <span style={{ color: '#ffcc33' }}>XUS</span>
       </span>
       <span
@@ -86,14 +90,14 @@ export default function Logo({
           fontWeight: 600,
           letterSpacing: '0.01em',
           lineHeight: 1,
-          color: '#0F172A',
+          color: navyColor,
           textAlign: 'left',
           display: 'block',
           whiteSpace: 'nowrap',
         }}
       >
         <span style={{ color: '#ffcc33' }}>Evidence.</span>{' '}
-        <span style={{ color: '#0A2463' }}>Structured.</span>
+        <span style={{ color: navyColor }}>Structured.</span>
       </span>
     </div>
   );
@@ -119,17 +123,17 @@ export default function Logo({
       )}
       style={{ gap: `${Math.round(config.height * 0.25)}px` }}
     >
-      {/* Logo image */}
-      <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-        <img
-          src="/synerxus-esg-logo.png"
-          alt="Synerxus"
-          style={{ height: `${Math.round(config.height * config.imgMult)}px`, width: 'auto', display: 'block', flexShrink: 0 }}
-        />
-      </div>
+      {showImage && (
+        <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+          <img
+            src="/synerxus-esg-logo.png"
+            alt="Synerxus"
+            style={{ height: `${Math.round(config.height * config.imgMult)}px`, width: 'auto', display: 'block', flexShrink: 0 }}
+          />
+        </div>
+      )}
 
-      {/* Wordmark */}
-      <div>{wordmark}</div>
+      {showWordmark && <div>{wordmark}</div>}
     </div>
   );
 }

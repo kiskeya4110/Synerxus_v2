@@ -217,28 +217,28 @@ export default function OrganizationPWAHeader({
           boxShadow: '0 4px 20px rgba(0, 0, 0, 0.08)',
           left: '50%',
           transform: 'translateX(-50%)',
-          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 12px)'
+          paddingTop: 'calc(env(safe-area-inset-top, 0px) + 10px)'
         }}
       >
-        <div className="flex items-center justify-between px-5 pb-3">
+        <div className="flex items-center justify-between px-4 pb-2.5 sm:px-5 sm:pb-3">
           {/* Logo — 40% */}
-          <div className="flex-shrink-0" style={{ width: '40%' }}>
-            <Logo size="xs" variant="full" theme="light" />
+          <div className="flex-shrink-0" style={{ width: '36%' }}>
+            <Logo size="xs" variant="icon" theme="light" />
           </div>
           {/* Type label — 30% */}
-          <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
-            <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Verify Hub</span>
+          <div className="flex-shrink-0 flex justify-center" style={{ width: '28%' }}>
+            <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-widest sm:text-[11px]">Verify Hub</span>
           </div>
           {/* Actions — 20% */}
-          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '20%' }}>
+          <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '22%' }}>
             {/* Notifications */}
             <button
               onClick={() => setNotificationsOpen(true)}
-              className="relative w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="relative w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95 sm:w-10 sm:h-10"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Notifications"
             >
-              <Bell className="w-4 h-4 text-stone-500 pointer-events-none" />
+              <Bell className="w-3.5 h-3.5 text-stone-500 pointer-events-none sm:w-4 sm:h-4" />
               {unreadCount > 0 && (
                 <span className="absolute -top-0.5 -right-0.5 w-3.5 h-3.5 bg-red-500 rounded-full text-[9px] font-bold text-white flex items-center justify-center pointer-events-none">
                   {unreadCount > 9 ? '9+' : unreadCount}
@@ -248,12 +248,12 @@ export default function OrganizationPWAHeader({
             {/* Hamburger Menu Button */}
             <button
               onClick={() => setShowMenu(true)}
-              className="w-10 h-10 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95"
+              className="w-9 h-9 rounded-full bg-stone-100 flex items-center justify-center hover:bg-stone-200 transition-all touch-manipulation cursor-pointer active:scale-95 sm:w-10 sm:h-10"
               style={{ WebkitTapHighlightColor: 'transparent' }}
               aria-label="Open navigation menu"
               data-testid="button-org-pwa-hamburger-menu"
             >
-              <Menu className="w-4 h-4 text-stone-600 pointer-events-none" />
+              <Menu className="w-3.5 h-3.5 text-stone-600 pointer-events-none sm:w-4 sm:h-4" />
             </button>
           </div>
         </div>

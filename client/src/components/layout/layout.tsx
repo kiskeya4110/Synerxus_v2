@@ -119,7 +119,7 @@ export default function Layout({ children }: LayoutProps) {
       <div className="flex flex-1 overflow-x-hidden">
         <Sidebar />
         <main className="flex-1 flex flex-col bg-background overflow-x-hidden">
-          <div className="flex-1 safe-area-x px-3 sm:px-4 md:px-6 pt-4 md:pt-6 pb-8 overflow-x-hidden">
+          <div className="flex-1 safe-area-x px-3 sm:px-4 md:px-6 pt-3 md:pt-6 pb-6 md:pb-8 overflow-x-hidden">
             <div className="max-w-7xl mx-auto w-full">
               {children}
             </div>

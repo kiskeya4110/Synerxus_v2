@@ -28,7 +28,7 @@ export const IMPACT_SCORE_LABELS = {
   PER_HOUR: 'Score/Hour',
 
   // Explanatory text
-  TOOLTIP: 'Your Impact Score measures verified contributions to social and environmental outcomes based on hours, SDG alignment, and verified results.',
+  TOOLTIP: 'Your Impact Score measures tracked contributions to social and environmental activities based on hours, SDG alignment, and recorded results.',
 
   // Action labels
   VIEW_DETAILS: 'View Impact Details',

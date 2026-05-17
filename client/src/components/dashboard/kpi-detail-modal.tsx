@@ -1006,7 +1006,7 @@ export default function KPIDetailModal({
           <CardContent className="p-4">
             <p className="font-semibold text-blue-800 mb-3">Impact Score Formula</p>
             <p className="text-sm text-slate-600 mb-3">
-              Impact Score measures verified, auditable impact using a proprietary formula:
+              Impact Score measures tracked contributions using a proprietary formula:
             </p>
             <div className="bg-white rounded-lg p-3 text-sm font-mono text-slate-700">
               Score = min(MaxScore, k × ln(1 + EffectiveScore)) × (1 + ConsistencyBonus)

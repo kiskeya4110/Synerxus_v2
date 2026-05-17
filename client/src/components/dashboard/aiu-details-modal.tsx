@@ -169,8 +169,8 @@ export default function AIUDetailsModal({
                 <div>
                   <p className="font-semibold text-white text-sm">What is Impact Score?</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Impact Score is Synerxus's proprietary metric that measures your verified contribution to social and environmental impact.
-                    It provides an auditable record for CSR/ESG reporting.
+                    Impact Score is Synerxus's proprietary metric that measures your tracked contributions to social and environmental activities.
+                    It supports structured recordkeeping for CSR/ESG reporting.
                   </p>
                 </div>
               </div>

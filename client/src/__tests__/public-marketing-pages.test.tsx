@@ -29,25 +29,25 @@ const publicPages = [
     name: "landing",
     path: "/landing",
     Component: MarketingHome,
-    expectedText: "Alignment is shown as context, not as a compliance or assurance result",
+    expectedText: "ESG evidence your team can trace, review, and report.",
   },
   {
     name: "platform",
     path: "/platform",
     Component: Platform,
-    expectedText: "The evidence layer behind defensible social-impact claims.",
+    expectedText: "The Synerxus Platform",
   },
   {
     name: "evidence ladder",
     path: "/evidence-ladder",
     Component: EvidenceLadder,
-    expectedText: "A maturity model for ESG claim defensibility.",
+    expectedText: "A maturity model for claim defensibility. Move from unsupported to review-ready.",
   },
   {
     name: "use cases",
     path: "/use-cases",
     Component: UseCasesPage,
-    expectedText: "Use Synerxus wherever ESG claims need evidence.",
+    expectedText: "Built for claims that need defensible evidence.",
   },
   {
     name: "resources",
@@ -76,60 +76,53 @@ describe("public marketing pages", () => {
     const html = renderPublicPage(path, Component);
 
     expect(html).toContain(expectedText);
-    expect(html).toContain("Request Assessment");
     expect(html).toContain("Synerxus");
   });
 
-  it("does not render derived SDG mapping details before that platform category is active", () => {
+  it("does not render mapping details before that platform category is active", () => {
     const html = renderPublicPage("/platform", Platform);
 
-    expect(html).toContain("Partner-confirmed evidence totals");
-    expect(html).toContain("Mapping Review Panel");
-    expect(html).toContain("Map activity records without turning tags into evidence.");
-    expect(html).toContain("The mapping is visible as classification context, not as causal impact evidence.");
+    expect(html).toContain("Claim-to-Evidence Workspace");
+    expect(html).toContain("Claim register");
+    expect(html).toContain("Evidence packets");
     expect(html).toContain("provide formal assurance");
-    expect(html).not.toContain("Mapped theme");
-    expect(html).not.toContain("SDG Target 7.b: Expand infrastructure and upgrade technology for sustainable energy services.");
+    expect(html).not.toContain("Mapping overview");
+    expect(html).not.toContain("SDG mapping is a classification layer");
   });
 
-  it("keeps the landing page focused on the streamlined evidence structure", () => {
+  it("keeps the landing page focused on ESG evidence review", () => {
     const html = renderPublicPage("/landing", MarketingHome);
 
-    expect(html).toContain("Claim-level evidence");
-    expect(html).toContain("claim-level records that show what supports the claim");
-    expect(html).toContain("ESG and social-impact claims are hard to defend");
-    expect(html).toContain("Create claim. Attach evidence. Confirm. Map. Preserve.");
-    expect(html).toContain("Evidence Categories");
-    expect(html).toContain("Self-reported");
-    expect(html).toContain("Partner-confirmed");
-    expect(html).toContain("Source-supported");
-    expect(html).toContain("Partner-reported");
-    expect(html).toContain("Thematic alignment only");
-    expect(html).toContain("Request Assessment");
+    expect(html).toContain("CORPORATE ESG REPORTING WORKFLOW");
+    expect(html).toContain("ESG Evidence Workspace");
+    expect(html).toContain("Attendance Log");
+    expect(html).toContain("Partner Confirmation");
+    expect(html).toContain("Source Documents");
+    expect(html).toContain("Training Completion Record");
+    expect(html).toContain("Mapping Context");
+    expect(html).toContain("Traceable to approved records. Built for evidence review.");
     expect(html).not.toContain("LinkedIn Newsletter");
   });
 
-  it("keeps the streamlined platform workspace visible", () => {
+  it("keeps the platform workspace visible without duplicate step navigation", () => {
     const html = renderPublicPage("/platform", Platform);
 
     [
-      "PLATFORM WORKSPACE",
-      "Keep every claim connected to its evidence trail.",
+      "The Synerxus Platform",
+      "Our employee volunteer program contributed to community workforce development programs across 8 partner organizations in 2025.",
       "Claim-to-Evidence Workspace",
       "Confirmation and Evidence Quality",
       "Mapping and Reporting Support",
-      "Claim-to-Evidence Trail",
-      "Every output is organized around one question",
+      "Evidence packet",
+      "Platform Boundaries",
     ].forEach((label) => {
       expect(html).toContain(label);
     });
 
     [
-      "Evidence Packet Detail View",
-      "Partner Confirmation Workflow",
-      "Source Artifact Index",
-      "Status Reconciliation",
-      "Assurance-Preparation Export",
+      "Step 1: Claim-to-Evidence Workspace",
+      "Step 2: Confirmation and Evidence Quality",
+      "Step 3: Mapping and Reporting Support",
     ].forEach((label) => {
       expect(html).not.toContain(label);
     });
@@ -142,6 +135,6 @@ describe("public marketing pages", () => {
 
     expect(homeHtml).not.toContain("LinkedIn Newsletter");
     expect(platformHtml).not.toContain("LinkedIn Newsletter");
-    expect(resourcesHtml).toContain("LinkedIn Newsletter");
+    expect(resourcesHtml).toContain("The Verifiable");
   });
 });

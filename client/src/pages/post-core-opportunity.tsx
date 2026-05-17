@@ -646,14 +646,14 @@ export default function PostCoreOpportunity() {
               </CardContent>
             </Card>
 
-            {/* Section 4: Purpose & Impact */}
+            {/* Section 4: Purpose & Evidence */}
             <Card data-testid="card-impact" className="bg-white shadow-sm border-slate-200">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-slate-900">
                   <TrendingUp className="w-5 h-5 text-blue-600" />
-                  Section 4: The Purpose & Impact
+                  Section 4: The Purpose & Evidence
                 </CardTitle>
-                <CardDescription className="text-slate-600">Why does this role matter? This powers SDG matching and Impact Dashboards.</CardDescription>
+                <CardDescription className="text-slate-600">Why does this role matter? This supports SDG mapping and evidence dashboards.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4 text-slate-800">
                 <FormField
@@ -683,10 +683,10 @@ export default function PostCoreOpportunity() {
                 />
 
                 <div className="border-t pt-4">
-                  <h3 className="font-semibold text-sm mb-2">Define Your Impact Metric</h3>
+                  <h3 className="font-semibold text-sm mb-2">Define Your Activity Metric</h3>
                   <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-                    This is the key metric this role will contribute to. It will appear on your Impact Dashboard.
-                    This turns volunteer hours into measurable outcomes.
+                    This is the key activity metric this role will contribute to. It will appear in your evidence dashboard.
+                    This turns volunteer hours into structured activity records.
                   </p>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

@@ -262,12 +262,12 @@ export default function UseCasesPage() {
                   key={item.title}
                   type="button"
                   onClick={() => handleCaseSelect(index)}
-                  className={`relative rounded-md border bg-white p-6 text-left shadow-md transition-all duration-200 ${
+                  className={`relative flex flex-col rounded-md border bg-white p-5 text-left shadow-md transition-all duration-200 ${
                     isSelected
-                      ? "border-[#0A1F44] shadow-xl ring-2 ring-[#0A1F44]/20"
+                      ? "min-h-[640px] border-[#0A1F44] shadow-xl ring-2 ring-[#0A1F44]/20"
                       : isDimmed
-                      ? "border-slate-200 opacity-50 hover:opacity-80"
-                      : "border-slate-200 hover:-translate-y-0.5 hover:shadow-xl"
+                      ? "h-[340px] border-slate-200 opacity-50 hover:opacity-80"
+                      : "h-[340px] border-slate-200 hover:-translate-y-0.5 hover:shadow-xl"
                   }`}
                 >
                   {/* Featured badge */}
@@ -277,52 +277,71 @@ export default function UseCasesPage() {
                     </span>
                   )}
 
-                  <div className="h-1 -translate-y-6 rounded-t-md" style={{ backgroundColor: item.color }} />
+                  <div className="h-1 -translate-y-5 rounded-t-md" style={{ backgroundColor: item.color }} />
                   <div className="flex items-start gap-4">
                     <span
-                      className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full text-white"
+                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white"
                       style={{ backgroundColor: item.color }}
                     >
-                      <Icon className="h-7 w-7" />
+                      <Icon className="h-6 w-6" />
                     </span>
-                    <h2 className={`text-xl font-extrabold leading-tight text-[#0A1F44] ${item.featured ? "pr-24" : ""}`}>
+                    <h2 className={`text-lg font-extrabold leading-tight text-[#0A1F44] ${item.featured ? "pr-24" : ""}`}>
                       {index + 1}. {item.title}
                     </h2>
                   </div>
 
-                  <p className="mt-5 text-sm font-bold uppercase tracking-wide text-[#0A1F44]">Claim</p>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">"{item.claim}"</p>
-
-                  <p className="mt-5 border-t border-slate-200 pt-4 text-sm font-bold uppercase tracking-wide text-[#0A1F44]">
-                    Evidence Package Preview
+                  <p className="mt-4 text-xs font-bold uppercase tracking-wide text-[#0A1F44]">Claim</p>
+                  <p className={`mt-2 text-sm leading-relaxed text-slate-700 ${isSelected ? "" : "line-clamp-3"}`}>
+                    "{item.claim}"
                   </p>
-                  <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
-                    {item.evidence.map((e) => (
-                      <li key={e} className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
-                        {e}
-                      </li>
-                    ))}
-                  </ul>
 
-                  <div className="mt-5 border-t border-slate-200 pt-4">
-                    <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-[#0A1F44]">
-                      <ShieldAlert className="h-4 w-4" /> Limitation / Caution
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.limitation}</p>
-                    <Link
-                      href="/evidence-ladder"
-                      onClick={(e) => e.stopPropagation()}
-                      className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#0A1F44] transition-colors hover:text-[#c88914]"
-                    >
-                      Where does this claim sit on the Evidence Ladder? <ArrowRight className="h-3 w-3" />
-                    </Link>
-                  </div>
+                  {isSelected ? (
+                    <>
+                      <p className="mt-5 border-t border-slate-200 pt-4 text-sm font-bold uppercase tracking-wide text-[#0A1F44]">
+                        Evidence Package Preview
+                      </p>
+                      <ul className="mt-2 space-y-1.5 text-sm text-slate-700">
+                        {item.evidence.map((e) => (
+                          <li key={e} className="flex items-center gap-2">
+                            <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-600" />
+                            {e}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-2">
+                      <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">
+                        Evidence Package
+                      </p>
+                      <p className="mt-1 text-xs font-semibold text-[#0A1F44]">
+                        {item.evidence.length} evidence elements
+                      </p>
+                    </div>
+                  )}
+
+                  {isSelected && (
+                    <div className="mt-5 border-t border-slate-200 pt-4">
+                      <p className="flex items-center gap-2 text-sm font-extrabold uppercase tracking-wide text-[#0A1F44]">
+                        <ShieldAlert className="h-4 w-4" /> Limitation / Caution
+                      </p>
+                      <p className="mt-2 text-sm leading-relaxed text-slate-700">{item.limitation}</p>
+                      <Link
+                        href="/evidence-ladder"
+                        onClick={(e) => e.stopPropagation()}
+                        className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#0A1F44] transition-colors hover:text-[#c88914]"
+                      >
+                        Where does this claim sit on the Evidence Ladder? <ArrowRight className="h-3 w-3" />
+                      </Link>
+                    </div>
+                  )}
 
                   {/* Who uses this — always visible */}
-                  <div className="mt-4 border-t border-slate-100 pt-3">
+                  <div className={`mt-4 border-t border-slate-100 pt-3 ${isSelected ? "" : "min-h-[70px]"}`}>
                     <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Who uses this</p>
-                    <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{item.whoUses}</p>
+                    <p className={`mt-0.5 text-xs leading-relaxed text-slate-600 ${isSelected ? "" : "line-clamp-2"}`}>
+                      {item.whoUses}
+                    </p>
                   </div>
 
                   {isSelected && (
@@ -338,7 +357,7 @@ export default function UseCasesPage() {
                     </div>
                   )}
 
-                  <div className="mt-4 border-t border-slate-100 pt-3">
+                  <div className="mt-auto border-t border-slate-100 pt-3">
                     {item.detailHref ? (
                       <Link
                         href={item.detailHref}

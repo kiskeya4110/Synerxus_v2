@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { Link } from "wouter";
 import { ArrowRight, BarChart3, CheckCircle2, Download, FileText, FolderOpen, ShieldCheck, Users, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
+import { ClaimRecordCard } from "@/components/marketing/claim-record-card";
 
 type Area = {
   title: string;
@@ -47,10 +48,10 @@ const areas: Area[] = [
 ];
 
 const qualityRows = [
-  { id: "Partner A confirmation", status: "Confirmed", confidence: "High" },
-  { id: "Partner B confirmation", status: "Confirmed", confidence: "Medium" },
-  { id: "Partner C confirmation", status: "Pending", confidence: "High" },
-  { id: "Partner D submission", status: "Confirmed", confidence: "High" },
+  { id: "Partner A confirmation", status: "Confirmed", confidence: "High", alignment: "Aligned" },
+  { id: "Partner B confirmation", status: "Confirmed", confidence: "Medium", alignment: "Aligned" },
+  { id: "Partner C confirmation", status: "Pending", confidence: "High", alignment: "Aligned" },
+  { id: "Partner D submission", status: "Confirmed", confidence: "High", alignment: "Aligned" },
 ] as const;
 
 function PreviewPanel({ type }: { type: string }) {
@@ -73,8 +74,8 @@ function PreviewPanel({ type }: { type: string }) {
                   {row.status}
                 </span>
                 <span>{row.confidence}</span>
-                <span className={`font-bold ${isPending ? "text-slate-400" : "text-emerald-700"}`}>
-                  {isPending ? "—" : "Aligned"}
+                <span className={`font-bold ${isPending ? "text-slate-500" : "text-emerald-700"}`}>
+                  {row.alignment}
                 </span>
               </div>
             );
@@ -176,12 +177,6 @@ function PreviewPanel({ type }: { type: string }) {
 
 export default function PlatformPage() {
   const [activeArea, setActiveArea] = useState(0);
-  const stepsRef = useRef<HTMLElement>(null);
-
-  function navigateToStep(index: number) {
-    setActiveArea(index);
-    stepsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }
 
   const area = areas[activeArea];
   const Icon = area.icon;
@@ -201,74 +196,25 @@ export default function PlatformPage() {
             </p>
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
-            <div className="rounded-md border border-slate-200 p-5">
-              <div className="flex items-start justify-between">
-                <div>
-                  <p className="text-xs font-bold text-slate-500">Claim</p>
-                  <h2 className="mt-1 text-lg font-extrabold text-[#0A1F44]">
-                    Our employee volunteer program contributed to community workforce development programs across 8 partner organizations in 2025.
-                  </h2>
-                </div>
-                <span className="rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">
-                  In review
-                </span>
-              </div>
-
-              <div className="mt-5 grid grid-cols-4 gap-3">
-                {[
-                  { label: "Claimed participants", value: "312" },
-                  { label: "Confirmed participants", value: "287" },
-                  { label: "Confidence", value: "High" },
-                  { label: "Evidence packets", value: "8" },
-                ].map(({ label, value }) => (
-                  <div key={label} className="rounded-md border border-slate-200 p-3">
-                    <p className="text-[10px] font-bold text-slate-500">{label}</p>
-                    <p className="mt-1 text-xl font-extrabold tabular-nums text-[#0A1F44]">{value}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-5 rounded-md bg-slate-50 p-4">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-extrabold text-[#0A1F44]">Evidence coverage</p>
-                  <p className="text-xs font-bold tabular-nums text-emerald-700">76%</p>
-                </div>
-                <div className="mt-3 h-3 overflow-hidden rounded-full bg-slate-200">
-                  <div className="h-3 w-[76%] rounded-full bg-emerald-600" />
-                </div>
-                <p className="mt-2 text-[11px] font-semibold text-slate-500">
-                  Supported 76% · Partial 14% · Unverified 10%
-                </p>
-              </div>
-            </div>
+          <div className="shadow-2xl">
+            <ClaimRecordCard
+              claim="Our employee volunteer program contributed to community workforce development programs across 8 partner organizations in 2025."
+              status="In Review"
+              metrics={[
+                { label: "Claimed participants", value: "312" },
+                { label: "Confirmed participants", value: "287" },
+                { label: "Confidence", value: "High" },
+                { label: "Evidence packets", value: "8" },
+              ]}
+              evidenceCoverage={76}
+              supportSummary="Supported 76% · Partial 14% · Unverified 10%"
+            />
           </div>
         </div>
       </section>
 
-      {/* ── Jump-link nav ────────────────────────────────────────────────── */}
-      <div className="border-b border-slate-200 bg-slate-50">
-        <div className="mx-auto flex max-w-7xl overflow-x-auto px-4 md:px-8">
-          {areas.map((a, i) => (
-            <button
-              key={a.title}
-              type="button"
-              onClick={() => navigateToStep(i)}
-              className={`shrink-0 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-semibold transition-colors ${
-                activeArea === i
-                  ? "border-[#c88914] text-[#0A1F44]"
-                  : "border-transparent text-slate-500 hover:text-[#0A1F44]"
-              }`}
-            >
-              <span className="font-extrabold text-[#c88914]">Step {i + 1}: </span>
-              {a.title}
-            </button>
-          ))}
-        </div>
-      </div>
-
       {/* ── Steps ────────────────────────────────────────────────────────── */}
-      <section ref={stepsRef} id="platform-steps" className="bg-white py-9">
+      <section id="platform-steps" className="bg-white py-9">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             {areas.map((a, i) => {

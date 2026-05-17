@@ -401,6 +401,11 @@ function EvidenceLadderVisual() {
                     <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${lvl.riskClass} bg-slate-50 sm:px-3 sm:text-[11px]`}>
                       {lvl.risk}
                     </span>
+                    {lvl.n === 4 && (
+                      <span className="rounded-full bg-[#c88914] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-white sm:px-2.5 sm:text-[10px] sm:tracking-[0.16em]">
+                        Synerxus standard
+                      </span>
+                    )}
                     {selected && (
                       <span className="rounded-full bg-[#0A1F44] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-white sm:px-2.5 sm:text-[10px] sm:tracking-[0.16em]">
                         Expanded
@@ -428,6 +433,11 @@ function EvidenceLadderVisual() {
                   </div>
                 </div>
               </button>
+              {lvl.n === 4 && (
+                <p className="mt-2 rounded-lg border border-[#c88914]/30 bg-[#fff9eb] px-4 py-3 text-[12px] leading-relaxed text-[#0A1F44] sm:text-sm">
+                  Synerxus structures evidence to reach Level 4 by default — partner confirmation with name, role, and date, plus source artifacts attached to the specific claim. Level 5 adds packaging: exceptions, limitations, and an assurance-preparation export.
+                </p>
+              )}
               {lvl.n === 5 && (
                 <p className="mt-2 text-center text-sm text-slate-500">
                   <Link

@@ -1,15 +1,20 @@
 import { useState, type MouseEvent, type ReactNode } from "react";
 import { Link, useLocation } from "wouter";
-import { Facebook, Linkedin, LayoutDashboard, Menu, X } from "lucide-react";
+import { ChevronDown, Facebook, Linkedin, LayoutDashboard, Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { label: "Platform", href: "/platform" },
+  { label: "Integrations", href: "/integrations" },
   { label: "Evidence Ladder", href: "/evidence-ladder" },
-  { label: "Use Cases", href: "/use-cases" },
   { label: "Resources", href: "/resources" },
+];
+
+const solutionItems = [
+  { label: "For ESG Teams", href: "/for-esg-teams" },
+  { label: "For NGOs and Partners (future)", href: "/use-cases" },
 ];
 
 const ASSURANCE_FOOTER_NOTE =
@@ -17,7 +22,9 @@ const ASSURANCE_FOOTER_NOTE =
 
 const footerLinks = [
   ["Platform", "/platform"],
+  ["Integrations", "/integrations"],
   ["Evidence Ladder", "/evidence-ladder"],
+  ["For ESG Teams", "/for-esg-teams"],
   ["Use Cases", "/use-cases"],
   ["Resources", "/resources"],
   ["Privacy", "/privacy"],
@@ -87,6 +94,33 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
+            <div className="group relative">
+              <button
+                type="button"
+                className={`flex items-center gap-1 border-b-2 px-0 py-2 text-sm font-semibold transition-colors ${
+                  location === "/for-esg-teams" || location.startsWith("/use-cases")
+                    ? "border-[#c88914] text-[#0A1F44]"
+                    : "border-transparent text-[#0A1F44] hover:border-[#c88914]/60"
+                }`}
+              >
+                Solutions <ChevronDown className="h-4 w-4" />
+              </button>
+              <div className="invisible absolute left-0 top-full z-50 w-72 translate-y-2 rounded-lg border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                {solutionItems.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`block rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
+                      location === item.href
+                        ? "bg-slate-100 text-[#0A1F44]"
+                        : "text-slate-700 hover:bg-slate-50 hover:text-[#0A1F44]"
+                    }`}
+                  >
+                    {item.label}
+                  </Link>
+                ))}
+              </div>
+            </div>
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
@@ -123,6 +157,19 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
           <div className="border-t border-slate-200 bg-white px-4 py-3 lg:hidden">
             <div className="grid gap-1">
               {navItems.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div className="px-3 pt-3 text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">
+                Solutions
+              </div>
+              {solutionItems.map((item) => (
                 <Link
                   key={item.href}
                   href={item.href}

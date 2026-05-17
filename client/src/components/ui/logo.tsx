@@ -85,19 +85,19 @@ export default function Logo({
       </span>
       <span
         style={{
-          fontSize: `${Math.round(config.height * 0.43)}px`,
+          fontSize: `${Math.round(config.height * 0.30)}px`,
           fontFamily: "'Inter', 'Instrument Sans', sans-serif",
           fontWeight: 600,
           letterSpacing: '0.01em',
-          lineHeight: 1,
+          lineHeight: 1.1,
           color: navyColor,
           textAlign: 'left',
           display: 'block',
           whiteSpace: 'nowrap',
         }}
       >
-        <span style={{ color: '#ffcc33' }}>Evidence.</span>{' '}
-        <span style={{ color: navyColor }}>Structured.</span>
+        <span style={{ color: '#ffcc33' }}>Evidence</span>{' '}
+        <span style={{ color: navyColor }}>behind ESG claims</span>
       </span>
     </div>
   );

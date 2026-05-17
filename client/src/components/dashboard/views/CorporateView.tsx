@@ -513,12 +513,12 @@ const CorporateView = memo(function CorporateView({
         {isLoading ? (
           <div className="text-center py-12">
             <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-500 text-sm">Loading verified outcomes...</p>
+            <p className="text-slate-500 text-sm">Loading confirmed outcomes...</p>
           </div>
         ) : outcomes.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
             <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-slate-700 font-medium mb-1">No verified outcomes yet</h3>
+            <h3 className="text-slate-700 font-medium mb-1">No confirmed outcomes yet</h3>
             <p className="text-slate-500 text-sm">
               {activeFilterCount > 0 ? "Try adjusting your filters." : "Outcomes will appear here once authorized partner organizations verify submissions."}
             </p>
@@ -844,16 +844,16 @@ const CorporateView = memo(function CorporateView({
       {isLoading ? (
         <div className="text-center py-16">
           <RefreshCw className="w-10 h-10 text-slate-400 animate-spin mx-auto mb-4" />
-          <p className="text-slate-500">Loading verified outcomes...</p>
+          <p className="text-slate-500">Loading confirmed outcomes...</p>
         </div>
       ) : outcomes.length === 0 ? (
         <div className="text-center py-16 bg-white rounded-xl border border-slate-200">
           <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <h3 className="text-slate-700 font-semibold text-lg mb-2">No verified outcomes yet</h3>
+          <h3 className="text-slate-700 font-semibold text-lg mb-2">No confirmed outcomes yet</h3>
           <p className="text-slate-500 max-w-md mx-auto">
             {activeFilterCount > 0
               ? "Try adjusting your filters to see more results."
-              : "Verified outcomes will appear here once your partner organizations verify submissions."}
+              : "Confirmed outcomes will appear here once your partner organizations confirm submissions."}
           </p>
         </div>
       ) : (

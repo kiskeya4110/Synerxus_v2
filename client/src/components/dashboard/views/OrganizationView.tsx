@@ -1918,7 +1918,7 @@ const OrganizationView = memo(function OrganizationView({
                   ESG / CSR Reporting and Assurance Support
                 </p>
                 <p className="text-xs text-gray-500 mb-3">
-                  Verified hours · SDG framework alignment · Partner-confirmed outputs
+                  Confirmed hours · SDG framework alignment · Partner-confirmed outputs
                 </p>
                 <div className="flex items-center gap-2 justify-center mb-4">
                   <label className="text-xs font-medium text-gray-500">Time Period</label>
@@ -2242,7 +2242,7 @@ const OrganizationView = memo(function OrganizationView({
                           {vol.totalHours ?? 0}h · {vol.projectsCount ?? 0} project{(vol.projectsCount ?? 0) !== 1 ? 's' : ''}
                         </p>
                       </div>
-                      <p className="text-xs font-medium text-[#0A9A6E]">{vol.verifiedHours ?? Math.floor((vol.totalHours ?? 0) * 0.8)}h verified</p>
+                      <p className="text-xs font-medium text-[#0A9A6E]">{vol.verifiedHours ?? Math.floor((vol.totalHours ?? 0) * 0.8)}h confirmed</p>
                     </div>
                   ))}
                   {(volunteers as any[]).length > 5 && (

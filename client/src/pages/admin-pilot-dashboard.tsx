@@ -167,7 +167,7 @@ function VerificationFeed({ items }: { items: RecentVerification[] }) {
             <div className="flex items-center gap-3 mt-1 text-xs text-slate-400 flex-wrap">
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 flex-shrink-0 inline-block"></span>
-                {item.hours}h verified
+                {item.hours}h confirmed
               </span>
               <span>{item.volunteer}</span>
               <span>{item.time}</span>
@@ -199,7 +199,7 @@ function CountryRow({ data }: { data: VerificationCountry }) {
       </div>
       <div className="text-center px-3 flex-shrink-0">
         <div className={`text-xl font-bold ${style.text}`}>{data.rate}%</div>
-        <div className="text-xs text-slate-500">verified</div>
+        <div className="text-xs text-slate-500">confirmed</div>
       </div>
       <div className="text-center px-3 border-l border-slate-200 flex-shrink-0">
         <div className="text-lg font-semibold text-emerald-700">{data.outcomes}</div>
@@ -398,7 +398,7 @@ export default function AdminPilotDashboard() {
               <StatCard
                 icon="✓"
                 value={stats?.totalVerifiedOutcomes ?? 0}
-                label="Verified Outputs"
+                label="Confirmed Outputs"
                 sublabel="partner-confirmed"
                 color="emerald"
               />

@@ -576,7 +576,7 @@ const VolunteerView = memo(function VolunteerView({
                     <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
                   </div>
                   <p className="text-3xl font-bold text-stone-800">{stats.hoursLogged}</p>
-                  <p className="text-xs text-stone-500 mt-1">{stats.verifiedHours} verified →</p>
+                  <p className="text-xs text-stone-500 mt-1">{stats.verifiedHours} confirmed →</p>
                 </button>
 
                 <button
@@ -1009,7 +1009,7 @@ const VolunteerView = memo(function VolunteerView({
                   {historyFilter === 'all' && (
                     <>
                       <p className="text-xs text-stone-500 mt-1">
-                        Submit your first activity to start your verified contribution record.
+                        Submit your first activity to start your contribution record.
                       </p>
                       <button
                         onClick={() => navigate('/log-activity')}
@@ -1187,7 +1187,7 @@ const VolunteerView = memo(function VolunteerView({
           {/* Page Header */}
           <PageHeader
             title={`Welcome back, ${activeUser?.displayName?.split(" ")[0] || "Volunteer"}`}
-            description="Log activity, track verification status, and view your verified contribution record."
+            description="Log activity, track verification status, and view your contribution record."
             actions={
               <Button variant="accent" size="lg" onClick={() => navigate('/log-activity')}>
                 <Plus className="h-5 w-5 mr-2" />
@@ -1220,7 +1220,7 @@ const VolunteerView = memo(function VolunteerView({
               <MetricCard
                 label="People Reached"
                 value={stats.totalPeopleImpacted}
-                subtitle={`${stats.outcomesVerified} verified activities`}
+                subtitle={`${stats.outcomesVerified} confirmed activities`}
                 accentColor="success"
                 icon={<Target className="h-5 w-5 text-success" />}
               />
@@ -1256,7 +1256,7 @@ const VolunteerView = memo(function VolunteerView({
                         <span className="text-xs">Hours Logged</span>
                       </div>
                       <p className="text-xl font-semibold text-foreground">{stats.hoursLogged}</p>
-                      <p className="text-xs text-muted-foreground">{stats.verifiedHours} verified</p>
+                      <p className="text-xs text-muted-foreground">{stats.verifiedHours} confirmed</p>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDesktopTab('opportunities'); }}
@@ -1267,7 +1267,7 @@ const VolunteerView = memo(function VolunteerView({
                         <span className="text-xs">People Reached</span>
                       </div>
                       <p className="text-xl font-semibold text-foreground">{stats.totalPeopleImpacted}</p>
-                      <p className="text-xs text-muted-foreground">{stats.outcomesVerified} verified activities</p>
+                      <p className="text-xs text-muted-foreground">{stats.outcomesVerified} confirmed activities</p>
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); setDesktopTab('my-work'); }}
@@ -1408,14 +1408,14 @@ const VolunteerView = memo(function VolunteerView({
             <MetricCard
               label="Hours Logged"
               value={stats.hoursLogged}
-              subtitle={`${stats.verifiedHours} verified`}
+              subtitle={`${stats.verifiedHours} confirmed`}
               accentColor="accent"
               icon={<Clock className="h-5 w-5 text-accent" />}
             />
             <MetricCard
               label="People Reached"
               value={stats.totalPeopleImpacted}
-              subtitle={`${stats.outcomesVerified} verified activities`}
+              subtitle={`${stats.outcomesVerified} confirmed activities`}
               accentColor="success"
               icon={<Target className="h-5 w-5 text-success" />}
             />
@@ -1473,7 +1473,7 @@ const VolunteerView = memo(function VolunteerView({
                   {historyFilter === 'all' && (
                     <>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Submit your first activity to start your verified contribution record.
+                        Submit your first activity to start your contribution record.
                       </p>
                       <Button
                         variant="accent"
@@ -1831,13 +1831,13 @@ const VolunteerView = memo(function VolunteerView({
               </div>
               <div className="bg-blue-50 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-blue-700">{stats.outcomesVerified}</p>
-                <p className="text-xs text-blue-600 mt-0.5">Verified Activities</p>
+                <p className="text-xs text-blue-600 mt-0.5">Confirmed Activities</p>
               </div>
             </div>
             <p className="text-[11px] text-muted-foreground leading-snug">Partner-reported reach is not independently verified. It reflects figures reported by the partner organization and is provided as reporting context only.</p>
             {allLogs.filter((l: any) => l.verificationStatus === 'approved' && (l.outcomeQuantity || 0) > 0).length > 0 ? (
               <>
-                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Verified Activities</p>
+                <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Confirmed Activities</p>
                 <div className="space-y-2 max-h-48 overflow-y-auto">
                   {allLogs
                     .filter((l: any) => l.verificationStatus === 'approved')

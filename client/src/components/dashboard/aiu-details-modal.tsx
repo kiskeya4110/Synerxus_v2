@@ -188,7 +188,7 @@ export default function AIUDetailsModal({
                 {[
                   "Time investment & consistency",
                   "Role and responsibilities",
-                  "Verified project outcomes",
+                  "Confirmed project outcomes",
                   "SDG alignment score",
                   "Skill-based contribution",
                   "Measurable results"
@@ -340,7 +340,7 @@ export default function AIUDetailsModal({
                   </div>
                   <div className="flex items-center gap-1">
                     <span className="text-sm font-bold text-violet-400">{verificationRate}%</span>
-                    <span className="text-[10px] text-slate-500">verified</span>
+                    <span className="text-[10px] text-slate-500">confirmed</span>
                   </div>
                 </div>
               </div>

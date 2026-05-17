@@ -17,8 +17,8 @@ import { useMemo } from 'react';
 export const IMPACT_SCORE_LABELS = {
   // Primary labels
   PRIMARY: 'Impact Score',
-  FULL_NAME: 'Verified Social Impact',
-  DESCRIPTION: 'A measure of your verified contribution to social and environmental outcomes',
+  FULL_NAME: 'Tracked Social Impact',
+  DESCRIPTION: 'A measure of your tracked contribution to social and environmental outcomes',
 
   // Display variants
   EARNED: 'Impact Score Earned',

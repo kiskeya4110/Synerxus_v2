@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, BarChart3, CheckCircle2, ChevronDown, Cloud, FilePlus2, FileText, GitBranch, Globe2, Info, Landmark, LockKeyhole, Network, Paperclip, ShieldAlert, ShieldCheck, Target, User, UserCheck, Users, XCircle, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, CheckCircle2, ChevronDown, Cloud, FileText, FolderOpen, GitBranch, Globe2, Info, Landmark, Network, ShieldAlert, ShieldCheck, Target, User, UserCheck, Users, XCircle, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
@@ -92,79 +92,79 @@ const frameworkCards: FrameworkCard[] = [
   },
 ];
 
-type WorkflowStep = { title: string; body: string; icon: LucideIcon; detail: string };
-
-const workflow: WorkflowStep[] = [
-  {
-    title: "Create Claim",
-    body: "Define clear, measurable claims with responsible owners.",
-    icon: FilePlus2,
-    detail: "A well-defined claim has a specific scope, a named reporting period, and a responsible party who can confirm it. Vague or aspirational claims create downstream evidence problems — a precisely scoped claim can be substantiated before it appears in any report.",
-  },
-  {
-    title: "Attach Evidence",
-    body: "Attach source documents, data, and supporting context.",
-    icon: Paperclip,
-    detail: "Attach source documents, data files, partner reports, and supporting context to each claim. The nature and completeness of attached evidence determines where the claim sits on the Evidence Ladder — from internal assertion to fully source-supported.",
-  },
-  {
-    title: "Confirm",
-    body: "Confirm who reviewed the claim and the source-support status.",
-    icon: UserCheck,
-    detail: "Record who reviewed and confirmed the claim and its supporting evidence. Confirmation status is tracked separately from self-reported records. The confirming party's name, role, and authorization are part of the evidence record — not just a checkbox.",
-  },
-  {
-    title: "Map",
-    body: "Map claims to frameworks, standards, or disclosure context.",
-    icon: GitBranch,
-    detail: "Map claims to reporting frameworks — GRI, CSRD, ISSB, TCFD, or UN SDGs — with documented mapping rationale and limitations. Derived mappings are kept separate from confirmed evidence totals so alignment claims remain accurate and defensible.",
-  },
-  {
-    title: "Defend",
-    body: "Package a reviewable evidence trail that holds up when stakeholders ask questions.",
-    icon: LockKeyhole,
-    detail: "Preserve a structured claim-to-evidence trail that persists across reporting periods. When an auditor, funder, or regulator requests evidence, teams with preserved records can respond immediately — without manual assembly under deadline pressure.",
-  },
-];
-
 type FlowStep = { title: string; body: string; icon: LucideIcon; detail: string };
+type HeroEvidenceTabId = "attendance" | "confirmation" | "documents" | "completion" | "mapping";
+
+type HeroEvidenceTab = {
+  id: HeroEvidenceTabId;
+  title: string;
+  meta: string;
+  icon: LucideIcon;
+};
 
 const evidenceFlow: FlowStep[] = [
   {
-    title: "Claim",
-    body: "Define the reporting statement clearly",
+    title: "Project Metrics Defined",
+    body: "Organizations pre-identify what gets tracked",
     icon: Target,
-    detail: "A well-defined claim has a specific scope, a named reporting period, and a responsible party who can confirm it. Vague or unmeasurable claims create downstream evidence problems. Synerxus helps you define claims that can be substantiated before they appear in reports.",
+    detail: "Organizations pre-identify what gets tracked — trees planted, panels installed, sessions delivered. The schema is fixed before any volunteer logs anything.",
   },
   {
-    title: "Evidence",
-    body: "Collect relevant source support",
-    icon: FileText,
-    detail: "Collect activity logs, partner reports, invoices, surveys, and monitoring data that support the claim. Document what evidence exists and what is missing. The presence or absence of source evidence determines where the claim sits on the Evidence Ladder.",
-  },
-  {
-    title: "Confirmation",
-    body: "Record who confirmed the activity",
-    icon: CheckCircle2,
-    detail: "Record who reviewed and confirmed the activity — an internal program owner, delivery partner, or external reviewer. Confirmation status directly affects the evidence tier and defensibility of the claim. Unconfirmed records are flagged separately from confirmed ones.",
-  },
-  {
-    title: "Source Support",
-    body: "Reference documents and records",
-    icon: FileText,
-    detail: "Reference primary source documents that substantiate the claim: invoices, reports, photos, spreadsheets, or third-party records. Source support moves a claim from internal assertion toward reviewable evidence that an auditor or funder can inspect directly.",
-  },
-  {
-    title: "Limitation",
-    body: "State what the claim does not prove",
-    icon: ShieldAlert,
-    detail: "Every claim has a boundary. State explicitly what the claim does not prove — causal attribution, long-term outcomes, regulatory compliance, or impact beyond the reported activity scope. Documented limitations protect against over-statement and are required for review-ready evidence packets.",
-  },
-  {
-    title: "Output",
-    body: "Produce a reviewable evidence summary",
+    title: "Volunteer Logs Numbers",
+    body: "Skilled volunteers enter quantities against fixed metrics",
     icon: BarChart3,
-    detail: "Produce a structured evidence summary that includes the claim, supporting evidence, confirmation status, mapping context, exceptions, and limitations. This output is ready for internal review, reporting submissions, or assurance preparation — without requiring manual assembly when a deadline arrives.",
+    detail: "Skilled volunteers enter quantities against pre-defined metrics. No free text. No interpretation. Just numbers against a fixed schema.",
+  },
+  {
+    title: "Authorized Approval",
+    body: "A named authorized person confirms the record",
+    icon: UserCheck,
+    detail: "A named authorized person at the organization confirms the volunteer was present, the numbers are accurate, and the activity happened as described.",
+  },
+  {
+    title: "Evidence Record Created",
+    body: "Approved records enter the evidence layer",
+    icon: FileText,
+    detail: "Approved records enter the evidence layer. Unapproved submissions are excluded. Every record carries who approved it, when, and where.",
+  },
+  {
+    title: "Corporate Dashboard Updated",
+    body: "Corporations see aggregate confirmed figures",
+    icon: BarChart3,
+    detail: "The corporation sees aggregate confirmed figures filtered by employee and organization — with percentage breakdowns showing what proportion is organization-confirmed.",
+  },
+];
+
+const heroEvidenceTabs: HeroEvidenceTab[] = [
+  {
+    id: "attendance",
+    title: "Attendance Log",
+    meta: "CSV · 2 linked",
+    icon: FileText,
+  },
+  {
+    id: "confirmation",
+    title: "Partner Confirmation",
+    meta: "PDF · Confirmed",
+    icon: Users,
+  },
+  {
+    id: "documents",
+    title: "Source Documents",
+    meta: "PDF · 3 linked",
+    icon: FolderOpen,
+  },
+  {
+    id: "completion",
+    title: "Training Completion Record",
+    meta: "CSV · 1 linked",
+    icon: CheckCircle2,
+  },
+  {
+    id: "mapping",
+    title: "Mapping Context",
+    meta: "GRI 413 / SDG 8",
+    icon: GitBranch,
   },
 ];
 
@@ -176,10 +176,335 @@ function strengthFillClass(strength: number): string {
   return "bg-emerald-600";
 }
 
+function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
+  if (activeTab === "attendance") {
+    return (
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Attendance table preview</p>
+        <div className="mt-3 overflow-hidden rounded-md border border-slate-200">
+          <div className="grid grid-cols-[1fr_1fr_1.25fr_0.9fr] bg-slate-50 px-3 py-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-500">
+            <span>Name</span>
+            <span>Date</span>
+            <span>Session</span>
+            <span>Status</span>
+          </div>
+          {[
+            ["M. Alvarez", "May 2", "Solar Skills Lab", "Completed"],
+            ["T. Chen", "May 9", "Job Readiness", "Attended"],
+            ["A. Brooks", "May 16", "Tool Safety", "Completed"],
+          ].map(([name, date, session, status]) => (
+            <div key={`${name}-${date}`} className="grid grid-cols-[1fr_1fr_1.25fr_0.9fr] border-t border-slate-100 px-3 py-2 text-[11px] text-slate-700">
+              <span className="font-semibold text-[#0A1F44]">{name}</span>
+              <span>{date}</span>
+              <span>{session}</span>
+              <span className="font-bold text-emerald-700">{status}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === "confirmation") {
+    return (
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Partner confirmation</p>
+        <div className="mt-3 grid gap-2 text-xs">
+          {[
+            ["Confirmed by", "Bright Futures Nonprofit"],
+            ["Date", "May 15, 2026"],
+            ["Status", "Confirmed"],
+            ["Reviewer", "Dana Reed, Program Director"],
+          ].map(([label, value]) => (
+            <div key={label} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
+              <span className="font-bold text-slate-500">{label}</span>
+              <span className="font-extrabold text-[#0A1F44]">{value}</span>
+            </div>
+          ))}
+        </div>
+        <p className="mt-3 rounded-md bg-emerald-50 px-3 py-2 text-xs leading-relaxed text-emerald-900">
+          Confirmation statement: attendance and completion records match the program records reviewed by the organization.
+        </p>
+      </div>
+    );
+  }
+
+  if (activeTab === "documents") {
+    return (
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">4 linked documents</p>
+        <div className="mt-3 grid gap-2">
+          {[
+            "Training_Attendance_Q2_2026.pdf",
+            "Curriculum_Overview_2026.pdf",
+            "Partner_Report_Q2_2026.pdf",
+            "Participant_Summary_Q2_2026.pdf",
+          ].map((file) => (
+            <div key={file} className="flex items-center gap-2 rounded-md border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-[#0A1F44]">
+              <FileText className="h-4 w-4 shrink-0 text-[#c88914]" />
+              <span className="truncate">{file}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (activeTab === "completion") {
+    return (
+      <div>
+        <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Training completion record</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          {[
+            ["Completed trainees", "240"],
+            ["Program", "Workforce Development Program"],
+            ["Period", "Q2 2026"],
+            ["Record owner", "Bright Futures Nonprofit"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-md border border-slate-200 bg-white p-3">
+              <p className="font-bold text-slate-500">{label}</p>
+              <p className="mt-1 font-extrabold text-[#0A1F44]">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Mapping context</p>
+      <div className="mt-3 grid gap-2 text-xs">
+        {[
+          ["Framework mapping", "GRI 413-1"],
+          ["SDG mapping", "SDG 8"],
+          ["Rationale", "Workforce development and community participation"],
+        ].map(([label, value]) => (
+          <div key={label} className="rounded-md border border-slate-200 bg-white px-3 py-2">
+            <p className="font-bold text-slate-500">{label}</p>
+            <p className="mt-1 font-extrabold text-[#0A1F44]">{value}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-3 rounded-md bg-[#fff9eb] px-3 py-2 text-xs leading-relaxed text-[#0A1F44]">
+        Note: mapping supports reporting context only.
+      </p>
+    </div>
+  );
+}
+
+function HeroEvidenceVisual() {
+  const [activeTab, setActiveTab] = useState<HeroEvidenceTabId>("attendance");
+  const activeTabConfig = heroEvidenceTabs.find((tab) => tab.id === activeTab) ?? heroEvidenceTabs[0];
+  const ActiveTabIcon = activeTabConfig.icon;
+  const screenContent: Record<
+    HeroEvidenceTabId,
+    {
+      status: string;
+      claim: string;
+      chips: string[];
+      leftTitle: string;
+      leftBody: string;
+      centerTitle: string;
+      centerBody: string;
+      rightTitle: string;
+      rightBody: string;
+      workflow: string[];
+    }
+  > = {
+    attendance: {
+      status: "Log reviewed",
+      claim: "Attendance evidence matched to Q2 workforce sessions",
+      chips: ["240 rows", "2 files", "3 sessions"],
+      leftTitle: "Roster",
+      leftBody: "Names and sessions linked.",
+      centerTitle: "Attendance Log",
+      centerBody: "CSV records matched to the claim.",
+      rightTitle: "Status",
+      rightBody: "Completed and attended rows separated.",
+      workflow: ["Import", "Attendance", "Matched"],
+    },
+    confirmation: {
+      status: "Confirmed",
+      claim: "Partner confirmation attached to the disclosure claim",
+      chips: ["Bright Futures", "May 15", "Named reviewer"],
+      leftTitle: "Partner",
+      leftBody: "Organization record selected.",
+      centerTitle: "Confirmation",
+      centerBody: "Reviewer, role, and date captured.",
+      rightTitle: "Approval",
+      rightBody: "Confirmation tied to source support.",
+      workflow: ["Partner", "Confirm", "Record"],
+    },
+    documents: {
+      status: "4 linked records",
+      claim: "Source artifacts attached to the claim package",
+      chips: ["PDF index", "4 files", "Source support"],
+      leftTitle: "Files",
+      leftBody: "Artifacts indexed by claim.",
+      centerTitle: "Documents",
+      centerBody: "Primary files available for review.",
+      rightTitle: "Trace",
+      rightBody: "Each file links back to evidence.",
+      workflow: ["Collect", "Documents", "Index"],
+    },
+    completion: {
+      status: "Record aligned",
+      claim: "Training completion record supports participant count",
+      chips: ["240 completed", "Q2 2026", "Owner set"],
+      leftTitle: "Program",
+      leftBody: "Workforce development period set.",
+      centerTitle: "Completion",
+      centerBody: "Completion count checked against records.",
+      rightTitle: "Owner",
+      rightBody: "Submitting organization retained.",
+      workflow: ["Program", "Completion", "Support"],
+    },
+    mapping: {
+      status: "Context only",
+      claim: "Disclosure context mapped without changing evidence strength",
+      chips: ["GRI 413-1", "SDG 8", "No certification"],
+      leftTitle: "Framework",
+      leftBody: "Reporting category selected.",
+      centerTitle: "Mapping",
+      centerBody: "Context layer kept separate.",
+      rightTitle: "Limit",
+      rightBody: "Mapping does not verify outcomes.",
+      workflow: ["Claim", "Mapping", "Limit"],
+    },
+  };
+  const activeScreen = screenContent[activeTab];
+
+  return (
+    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
+      <div className="bg-[#061A36] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.12em] text-white">
+        CORPORATE ESG REPORTING WORKFLOW
+      </div>
+
+      <div className="relative overflow-hidden bg-[#f5f7fb] px-5 pb-5 pt-7">
+        <div className="relative mx-auto max-w-[610px]">
+          <div className="mx-auto w-[88%] rounded-t-[1.4rem] border-[10px] border-[#07101f] bg-[#07101f] shadow-2xl">
+            <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-white">
+              <div className="absolute inset-y-0 left-0 w-11 bg-[#09213f]" />
+              <div className="absolute left-3.5 top-4 grid h-4 w-4 grid-cols-2 gap-0.5">
+                <span className="rounded-sm bg-[#c88914]" />
+                <span className="rounded-sm bg-[#c88914]" />
+                <span className="rounded-sm bg-[#c88914]" />
+                <span className="rounded-sm bg-[#c88914]" />
+              </div>
+              {[ShieldCheck, FileText, GitBranch, Users].map((Icon, index) => (
+                <div key={index} className="absolute left-3.5 grid h-4 w-4 place-items-center rounded bg-white/10" style={{ top: `${54 + index * 34}px` }}>
+                  <Icon className="h-2.5 w-2.5 text-white/75" />
+                </div>
+              ))}
+
+              <div className="absolute left-16 right-6 top-5 flex items-center justify-between">
+                <div>
+                  <p className="text-[12px] font-extrabold text-[#0A1F44]">ESG Evidence Workspace</p>
+                  <p className="mt-1 text-[9px] font-semibold uppercase tracking-wide text-slate-500">{activeTabConfig.title}</p>
+                </div>
+                <div className="rounded-full bg-emerald-100 px-3 py-1 text-[10px] font-extrabold text-emerald-700">{activeScreen.status}</div>
+              </div>
+
+              <div className="absolute left-16 right-6 top-20 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2">
+                <p className="text-[10px] font-extrabold leading-snug text-[#0A1F44]">{activeScreen.claim}</p>
+                <div className="mt-2 grid grid-cols-3 gap-2">
+                  {activeScreen.chips.map((label) => (
+                    <div key={label} className="rounded bg-white px-2 py-1 text-[8px] font-bold text-slate-600 shadow-sm">
+                      {label}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="absolute left-[116px] right-[86px] top-[178px] h-px bg-[#c88914]/45" />
+              <div className="absolute left-[116px] top-[178px] h-12 w-px bg-[#c88914]/30" />
+              <div className="absolute right-[86px] top-[178px] h-12 w-px bg-[#c88914]/30" />
+
+              <div className="absolute left-16 top-[158px] w-28 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="grid h-7 w-7 place-items-center rounded-full bg-[#fff9eb]">
+                    <FileText className="h-3.5 w-3.5 text-[#c88914]" />
+                  </div>
+                  <p className="text-[9px] font-extrabold text-[#0A1F44]">{activeScreen.leftTitle}</p>
+                </div>
+                <p className="text-[8px] font-semibold leading-snug text-slate-500">{activeScreen.leftBody}</p>
+              </div>
+
+              <div className="absolute left-1/2 top-[146px] w-36 -translate-x-1/2 rounded-lg border-2 border-[#c88914] bg-[#fff9eb] p-3 shadow-lg">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="grid h-7 w-7 place-items-center rounded-full bg-white">
+                    <ActiveTabIcon className="h-3.5 w-3.5 text-[#0A1F44]" />
+                  </div>
+                  <p className="truncate text-[9px] font-extrabold text-[#0A1F44]">{activeScreen.centerTitle}</p>
+                </div>
+                <p className="text-[8px] font-semibold leading-snug text-slate-600">{activeScreen.centerBody}</p>
+              </div>
+
+              <div className="absolute right-8 top-[158px] w-28 rounded-lg border border-slate-200 bg-white p-3 shadow-sm">
+                <div className="mb-2 flex items-center gap-2">
+                  <div className="grid h-7 w-7 place-items-center rounded-full bg-emerald-50">
+                    <ShieldCheck className="h-3.5 w-3.5 text-emerald-700" />
+                  </div>
+                  <p className="text-[9px] font-extrabold text-[#0A1F44]">{activeScreen.rightTitle}</p>
+                </div>
+                <p className="text-[8px] font-semibold leading-snug text-slate-500">{activeScreen.rightBody}</p>
+              </div>
+
+              <div className="absolute bottom-6 left-16 right-6 grid grid-cols-3 gap-3">
+                {activeScreen.workflow.map((label, index) => (
+                  <div key={label} className={`rounded-md border px-3 py-2 shadow-sm ${index === 1 ? "border-[#c88914]/50 bg-[#fff9eb]" : "border-slate-200 bg-slate-50"}`}>
+                    <p className="truncate text-[9px] font-extrabold uppercase tracking-wide text-[#0A1F44]">{label}</p>
+                    <div className="mt-2 h-1.5 rounded-full bg-slate-200" />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mx-auto h-7 w-[95%] rounded-b-[2rem] bg-gradient-to-b from-slate-600 to-slate-900 shadow-2xl">
+            <div className="mx-auto h-1.5 w-32 rounded-b-full bg-slate-400/60" />
+          </div>
+          <div className="mx-auto h-2 w-[78%] rounded-full bg-black/15 blur-sm" />
+        </div>
+
+        <div role="tablist" aria-label="Linked ESG evidence records" className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+          {heroEvidenceTabs.map(({ id, title, meta, icon: Icon }) => {
+            const isActive = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                role="tab"
+                aria-selected={isActive}
+                aria-label={`Show ${title} evidence detail`}
+                onClick={() => setActiveTab(id)}
+                className={`group rounded-lg border p-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
+                  isActive
+                    ? "border-[#c88914] bg-white shadow-lg"
+                    : "border-slate-200 bg-white/90 hover:-translate-y-0.5 hover:border-[#0A1F44]/30 hover:shadow-md"
+                }`}
+              >
+                <Icon className={`mx-auto h-8 w-8 ${isActive ? "text-[#0A1F44]" : "text-slate-500 group-hover:text-[#0A1F44]"}`} />
+                <p className="mt-2 text-center text-[11px] font-extrabold leading-tight text-[#0A1F44]">{title}</p>
+                <p className="mt-1 text-[10px] font-semibold text-slate-500">{meta}</p>
+              </button>
+            );
+          })}
+        </div>
+
+        <div className="mt-4 flex items-center justify-center gap-2 px-3 py-1 text-xs font-semibold text-[#0A1F44]">
+          <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
+          Traceable to approved records. Built for evidence review.
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Page ────────────────────────────────────────────────────────────────────
 
 export default function MarketingHome() {
-  const [activeWorkflowStep, setActiveWorkflowStep] = useState<number | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
   const [activeFrameworkCard, setActiveFrameworkCard] = useState<number | null>(null);
   const [activeFlowStep, setActiveFlowStep] = useState<number | null>(null);
@@ -190,181 +515,53 @@ export default function MarketingHome() {
       <section className="border-b border-slate-200 bg-white">
         <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-14">
           <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
-              Evidence behind the claim.
-            </p>
             <h1 className="mt-4 max-w-2xl text-4xl font-extrabold leading-[1.04] tracking-tight text-[#0A1F44] md:text-5xl">
-              Claim-level evidence for defensible ESG and social-impact reporting.
+              ESG evidence your team can trace, review, and report.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-[#0A1F44]/80">
-              Turn each claim into a structured evidence record that shows what supports it, who confirmed it, what source evidence exists, what remains unverified, and what the claim does not prove.
+            <p className="mt-5 max-w-xl text-lg leading-relaxed text-[#0A1F44]/80">
+              Synerxus helps ESG teams organize approved activity records, confirmation status, and evidence summaries before they appear in disclosure workflows.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
                 <Link href="/request-assessment">Request Readiness Assessment</Link>
               </Button>
               <Button asChild variant="outline" className="border-[#0A1F44] text-[#0A1F44]">
-                <Link href="/platform">View Sample Evidence Summary</Link>
+                <Link href="/for-esg-teams">For ESG Teams</Link>
               </Button>
             </div>
             <div className="mt-8 flex gap-4 rounded-md border border-[#c88914]/30 bg-[#fff9eb] p-4 text-sm leading-relaxed text-[#0A1F44]">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#c88914]" />
               <p>
-                Synerxus supports evidence organization, reporting preparation, and assurance preparation; it does not provide formal assurance, legal advice, regulatory compliance determinations, SDG impact certification, or causal attribution.
+                ESG dashboard figures reflect organization-approved activity records. They are not downstream impact claims or formal assurance conclusions.
               </p>
             </div>
           </div>
 
-          {/* ── Claim record mini-preview ───────────────────────────────── */}
-          <div className="relative">
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-2xl">
-              <div className="border-b border-slate-100 bg-[#061A36] px-4 py-3">
-                <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">Sample Claim Record</p>
-              </div>
-              <div className="p-5">
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    <p className="text-[10px] font-bold text-slate-500">Claim</p>
-                    <h3 className="mt-1 text-sm font-extrabold leading-snug text-[#0A1F44]">
-                      240 residents completed solar workforce training during Q2 2026.
-                    </h3>
-                  </div>
-                  <span className="shrink-0 rounded-full bg-emerald-100 px-3 py-1 text-xs font-bold text-emerald-700">In review</span>
-                </div>
-
-                <div className="mt-4 grid grid-cols-2 gap-3">
-                  {[
-                    { label: "Claimed residents", value: "240" },
-                    { label: "Confirmed residents", value: "240" },
-                    { label: "Evidence coverage", value: "76%" },
-                    { label: "Evidence packets", value: "8" },
-                  ].map(({ label, value }) => (
-                    <div key={label} className="rounded-md border border-slate-200 p-3">
-                      <p className="text-[10px] font-bold text-slate-500">{label}</p>
-                      <p className="mt-1 text-xl font-extrabold tabular-nums text-[#0A1F44]">{value}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="mt-4 rounded-md bg-slate-50 p-4">
-                  <div className="flex items-center justify-between">
-                    <p className="text-xs font-extrabold text-[#0A1F44]">Evidence coverage</p>
-                    <p className="text-xs font-bold tabular-nums text-emerald-700">76%</p>
-                  </div>
-                  <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-200">
-                    <div className="h-3 w-[76%] rounded-full bg-emerald-600" />
-                  </div>
-                  <p className="mt-2 text-[11px] font-semibold text-slate-500">
-                    Supported 76% · Partial 16% · Unverified 8%
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
+          <HeroEvidenceVisual />
         </div>
       </section>
 
-      {/* ── ESG Manager Framing ─────────────────────────────────────────── */}
+      {/* ── Entry Points ────────────────────────────────────────────────── */}
       <section className="border-b border-slate-200 bg-white py-8">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-center text-2xl font-extrabold text-[#0A1F44]">
-            Built for the moment your assurance provider asks: what supports this claim?
-          </h2>
-          <p className="mx-auto mt-4 max-w-3xl text-center text-base leading-relaxed text-slate-700">
-            ESG Managers spend weeks before assurance reviews reconstructing the evidence behind disclosure claims. Synerxus connects each claim to its evidence, confirmation, and source support before the review starts — so the answer is ready when it is asked.
-          </p>
-          <div className="mt-8 grid gap-6 md:grid-cols-2">
-            <div className="rounded-lg border border-red-200 bg-red-50 p-6">
-              <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-red-700">Before Synerxus</p>
-              <ul className="mt-5 space-y-3">
-                {[
-                  "ESG claims assembled from spreadsheets and email chains",
-                  "Partner reports stored as unconnected PDFs",
-                  "Assurance provider asks for evidence, team scrambles to reconstruct",
-                  "Some claims cannot be supported after the fact",
-                  "Disclosure is filed with known evidence gaps",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-sm leading-relaxed text-slate-700">
-                    <span className="mt-1 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-red-200">
-                      <span className="h-1.5 w-1.5 rounded-full bg-red-600" />
-                    </span>
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6">
-              <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-emerald-700">With Synerxus</p>
-              <ul className="mt-5 space-y-3">
-                {[
-                  "Each disclosure claim connected to its evidence record",
-                  "Partner confirmation captured with name, role, and date",
-                  "Source artifacts attached to specific claims, not filed separately",
-                  "Exception flags visible before the report is submitted",
-                  "Assurance-preparation export ready when the review starts",
-                ].map((item) => (
-                  <li key={item} className="flex items-start gap-3 text-sm leading-relaxed text-slate-700">
-                    <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
-                    {item}
-                  </li>
-                ))}
-              </ul>
-            </div>
+        <div className="mx-auto grid max-w-7xl gap-5 px-4 md:grid-cols-2 md:px-8">
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
+            <h2 className="text-xl font-extrabold text-[#0A1F44]">For Organizations</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+              Define your project metrics. Post opportunities. Approve contributions. Generate verified evidence summaries for funders and corporate partners.
+            </p>
+            <Link href="/use-cases" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
+              For organizations <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-        </div>
-      </section>
-
-      {/* ── How Synerxus Works ───────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-8">
-        <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-center text-2xl font-extrabold text-[#0A1F44]">How Synerxus Works</h2>
-          <p className="mt-1 text-center text-sm text-slate-400">Click any step to learn more.</p>
-          <div className="mt-7 grid gap-5 lg:grid-cols-5">
-            {workflow.map((item, index) => {
-              const Icon = item.icon;
-              const isActive = activeWorkflowStep === index;
-              return (
-                <button
-                  key={item.title}
-                  type="button"
-                  onClick={() => setActiveWorkflowStep((prev) => (prev === index ? null : index))}
-                  className={`group relative flex gap-3 rounded-lg border p-3 text-left transition-all duration-200 ${
-                    isActive
-                      ? "border-[#0A1F44] bg-[#0A1F44] shadow-md"
-                      : "border-transparent hover:border-slate-200 hover:bg-slate-50"
-                  }`}
-                >
-                  <div className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-md border transition-colors ${
-                    isActive
-                      ? "border-white/20 bg-white/15"
-                      : "border-[#0A1F44]/20 bg-white group-hover:border-[#c88914]/60 group-hover:bg-[#fff9eb]"
-                  }`}>
-                    <Icon className={`h-7 w-7 transition-colors ${isActive ? "text-[#c88914]" : "text-[#0A1F44] group-hover:text-[#c88914]"}`} />
-                  </div>
-                  <div>
-                    <p className={`text-xs font-extrabold ${isActive ? "text-[#c88914]" : "text-[#c88914]"}`}>{index + 1}</p>
-                    <h3 className={`text-sm font-extrabold ${isActive ? "text-white" : "text-[#0A1F44]"}`}>{item.title}</h3>
-                    <p className={`mt-1 text-xs leading-relaxed ${isActive ? "text-white/70" : "text-slate-600"}`}>{item.body}</p>
-                  </div>
-                </button>
-              );
-            })}
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
+            <h2 className="text-xl font-extrabold text-[#0A1F44]">For Corporations</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+              See your employees' confirmed contributions — filtered by person and organization, traceable to every approved record.
+            </p>
+            <Link href="/for-esg-teams" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
+              For ESG teams <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
-
-          {activeWorkflowStep !== null && (
-            <div className="mt-5 rounded-lg border border-[#0A1F44]/20 bg-[#f8fafc] p-5">
-              <div className="flex items-start gap-4">
-                {(() => { const I = workflow[activeWorkflowStep].icon; return <I className="h-7 w-7 shrink-0 text-[#0A1F44]" />; })()}
-                <div className="flex-1">
-                  <h3 className="font-extrabold text-[#0A1F44]">{workflow[activeWorkflowStep].title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-700">{workflow[activeWorkflowStep].detail}</p>
-                </div>
-                <button type="button" onClick={() => setActiveWorkflowStep(null)} className="shrink-0 text-slate-400 hover:text-slate-600">
-                  <XCircle className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          )}
         </div>
       </section>
 
@@ -501,11 +698,11 @@ export default function MarketingHome() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-center text-sm font-extrabold uppercase tracking-[0.18em] text-[#0A1F44]">
-              One consistent evidence flow for every claim
+              Bottom-up evidence flow
             </h2>
             <p className="mt-1 text-center text-xs text-slate-400">Click any step to learn more.</p>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-6">
+            <div className="mt-6 grid gap-5 md:grid-cols-5">
               {evidenceFlow.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = activeFlowStep === index;

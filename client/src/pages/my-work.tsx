@@ -267,7 +267,7 @@ export default function MyWork() {
       {filter === "all" && (
         <>
           <p className="text-xs text-gray-500 mb-4">
-            Submit your first activity to start building your verified contribution record.
+            Submit your first activity to start building your contribution record.
           </p>
           <button
             onClick={() => navigate("/log-activity")}

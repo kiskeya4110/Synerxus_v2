@@ -541,7 +541,7 @@ function ImpactScoreCard({ score, trend, hoursLogged, projectsActive, onViewDeta
         <div className="flex items-start justify-between mb-4">
           <div>
             <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-1">
-              Verified Contribution Summary
+              Contribution Summary
             </p>
             <div className="flex items-baseline gap-2">
               <span className="text-5xl font-bold text-foreground tabular-nums">
@@ -1046,7 +1046,7 @@ export default function VolunteerDashboardNew() {
                 <h1 className="text-base font-bold text-stone-800 leading-tight">
                   Welcome back{activeUser?.displayName ? `, ${activeUser.displayName.split(' ')[0]}` : ''}
                 </h1>
-                <p className="text-stone-600 text-xs">Your verified contribution record</p>
+                <p className="text-stone-600 text-xs">Your contribution record</p>
               </div>
 
               {/* Quick Stats Summary */}
@@ -1062,7 +1062,7 @@ export default function VolunteerDashboardNew() {
                 <div className="grid grid-cols-3 gap-2 text-center">
                   <div>
                     <p className="text-2xl font-bold text-white">{stats.verifiedHours || stats.hoursLogged}</p>
-                    <p className="text-xs text-emerald-200">Verified Hrs</p>
+                    <p className="text-xs text-emerald-200">Confirmed Hrs</p>
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">{stats.totalProjects}</p>
@@ -1191,7 +1191,7 @@ export default function VolunteerDashboardNew() {
                     <span className="text-xs font-medium text-stone-500 uppercase">Hours</span>
                   </div>
                   <p className="text-2xl font-bold text-stone-800">{stats.hoursLogged}</p>
-                  <p className="text-xs text-stone-500 mt-0.5">{stats.verifiedHours} verified</p>
+                  <p className="text-xs text-stone-500 mt-0.5">{stats.verifiedHours} confirmed</p>
                 </div>
 
                 {/* People Reached */}
@@ -1576,7 +1576,7 @@ export default function VolunteerDashboardNew() {
         {/* Page Header */}
         <PageHeader
           title={`Welcome back, ${activeUser.displayName?.split(" ")[0] || "Volunteer"}`}
-          description="Log activity, track verification status, and view your verified contribution record."
+          description="Log activity, track verification status, and view your contribution record."
           actions={
             <Button variant="accent" size="lg" onClick={() => setShowLogModal(true)}>
               <Plus className="h-5 w-5 mr-2" />
@@ -1633,7 +1633,7 @@ export default function VolunteerDashboardNew() {
                 </p>
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-muted-foreground">Verified Activities</span>
+                    <span className="text-sm text-muted-foreground">Confirmed Activities</span>
                     <span className="text-sm font-semibold text-emerald-700">{stats.verifiedActivities}</span>
                   </div>
                   <div className="flex items-center justify-between">

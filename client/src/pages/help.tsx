@@ -88,7 +88,7 @@ const faqData: FAQItem[] = [
     category: "Corporate Partners",
     question: "What is the Impact Score?",
     answer:
-      "Impact Score summarizes verified contribution signals for internal prioritization. It is not a compliance score, certification, or assurance opinion.",
+      "Impact Score summarizes tracked contribution signals for internal prioritization. It is not a compliance score, certification, or assurance opinion.",
   },
   {
     category: "SDG Goals",

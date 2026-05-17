@@ -14,7 +14,7 @@ const sections: TermsSection[] = [
   {
     title: "1. About Synerxus",
     paragraphs: [
-      "Synerxus provides verified evidence infrastructure for ESG, CSR, corporate volunteering, community investment, social value, and partner-delivered impact programs.",
+      "Synerxus provides structured evidence infrastructure for ESG, CSR, corporate volunteering, community investment, social value, and partner-delivered impact programs.",
       "The Services help organizations capture activity data, link activity to outputs, enable authorized partner confirmation, create structured evidence records, support framework alignment, and generate management reports for reporting and assurance preparation.",
       "Synerxus is not a volunteer marketplace alone, ESG reporting certifier, accounting firm, law firm, registered assurance provider, or regulatory compliance body.",
     ],

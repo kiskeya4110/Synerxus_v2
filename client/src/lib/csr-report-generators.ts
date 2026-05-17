@@ -637,7 +637,7 @@ export function generateOrgPDFContent(
                     <span style="color:#0A2463;">SYNERXUS</span>
                   </span>
                   <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
-                    <span style="color:#ffcc33;">Impacts.</span> <span style="color:#0A2463;">Verified.</span>
+                    <span style="color:#0A2463;">Evidence behind ESG claims</span>
                   </span>
                 </div>
               </div>
@@ -728,7 +728,7 @@ export function generateOrgPDFContent(
           <div class="footer-logo">
             <img src="${origin}/synerxus-esg-logo.png" alt="Synerxus" style="height: 28px; width: auto;" />
           </div>
-          <div class="footer-tagline"><span style="color:#ffcc33;">Impacts.</span> <span style="color:#0A2463;">Verified.</span></div>
+          <div class="footer-tagline"><span style="color:#0A2463;">Evidence behind ESG claims</span></div>
           <div class="footer-generated">
             Generated on ${currentDate} • ${template.name}
           </div>
@@ -738,7 +738,7 @@ export function generateOrgPDFContent(
           <div class="footer-copyright">
             © ${new Date().getFullYear()} Synerxus. All rights reserved. | hello@synerxus.com
           </div>
-          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#ffcc33;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#ffcc33;font-weight:600;">Impacts.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
+          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#ffcc33;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#0A2463;font-weight:600;">Evidence behind ESG claims</span></div>
         </div>
       </body>
     </html>
@@ -1116,7 +1116,7 @@ export function generatePDFContent(
                     <span style="color:#0A2463;">SYNERXUS</span>
                   </span>
                   <span style="font-size:13px;font-weight:600;line-height:1;white-space:nowrap;font-family:Arial,sans-serif;">
-                    <span style="color:#ffcc33;">Evidence.</span> <span style="color:#0A2463;">Verified.</span>
+                    <span style="color:#0A2463;">Evidence behind ESG claims</span>
                   </span>
                 </div>
               </div>
@@ -1697,7 +1697,7 @@ export function generatePDFContent(
             <div class="footer-logo-block">
               <img src="${origin}/synerxus-esg-logo.png" alt="Synerxus" style="height:28px;width:auto;" />
               <div style="font-size:11px;line-height:1.6;color:#6b7280;">
-                <div><span style="color:#ffcc33;font-weight:700;">Evidence.</span> <span style="color:#0A2463;font-weight:700;">Verified.</span></div>
+                <div><span style="color:#0A2463;font-weight:700;">Evidence behind ESG claims</span></div>
                 <div>Assurance-Support Documentation</div>
               </div>
             </div>
@@ -1722,7 +1722,7 @@ export function generatePDFContent(
             <div class="footer-confidential">⚠ SAMPLE REPORT — Illustrative data only. This report contains confidential information. Distribution is restricted to authorized personnel.</div>
           </div>
           <div class="footer-copyright">© ${new Date().getFullYear()} Synerxus. All rights reserved. | hello@synerxus.com</div>
-          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#ffcc33;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#ffcc33;font-weight:600;">Evidence.</span> <span style="color:#0A2463;font-weight:600;">Verified.</span></div>
+          <div style="text-align:center;margin-top:14px;padding-top:10px;border-top:1px solid #e5e7eb;font-size:10px;letter-spacing:0.04em;">Powered by <span style="color:#0A2463;font-weight:700;">SYNER</span><span style="color:#ffcc33;font-weight:700;">XUS</span> &nbsp;·&nbsp; <span style="color:#0A2463;font-weight:600;">Evidence behind ESG claims</span></div>
         </div>
       </body>
     </html>

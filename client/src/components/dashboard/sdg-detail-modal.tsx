@@ -185,7 +185,7 @@ export default function SDGDetailModal({
                     <Clock className="h-5 w-5 text-blue-600" />
                   </div>
                   <div>
-                    <p className="text-xs text-blue-600 font-medium">Verified Hours</p>
+                    <p className="text-xs text-blue-600 font-medium">Confirmed Hours</p>
                     <p className="text-lg font-bold text-blue-700">{formatDecimal(metrics.totalHours)}</p>
                   </div>
                 </CardContent>

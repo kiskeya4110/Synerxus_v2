@@ -196,7 +196,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
       <div style="font-size:11px;font-weight:800;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Summary at a Glance</div>
       <div class="grid grid-3">
         <div class="metric-card"><span class="metric-icon">&#128196;</span><div class="metric-label">Verified Evidence Records</div><div class="metric-value">${context.verifiedRecords}</div><div class="metric-note">Total records verified</div></div>
-        <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Verified Hours</div><div class="metric-value">${context.verifiedHours}</div><div class="metric-note">Total hours verified</div></div>
+        <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Confirmed Hours</div><div class="metric-value">${context.verifiedHours}</div><div class="metric-note">Total hours verified</div></div>
         <div class="metric-card"><span class="metric-icon">&#128101;</span><div class="metric-label">Partner-Reported Reach</div><div class="metric-value">${context.partnerReportedReach}</div><div class="metric-note">Individuals reached</div></div>
       </div>
     </div>
@@ -207,7 +207,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
     <p class="subtitle" style="margin-bottom:14px">Verified, Partner-Reported, and Derived / Mapped data kept separate.</p>
     <div class="grid-6">
       <div class="metric-card"><span class="metric-icon">&#128196;</span><div class="metric-label">Verified Records</div><div class="metric-value">${context.verifiedRecords}</div></div>
-      <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Verified Hours</div><div class="metric-value">${context.verifiedHours}</div></div>
+      <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Confirmed Hours</div><div class="metric-value">${context.verifiedHours}</div></div>
       <div class="metric-card"><span class="metric-icon">&#10003;</span><div class="metric-label">Verification Rate</div><div class="metric-value">${context.verificationRate}%</div></div>
       <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Avg Verification Time</div><div class="metric-value" style="font-size:13px">${escapeHtml(context.averageVerificationTime)}</div></div>
       <div class="metric-card"><span class="metric-icon">&#9888;</span><div class="metric-label">Incomplete Records</div><div class="metric-value">${context.incompleteRecords}</div></div>
@@ -219,7 +219,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
         <div class="tier-icon">&#9989;</div>
         <div class="tier-title">Verified</div>
         <div class="tier-desc">Partner-confirmed outputs and verified hours.</div>
-        <div class="tier-metrics"><strong>Example Metrics</strong><br>Verified Evidence Records: ${context.verifiedRecords}<br>Verified Hours: ${context.verifiedHours}<br>Verification Rate: ${context.verificationRate}%<br>Avg. Verification Time: ${escapeHtml(context.averageVerificationTime)}</div>
+        <div class="tier-metrics"><strong>Example Metrics</strong><br>Verified Evidence Records: ${context.verifiedRecords}<br>Confirmed Hours: ${context.verifiedHours}<br>Verification Rate: ${context.verificationRate}%<br>Avg. Verification Time: ${escapeHtml(context.averageVerificationTime)}</div>
       </div>
       <div class="tier-card amber">
         <div class="tier-icon">&#128101;</div>
@@ -372,7 +372,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
     <div class="table-wrap" style="margin-bottom:14px"><table><thead><tr><th>Term</th><th>Definition</th></tr></thead><tbody>
       <tr><td><strong>Verified Evidence Record</strong></td><td>A structured record that has completed required verification checks and can support reporting.</td></tr>
       <tr><td><strong>Partner-Confirmed Output</strong></td><td>An output submitted by an authorized partner or verifier.</td></tr>
-      <tr><td><strong>Verified Hours</strong></td><td>Hours tied to records with completed verification status.</td></tr>
+      <tr><td><strong>Confirmed Hours</strong></td><td>Hours tied to records with completed verification status.</td></tr>
       <tr><td><strong>Partner-Reported Reach</strong></td><td>Reach figures reported by partners and not independently verified unless explicitly stated.</td></tr>
       <tr><td><strong>Derived / Mapped Alignment</strong></td><td>Alignment to frameworks such as Synerxus classification and framework mapping.</td></tr>
       <tr><td><strong>Incomplete Record</strong></td><td>A record missing required information or documentation and not eligible for verification.</td></tr>
@@ -451,7 +451,7 @@ export function generateCSVContent(
   rows.push(["", "", "", ""]);
 
   if (data) {
-    rows.push(["Verified Hours", String(data.engagementMetrics?.totalHours || 0), "YTD", "Active"]);
+    rows.push(["Confirmed Hours", String(data.engagementMetrics?.totalHours || 0), "YTD", "Active"]);
     rows.push(["Active Employees", String(data.engagementMetrics?.activeEmployees || 0), "Current", "Active"]);
     rows.push(["Participation Rate", `${data.engagementMetrics?.participationRate || 0}%`, "Current", "Active"]);
     rows.push(["Direct Beneficiaries", String(data.impactMetrics?.directBeneficiaries || 0), "YTD", "Active"]);

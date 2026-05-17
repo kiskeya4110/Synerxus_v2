@@ -199,7 +199,7 @@ export default function CSRDashboardPWA() {
       <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4">
         {/* Summary Bar */}
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <h1 className="text-lg font-bold text-slate-900 mb-3">Verified Outcomes</h1>
+          <h1 className="text-lg font-bold text-slate-900 mb-3">Confirmed Outcomes</h1>
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center">
               <div className="text-2xl font-bold text-emerald-600">{summary.totalVerifiedOutcomes}</div>

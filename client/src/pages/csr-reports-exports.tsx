@@ -368,7 +368,7 @@ export default function CSRReportsExports() {
             <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
               <TrendingUp className="h-5 w-5 text-blue-600 mx-auto mb-1" />
               <p className="text-lg font-bold">{orgDashboardData?.totalHours || 0}</p>
-              <p className="text-[10px] text-gray-500">Verified Hours</p>
+              <p className="text-[10px] text-gray-500">Confirmed Hours</p>
             </div>
             <div className="bg-white rounded-lg p-3 border border-slate-200 shadow-sm text-center">
               <Users className="h-5 w-5 text-green-600 mx-auto mb-1" />

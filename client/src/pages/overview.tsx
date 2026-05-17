@@ -828,7 +828,7 @@ export default function Overview() {
               <div className="p-2 bg-green-100 rounded-lg">
                 <Clock size={20} className="text-green-600" />
               </div>
-              <span className="text-sm font-medium text-gray-700">Verified Hours</span>
+              <span className="text-sm font-medium text-gray-700">Confirmed Hours</span>
             </div>
             <p className="text-4xl font-bold text-green-600 mb-1">{(metrics.totalHours || 0).toLocaleString()}</p>
             <p className="text-xs text-gray-600">Volunteer hours logged</p>

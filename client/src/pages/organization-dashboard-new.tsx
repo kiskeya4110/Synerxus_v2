@@ -1262,7 +1262,7 @@ export default function OrganizationDashboardNew() {
                       variant="outline"
                       onClick={() => {
                         const rows = [
-                          ["Project", "Status", "Logged Hours", "Verified Hours", "Volunteers", "Partner-Reported Reach", "Completion %"],
+                          ["Project", "Status", "Logged Hours", "Confirmed Hours", "Volunteers", "Partner-Reported Reach", "Completion %"],
                           ...(reportData.projects || []).map((p: any) => [
                             p.name, p.status, p.totalHours, p.verifiedHours, p.volunteerCount, p.peopleImpacted, p.completionPercentage
                           ]),
@@ -1298,7 +1298,7 @@ export default function OrganizationDashboardNew() {
               <>
                 <Grid columns={4}>
                   <MetricCard label="Logged Hours" value={reportData.summary?.totalHours || 0} />
-                  <MetricCard label="Verified Hours" value={reportData.summary?.verifiedHours || 0} />
+                  <MetricCard label="Confirmed Hours" value={reportData.summary?.verifiedHours || 0} />
                   <MetricCard label="Volunteers" value={reportData.summary?.totalVolunteers || 0} />
                   <MetricCard label="People Impacted" value={reportData.summary?.peopleImpacted || 0} />
                   <MetricCard label="Projects" value={reportData.summary?.totalProjects || 0} />

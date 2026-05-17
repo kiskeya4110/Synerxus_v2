@@ -145,7 +145,7 @@ export default function ImpactLogHistory({
           <div className="grid grid-cols-3 gap-3 mb-4 p-3 bg-gradient-to-r from-emerald-50 to-teal-50 rounded-lg">
             <div className="text-center">
               <p className="text-2xl font-bold text-emerald-700">{stats.verifiedHours}</p>
-              <p className="text-xs text-emerald-600">Verified Hours</p>
+              <p className="text-xs text-emerald-600">Confirmed Hours</p>
             </div>
             <div className="text-center border-x border-emerald-200">
               <p className="text-2xl font-bold text-amber-600">{stats.pending}</p>

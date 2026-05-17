@@ -1238,7 +1238,7 @@ export default function ProjectDetail() {
                   <div className="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-200 dark:border-blue-800 text-center">
                     <Clock className="h-5 w-5 text-blue-600 mx-auto mb-1" />
                     <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">{Math.round(totalHours)}</div>
-                    <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Verified Hours</div>
+                    <div className="text-xs text-blue-600/80 dark:text-blue-400/80">Confirmed Hours</div>
                   </div>
                   <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 text-center">
                     <Zap className="h-5 w-5 text-purple-600 mx-auto mb-1" />
@@ -1445,7 +1445,7 @@ export default function ProjectDetail() {
                       <div className="text-xl font-bold text-green-600">
                         {projectActivities.filter(a => a.verificationStatus === 'approved').reduce((sum, a) => sum + (a.hours || 0), 0)}
                       </div>
-                      <div className="text-xs text-green-600/80">Verified Hours</div>
+                      <div className="text-xs text-green-600/80">Confirmed Hours</div>
                     </div>
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
                       <div className="text-xl font-bold text-amber-600">
@@ -1644,7 +1644,7 @@ export default function ProjectDetail() {
                   <div className="grid grid-cols-3 gap-3">
                     <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-blue-600">{Math.round(totalHours)}</div>
-                      <div className="text-xs text-blue-600/80">Verified Hours</div>
+                      <div className="text-xs text-blue-600/80">Confirmed Hours</div>
                     </div>
                     <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-green-600">

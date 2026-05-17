@@ -19,7 +19,7 @@ import { prepareReportContent } from "@/lib/report-sanitizer";
 type CorporateTab = 'outcomes' | 'reports';
 
 const CORPORATE_TABS: { id: CorporateTab; label: string }[] = [
-  { id: 'outcomes', label: 'Verified Outcomes' },
+  { id: 'outcomes', label: 'Confirmed Outcomes' },
   { id: 'reports',  label: 'ESG Reports' },
 ];
 
@@ -361,7 +361,7 @@ const CorporateView = memo(function CorporateView({
         {/* Summary Bar - Interactive */}
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-lg font-bold text-slate-900">Verified Outcomes</h1>
+            <h1 className="text-lg font-bold text-slate-900">Confirmed Outcomes</h1>
           </div>
           <div className="grid grid-cols-3 gap-3">
             <button
@@ -726,7 +726,7 @@ const CorporateView = memo(function CorporateView({
         </nav>
       </div>
 
-      {/* ── Verified Outcomes Tab ────────────────────────────────────────── */}
+      {/* ── Confirmed Outcomes Tab ────────────────────────────────────────── */}
       {activeCorpTab === 'outcomes' && (<>
 
       {/* Summary Cards */}
@@ -734,7 +734,7 @@ const CorporateView = memo(function CorporateView({
         <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-sm">
           <div className="flex items-center gap-2 mb-2">
             <CheckCircle className="h-5 w-5 text-emerald-600" />
-            <span className="text-sm font-medium text-slate-500 uppercase">Verified Outcomes</span>
+            <span className="text-sm font-medium text-slate-500 uppercase">Confirmed Outcomes</span>
           </div>
           <p className="text-3xl font-bold text-slate-900">{summary.totalVerifiedOutcomes}</p>
         </div>
@@ -1026,7 +1026,7 @@ const CorporateView = memo(function CorporateView({
               <div className="w-px h-8 bg-slate-200" />
               <div>
                 <div className="text-sm font-bold text-slate-900 leading-tight">CSR / ESG Reports</div>
-                <div className="text-[10px] text-slate-500 leading-tight">Verified impact data · Audit-ready exports</div>
+                <div className="text-[10px] text-slate-500 leading-tight">Confirmed activity records · Assurance-preparation exports</div>
               </div>
             </div>
             <span className="text-xs font-semibold px-3 py-1 rounded-full bg-blue-100 text-blue-700">✓ Evidence Confirmed</span>

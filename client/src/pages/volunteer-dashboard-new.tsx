@@ -1588,7 +1588,7 @@ export default function VolunteerDashboardNew() {
         {/* Primary KPI Row */}
         <Grid columns={4} gap="default">
           <MetricCard
-            label="Verified Hours"
+            label="Confirmed Hours"
             value={stats.verifiedHours || stats.hoursLogged}
             subtitle={stats.pendingVerifications > 0 ? `${stats.pendingVerifications} pending review` : "partner-confirmed"}
             accentColor="success"

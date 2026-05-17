@@ -1792,7 +1792,7 @@ const OrganizationView = memo(function OrganizationView({
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-gray-900">{stats.totalHours}</p>
-                    <p className="text-xs text-gray-500">Verified Hours</p>
+                    <p className="text-xs text-gray-500">Confirmed Hours</p>
                   </div>
                 </div>
               </div>
@@ -1957,7 +1957,7 @@ const OrganizationView = memo(function OrganizationView({
               {/* Quick stats */}
               <div className="grid grid-cols-2 gap-3">
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
-                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Verified Hours</p>
+                  <p className="text-xs font-medium text-gray-500 uppercase mb-1">Confirmed Hours</p>
                   <p className="text-2xl font-bold text-blue-700">{stats.verifiedHours || reportPreviewStats.totalHoursVerified || 0}</p>
                 </div>
                 <div className="bg-white rounded-xl p-4 border border-gray-200 shadow-sm">
@@ -2025,7 +2025,7 @@ const OrganizationView = memo(function OrganizationView({
           icon={<CheckCircle2 className="h-5 w-5 text-success" />}
         />
         <MetricCard
-          label="Verified Hours"
+          label="Confirmed Hours"
           value={stats.verifiedHours || reportPreviewStats.totalHoursVerified || 0}
           accentColor="cyan"
           icon={<Clock className="h-5 w-5 text-[#22D3EE]" />}

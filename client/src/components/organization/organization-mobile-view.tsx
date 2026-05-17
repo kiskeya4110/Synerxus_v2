@@ -209,7 +209,7 @@ function QuickStats({
           </div>
           <div>
             <p className="text-lg font-bold text-foreground">{totalHours.toLocaleString()}</p>
-            <p className="text-[10px] text-muted-foreground">Verified Hours</p>
+            <p className="text-[10px] text-muted-foreground">Confirmed Hours</p>
           </div>
         </div>
       </Card>

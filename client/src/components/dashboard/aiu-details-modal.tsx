@@ -116,7 +116,7 @@ export default function AIUDetailsModal({
             </div>
           </div>
 
-          {/* Verified Outcomes - Interactive */}
+          {/* Confirmed Outcomes - Interactive */}
           <button
             onClick={onNavigateToVerification}
             className="w-full text-left"
@@ -130,7 +130,7 @@ export default function AIUDetailsModal({
                       <CheckCircle2 className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <p className="font-semibold text-white text-sm">Verified Outcomes</p>
+                      <p className="font-semibold text-white text-sm">Confirmed Outcomes</p>
                       <p className="text-xs text-slate-400">
                         {verificationRate}% of your activities are verified by organizations
                       </p>
@@ -147,7 +147,7 @@ export default function AIUDetailsModal({
                   <div className="mt-3 grid grid-cols-2 gap-2">
                     <div className="bg-emerald-500/20 rounded-lg p-2 text-center border border-emerald-500/30">
                       <p className="text-lg font-bold text-emerald-400">{formatDecimal(verifiedHours)}</p>
-                      <p className="text-[10px] text-emerald-400">Verified Outcomes</p>
+                      <p className="text-[10px] text-emerald-400">Confirmed Outcomes</p>
                     </div>
                     <div className="bg-amber-500/20 rounded-lg p-2 text-center border border-amber-500/30">
                       <p className="text-lg font-bold text-amber-400">{formatDecimal(pendingHours)}</p>

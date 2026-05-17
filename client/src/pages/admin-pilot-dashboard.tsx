@@ -405,7 +405,7 @@ export default function AdminPilotDashboard() {
               <StatCard
                 icon="⏱"
                 value={`${stats?.totalVerifiedHours ?? 0}h`}
-                label="Verified Hours"
+                label="Confirmed Hours"
                 sublabel="partner-confirmed (from self-reported)"
                 color="cyan"
               />

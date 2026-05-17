@@ -40,7 +40,7 @@ const ViewLoader = () => (
  * Access Control:
  * - Volunteer: Log Impact (self), Project Matches, Hours Tracking
  * - Organization: Verification Queue, Project Management, Log Hours for Others
- * - Corporate: Verified Outcomes (read-only), ESG Reports
+ * - Corporate: Confirmed Outcomes (read-only), ESG Reports
  */
 export default function UnifiedDashboard() {
   const { user, dbUser, loading: authLoading, signOut } = useAuth();

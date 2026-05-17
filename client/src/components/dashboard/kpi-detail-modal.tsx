@@ -235,7 +235,7 @@ export default function KPIDetailModal({
                 <Clock className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs text-blue-600 font-medium">Verified Hours</p>
+                <p className="text-xs text-blue-600 font-medium">Confirmed Hours</p>
                 <p className="text-lg font-bold text-blue-700">{totalHours.toLocaleString()}</p>
               </div>
             </CardContent>
@@ -706,7 +706,7 @@ export default function KPIDetailModal({
                 <span className="font-semibold text-slate-800">${economicValueRate}/hour</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Verified Hours</span>
+                <span className="text-sm text-slate-600">Confirmed Hours</span>
                 <span className="font-semibold text-slate-800">{totalHours.toLocaleString()}</span>
               </div>
               <div className="border-t pt-2 flex items-center justify-between">
@@ -770,7 +770,7 @@ export default function KPIDetailModal({
                 <Clock className="h-5 w-5 text-blue-600" />
               </div>
               <div>
-                <p className="text-xs text-blue-600 font-medium">Verified Hours</p>
+                <p className="text-xs text-blue-600 font-medium">Confirmed Hours</p>
                 <p className="text-lg font-bold text-blue-700">{totalHours.toLocaleString()}</p>
               </div>
             </CardContent>
@@ -874,7 +874,7 @@ export default function KPIDetailModal({
                 <Clock className="h-5 w-5 text-emerald-600" />
               </div>
               <div>
-                <p className="text-xs text-emerald-600 font-medium">Verified Hours</p>
+                <p className="text-xs text-emerald-600 font-medium">Confirmed Hours</p>
                 <p className="text-lg font-bold text-emerald-700">{totalHours.toLocaleString()}</p>
               </div>
             </CardContent>
@@ -1042,7 +1042,7 @@ export default function KPIDetailModal({
 
   // Get header config based on KPI type
   const headerConfig = {
-    hours: { title: 'Verified Hours', icon: Clock, gradient: 'from-blue-500 to-cyan-500', value: totalHours.toLocaleString() },
+    hours: { title: 'Confirmed Hours', icon: Clock, gradient: 'from-blue-500 to-cyan-500', value: totalHours.toLocaleString() },
     employees: { title: 'Participants', icon: Users, gradient: 'from-emerald-500 to-teal-500', value: totalEmployees.toString() },
     projects: { title: 'Active Projects', icon: Briefcase, gradient: 'from-purple-500 to-violet-500', value: totalProjects.toString() },
     sdg: { title: 'SDG Goals', icon: Target, gradient: 'from-amber-500 to-orange-500', value: sdgMetrics.length.toString() },

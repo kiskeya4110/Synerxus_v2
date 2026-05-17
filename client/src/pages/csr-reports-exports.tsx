@@ -907,7 +907,7 @@ export default function CSRReportsExports() {
                 {companyName && companyName !== "Your Company" && (
                   <div style={{ fontSize: "13px", fontWeight: "600", color: "#374151" }}>{companyName}</div>
                 )}
-                <div style={{ fontSize: "12px", color: "#6b7280" }}>Verified impact data · Audit-ready exports</div>
+                <div style={{ fontSize: "12px", color: "#6b7280" }}>Confirmed activity records · Assurance-preparation exports</div>
               </div>
             </div>
             <span style={{ fontSize: "11px", fontWeight: "600", padding: "4px 12px", borderRadius: "20px", backgroundColor: "#dbeafe", color: "#1e40af" }}>✓ Evidence Confirmed</span>
@@ -1223,7 +1223,7 @@ export default function CSRReportsExports() {
                 <div style={{ display: "flex", gap: "12px" }}>
                   <label htmlFor="schedule-format-pdf" style={{ display: "flex", alignItems: "center", gap: "6px", cursor: "pointer" }}>
                     <input id="schedule-format-pdf" type="radio" name="format" value="PDF" defaultChecked />
-                    <span style={{ fontSize: "13px" }}>PDF (Audit-Ready)</span>
+                    <span style={{ fontSize: "13px" }}>PDF — formatted for reporting</span>
                   </label>
                 </div>
               </div>

@@ -1650,7 +1650,7 @@ export default function ProjectDetail() {
                       <div className="text-2xl font-bold text-green-600">
                         {projectImpact.filter(i => i.verificationStatus === 'approved').length}
                       </div>
-                      <div className="text-xs text-green-600/80">Verified Impacts</div>
+                      <div className="text-xs text-green-600/80">Tracked Impacts</div>
                     </div>
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-amber-600">

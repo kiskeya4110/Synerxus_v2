@@ -423,7 +423,7 @@ export default function ProjectDetailPWA() {
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                     <div>
                       <p className="text-xs font-semibold text-slate-700">Your Impact Score</p>
-                      <p className="text-xs text-slate-500">Verified Impact Points</p>
+                      <p className="text-xs text-slate-500">Tracked Impact Points</p>
                     </div>
                   </div>
                   <div className="text-right">

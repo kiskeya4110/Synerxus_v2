@@ -17,7 +17,7 @@ export default function AssuranceBoundaryDiagram() {
       sublabelColor: "#0891B2",
     },
     {
-      label: "Self-Reported → Verified → Audit-Ready",
+      label: "Submitted → Reviewed → Traceable",
       sublabel: null,
       bg: "#EFF6FF",
       border: "#0A2463",

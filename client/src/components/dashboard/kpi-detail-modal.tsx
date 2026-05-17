@@ -945,7 +945,7 @@ export default function KPIDetailModal({
         {/* Impact Score Definition */}
         <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-3">
           <p className="text-sm text-slate-700">
-            <span className="font-semibold text-cyan-700">Impact Score</span> is a 0-100 measure of your real-world social impact, based on hours contributed, people reached, tasks completed, and alignment with UN Sustainable Development Goals.
+            <span className="font-semibold text-cyan-700">Impact Score</span> is a 0-100 measure of your tracked social contributions, based on hours contributed, people reached, tasks completed, and alignment with UN Sustainable Development Goals.
           </p>
         </div>
 

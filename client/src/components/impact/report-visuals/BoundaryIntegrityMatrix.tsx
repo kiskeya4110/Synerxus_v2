@@ -51,7 +51,7 @@ export default function BoundaryIntegrityMatrix() {
               borderBottom: "1px solid #E5E7EB",
             }}
           >
-            Included (Verified)
+            Included (Confirmed)
           </div>
           {included.map((item, i) => (
             <div
@@ -84,7 +84,7 @@ export default function BoundaryIntegrityMatrix() {
               borderBottom: "1px solid #E5E7EB",
             }}
           >
-            Excluded (Not Verified)
+            Excluded (Not Confirmed)
           </div>
           {excluded.map((item, i) => (
             <div

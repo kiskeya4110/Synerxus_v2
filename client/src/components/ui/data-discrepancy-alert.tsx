@@ -78,7 +78,7 @@ export function DataDiscrepancyAlert({ userId, onResolved, showIfNoIssues = fals
       return (
         <Alert className="mb-4 border-green-200 bg-green-50 dark:bg-green-900/20 dark:border-green-800">
           <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
-          <AlertTitle className="text-green-800 dark:text-green-200">Data Verified</AlertTitle>
+          <AlertTitle className="text-green-800 dark:text-green-200">Data Confirmed</AlertTitle>
           <AlertDescription className="text-green-700 dark:text-green-300">
             Your profile data is consistent across all records.
           </AlertDescription>

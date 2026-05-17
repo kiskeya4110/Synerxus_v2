@@ -1382,7 +1382,7 @@ const OrganizationView = memo(function OrganizationView({
                 >
                   <div className="flex items-center gap-2 mb-2">
                     <Clock className="h-4 w-4 text-blue-600" />
-                    <span className="text-xs font-medium text-gray-500 uppercase">Verified Hrs</span>
+                    <span className="text-xs font-medium text-gray-500 uppercase">Confirmed Hrs</span>
                   </div>
                   <p className="text-3xl font-bold text-blue-700">
                     {stats.verifiedHours || reportPreviewStats.totalHoursVerified || 0}
@@ -1688,7 +1688,7 @@ const OrganizationView = memo(function OrganizationView({
                   </div>
                   <div className="text-left">
                     <p className="text-sm font-bold leading-tight">Log Volunteer Hours & Impact</p>
-                    <p className="text-[11px] text-white/80 mt-0.5">Record verified outcomes for your team</p>
+                    <p className="text-[11px] text-white/80 mt-0.5">Record confirmed outcomes for your team</p>
                   </div>
                 </div>
                 <ChevronRight className="h-5 w-5 text-white/70 flex-shrink-0" />

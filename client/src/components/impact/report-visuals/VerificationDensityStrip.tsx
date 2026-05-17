@@ -45,7 +45,7 @@ export default function VerificationDensityStrip({
               lineHeight: 1.1,
             }}
           >
-            {verifiedOutcomes.toLocaleString()} Verified
+            {verifiedOutcomes.toLocaleString()} Confirmed
           </div>
           <div style={{ fontSize: "11px", color: "#374151", marginTop: "4px", fontWeight: 600 }}>
             Outcomes ✓
@@ -71,7 +71,7 @@ export default function VerificationDensityStrip({
               lineHeight: 1.1,
             }}
           >
-            {verifiedHours.toLocaleString()} Verified
+            {verifiedHours.toLocaleString()} Confirmed
           </div>
           <div style={{ fontSize: "11px", color: "#374151", marginTop: "4px", fontWeight: 600 }}>
             Hours ⏱
@@ -96,7 +96,7 @@ export default function VerificationDensityStrip({
               lineHeight: 1.1,
             }}
           >
-            {verifiedBeneficiaries.toLocaleString()} Verified
+            {verifiedBeneficiaries.toLocaleString()} Confirmed
           </div>
           <div style={{ fontSize: "11px", color: "#374151", marginTop: "4px", fontWeight: 600 }}>
             Beneficiaries
@@ -117,7 +117,7 @@ export default function VerificationDensityStrip({
           letterSpacing: "0.03em",
         }}
       >
-        Management Reporting Verified — Supports Global Sustainability Frameworks (ISAE 3000)
+        Management Reporting Confirmed — Supports Global Sustainability Frameworks (ISAE 3000)
       </div>
     </div>
   );

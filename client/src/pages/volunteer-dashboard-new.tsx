@@ -693,7 +693,7 @@ function ActiveProjects({ projects, isLoading }: ActiveProjectsProps) {
     return (
       <EmptyState
         title="No active projects"
-        description="Join a project to start submitting verified activity records"
+        description="Join a project to start submitting confirmed activity records"
         action={{ label: "View Projects", onClick: () => {} }}
         size="sm"
       />
@@ -1239,7 +1239,7 @@ export default function VolunteerDashboardNew() {
 
               {/* Wallet Description */}
               <p className="text-[11px] text-stone-500 text-center px-2 leading-snug">
-                Your Impact Wallet shows your verified volunteer activity, contribution history, and SDG reporting context. It does not establish causal impact.
+                Your Impact Wallet shows your confirmed volunteer activity, contribution history, and SDG reporting context. It does not establish causal impact.
               </p>
 
               {/* Recent Logs */}
@@ -1595,7 +1595,7 @@ export default function VolunteerDashboardNew() {
             icon={<Clock className="h-5 w-5 text-success" />}
           />
           <MetricCard
-            label="Verified Activities"
+            label="Confirmed Activities"
             value={stats.verifiedActivities}
             subtitle={stats.pendingVerifications > 0 ? `${stats.pendingVerifications} pending` : "evidence records"}
             accentColor="primary"
@@ -1650,7 +1650,7 @@ export default function VolunteerDashboardNew() {
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-4 leading-snug border-t border-border pt-3">
-                  Your wallet shows verified activity and reporting context. It does not establish causal impact.
+                  Your wallet shows confirmed activity and reporting context. It does not establish causal impact.
                 </p>
               </CardContent>
             </Card>

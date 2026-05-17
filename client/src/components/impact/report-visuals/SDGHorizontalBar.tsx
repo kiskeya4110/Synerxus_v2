@@ -43,7 +43,7 @@ export default function SDGHorizontalBar({ entries = DEFAULT_ENTRIES }: SDGHoriz
           textTransform: "uppercase",
         }}
       >
-        SDG Alignment — Verified Outcome Distribution
+        SDG Alignment — Confirmed Outcome Distribution
       </div>
 
       <div style={{ padding: "12px 16px", background: "#F9FAFB" }}>
@@ -103,7 +103,7 @@ export default function SDGHorizontalBar({ entries = DEFAULT_ENTRIES }: SDGHoriz
             >
               {entry.percentage}%{" "}
               <span style={{ color: "#6B7280", fontWeight: 400 }}>
-                ({entry.outcomes} outcomes verified)
+                ({entry.outcomes} outcomes confirmed)
               </span>
             </div>
           </div>

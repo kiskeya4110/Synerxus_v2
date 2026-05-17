@@ -196,7 +196,7 @@ function buildVerifiedEvidenceSummaryPdf(context: VerifiedSummaryContext): strin
       <div style="font-size:11px;font-weight:800;color:var(--navy);margin-bottom:10px;text-transform:uppercase;letter-spacing:.06em">Summary at a Glance</div>
       <div class="grid grid-3">
         <div class="metric-card"><span class="metric-icon">&#128196;</span><div class="metric-label">Verified Evidence Records</div><div class="metric-value">${context.verifiedRecords}</div><div class="metric-note">Total records verified</div></div>
-        <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Confirmed Hours</div><div class="metric-value">${context.verifiedHours}</div><div class="metric-note">Total hours verified</div></div>
+        <div class="metric-card"><span class="metric-icon">&#128336;</span><div class="metric-label">Confirmed Hours</div><div class="metric-value">${context.verifiedHours}</div><div class="metric-note">Total hours confirmed</div></div>
         <div class="metric-card"><span class="metric-icon">&#128101;</span><div class="metric-label">Partner-Reported Reach</div><div class="metric-value">${context.partnerReportedReach}</div><div class="metric-note">Individuals reached</div></div>
       </div>
     </div>
@@ -1225,7 +1225,7 @@ export function generatePDFContent(
           <div class="metric-grid">
             <div class="metric-card blue">
               <div class="metric-value">${totalHours.toLocaleString()}</div>
-              <div class="metric-label">Verified Volunteer Hours</div>
+              <div class="metric-label">Confirmed Volunteer Hours</div>
             </div>
             <div class="metric-card green">
               <div class="metric-value">${activeEmployees}</div>

@@ -802,7 +802,7 @@ const VolunteerView = memo(function VolunteerView({
                 <div className="bg-white rounded-xl border border-stone-200 shadow-sm p-6 text-center">
                   <FolderOpen className="h-10 w-10 text-stone-300 mx-auto mb-2" />
                   <p className="text-sm text-stone-500">No projects assigned yet</p>
-                  <p className="text-xs text-stone-400 mt-1">Select a verified project to log measurable impact</p>
+                  <p className="text-xs text-stone-400 mt-1">Select a confirmed project to log measurable impact</p>
                 </div>
               )}
 
@@ -1856,7 +1856,7 @@ const VolunteerView = memo(function VolunteerView({
                 </div>
               </>
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-2">Log verified activities to see your impact on people.</p>
+              <p className="text-sm text-muted-foreground text-center py-2">Log confirmed activities to see your impact on people.</p>
             )}
             <Button variant="outline" size="sm" className="w-full" onClick={() => { setKpiModal(null); setDesktopTab('my-work'); }}>
               View All Activity

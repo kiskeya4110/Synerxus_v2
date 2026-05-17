@@ -200,7 +200,7 @@ export default function InnovationScoringRadar({
           textTransform: "uppercase",
         }}
       >
-        Verified Innovation Scoring Profile
+        Innovation Scoring Profile
       </div>
 
       <div style={{ background: "#F9FAFB" }}>

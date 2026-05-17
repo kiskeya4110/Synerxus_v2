@@ -990,7 +990,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-semibold text-foreground">Log Volunteer Hours & Impact</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Record verified outcomes for your team</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">Record confirmed outcomes for your team</p>
                 </div>
                 <Button
                   variant="accent"

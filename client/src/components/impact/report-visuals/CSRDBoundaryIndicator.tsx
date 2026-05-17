@@ -58,7 +58,7 @@ export default function CSRDBoundaryIndicator({ percentage = 65 }: CSRDBoundaryI
         {/* Label */}
         <div style={{ fontSize: "10.5px", color: "#374151", fontWeight: 600, marginBottom: "4px" }}>
           Supports Global Sustainability Frameworks{" "}
-          <span style={{ color: "#0891B2" }}>(Management Reporting Verified)</span>
+          <span style={{ color: "#0891B2" }}>(Management Reporting Confirmed)</span>
         </div>
 
         {/* Disclaimer */}

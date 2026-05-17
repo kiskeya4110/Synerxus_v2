@@ -1362,7 +1362,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <div className="text-[10px] font-semibold text-slate-200">Hours</div>
                 {kpis.verifiedHours > 0 && (
                   <div className="text-[8px] text-emerald-300 font-semibold flex items-center justify-center gap-0.5">
-                    <CheckCircle className="w-2.5 h-2.5" /> {kpis.verifiedHours} verified
+                    <CheckCircle className="w-2.5 h-2.5" /> {kpis.verifiedHours} confirmed
                   </div>
                 )}
               </button>
@@ -2578,7 +2578,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   {timeFilter !== 'all' && <span className="opacity-80 ml-1">({timeFilter === 'month' ? 'this month' : timeFilter === 'quarter' ? 'this quarter' : 'this year'})</span>}
                 </span>
                 <span className="ml-auto text-xs bg-white/20 px-2 py-0.5 rounded-full">
-                  {Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}% Verified
+                  {Math.min(Math.round(aiuSummary?.verificationRate || 0), 100)}% Confirmed
                 </span>
                 <ChevronDown className="w-4 h-4 opacity-60 -rotate-90" />
               </button>

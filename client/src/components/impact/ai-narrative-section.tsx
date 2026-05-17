@@ -286,7 +286,7 @@ export function AINarrativeSection({
             </div>
             <div className="flex items-center gap-1.5 bg-green-50 dark:bg-green-900/30 text-green-700 dark:text-green-300 px-2.5 py-1 rounded-full">
               <CheckCircle2 className="h-3 w-3" />
-              <span className="font-medium">Verified Data</span>
+              <span className="font-medium">Confirmed Data</span>
             </div>
             {context.period && (
               <div className="flex items-center gap-1.5 bg-purple-50 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 px-2.5 py-1 rounded-full">
@@ -438,7 +438,7 @@ export function AINarrativeSection({
           <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1">
               <CheckCircle2 className="h-3 w-3 text-green-500" />
-              Data verified from activity logs
+              Data confirmed from activity logs
             </span>
             <span>•</span>
             <span>Report ID: {generatedAt ? `RPT-${generatedAt.getTime().toString(36).toUpperCase()}` : 'Pending'}</span>

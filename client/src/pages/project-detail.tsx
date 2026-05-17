@@ -1664,7 +1664,7 @@ export default function ProjectDetail() {
                   <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
                     <h4 className="font-semibold text-sm mb-2">How Impact is Measured</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• <strong>People Impacted:</strong> Direct beneficiaries reported and verified</li>
+                      <li>• <strong>People Impacted:</strong> Direct beneficiaries reported and confirmed</li>
                       <li>• <strong>Impact Records:</strong> Aggregate of all project impact submissions</li>
                       <li>• <strong>Hours:</strong> Total volunteer hours contributed</li>
                     </ul>

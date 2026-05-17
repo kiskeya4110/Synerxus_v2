@@ -35,7 +35,7 @@ const ROLE_OPTIONS = [
   {
     id: "corporate",
     title: "Corporate Partner",
-    description: "Deploy verified ESG programs, generate Verified Evidence Summaries, and support sustainability reporting requirements.",
+    description: "Deploy structured ESG programs, generate Verified Evidence Summaries, and support sustainability reporting requirements.",
     icon: Building2,
     href: "/signup/corporate",
     free: false,

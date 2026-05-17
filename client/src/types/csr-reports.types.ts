@@ -41,7 +41,7 @@ export const reportTemplates: ReportTemplate[] = [
   {
     id: "volunteer-hours",
     name: "Volunteer Hours Report",
-    description: "Verified volunteer hours by employee with SDG breakdown.",
+    description: "Confirmed volunteer hours by employee with SDG breakdown.",
     category: "engagement",
     icon: "⏱️",
     formats: ["PDF"],
@@ -76,9 +76,9 @@ export const reportTemplates: ReportTemplate[] = [
   },
   {
     id: "esg-audit",
-    name: "ESG Audit Report",
-    description: "Audit-ready ESG data with verification timestamps.",
-    category: "compliance",
+    name: "ESG Evidence Review Export",
+    description: "Confirmed ESG activity records with evidence timestamps for assurance preparation.",
+    category: "evidence",
     icon: "✅",
     formats: ["PDF"],
     frequency: "quarterly",

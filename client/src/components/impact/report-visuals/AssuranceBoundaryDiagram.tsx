@@ -9,7 +9,7 @@ export default function AssuranceBoundaryDiagram() {
       sublabelColor: "#9CA3AF",
     },
     {
-      label: "Synerxus: Management Reporting Verified ✓",
+      label: "Synerxus: Management Reporting Confirmed ✓",
       sublabel: "(Authorized partner confirmation)",
       bg: "#F0FDFF",
       border: "#0891B2",

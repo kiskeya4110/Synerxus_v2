@@ -1365,7 +1365,7 @@ export default function OrganizationDashboardNew() {
                             </div>
                             <div className="text-right">
                               <p className="text-sm font-semibold">{v.hours}h</p>
-                              <p className="text-xs text-green-600">{v.verifiedHours}h verified</p>
+                              <p className="text-xs text-green-600">{v.verifiedHours}h confirmed</p>
                             </div>
                           </div>
                         ))}

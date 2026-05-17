@@ -13,6 +13,8 @@ const Landing = lazy(() => import("@/pages/marketing-home"));
 const Platform = lazy(() => import("@/pages/platform"));
 const EvidenceLadder = lazy(() => import("@/pages/evidence-ladder"));
 const UseCases = lazy(() => import("@/pages/use-cases"));
+const ForEsgTeams = lazy(() => import("@/pages/for-esg-teams"));
+const Integrations = lazy(() => import("@/pages/integrations"));
 const UseCaseGrantFunder = lazy(() => import("@/pages/use-case-grant-funder"));
 const Resources = lazy(() => import("@/pages/insights"));
 const Contact = lazy(() => import("@/pages/contact"));
@@ -105,17 +107,19 @@ export default function App() {
           <Route path="/landing" component={Landing} />
           <Route path="/platform" component={Platform} />
           <Route path="/evidence-ladder" component={EvidenceLadder} />
+          <Route path="/for-esg-teams" component={ForEsgTeams} />
+          <Route path="/integrations" component={Integrations} />
           <Route path="/use-cases" component={UseCases} />
           <Route path="/use-cases/grant-funder-reporting" component={UseCaseGrantFunder} />
           <Route path="/resources" component={Resources} />
           <Route path="/request-assessment" component={Contact} />
           <Route path="/contact">{() => <Redirect to="/request-assessment" />}</Route>
-          <Route path="/evidence-objects">{() => <Redirect to="/platform" />}</Route>
-          <Route path="/solutions">{() => <Redirect to="/platform" />}</Route>
-          <Route path="/how-it-works">{() => <Redirect to="/platform" />}</Route>
-          <Route path="/frameworks">{() => <Redirect to="/platform" />}</Route>
-          <Route path="/for-partners">{() => <Redirect to="/platform" />}</Route>
-          <Route path="/about">{() => <Redirect to="/platform" />}</Route>
+          <Route path="/evidence-objects">{() => <Redirect to="/landing" />}</Route>
+          <Route path="/solutions">{() => <Redirect to="/landing" />}</Route>
+          <Route path="/how-it-works">{() => <Redirect to="/landing" />}</Route>
+          <Route path="/frameworks">{() => <Redirect to="/landing" />}</Route>
+          <Route path="/for-partners">{() => <Redirect to="/landing" />}</Route>
+          <Route path="/about">{() => <Redirect to="/landing" />}</Route>
           <Route path="/insights">{() => <Redirect to="/resources" />}</Route>
 
           {/* ================================================================ */}

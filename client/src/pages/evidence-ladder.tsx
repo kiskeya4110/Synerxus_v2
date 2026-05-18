@@ -444,7 +444,7 @@ function EvidenceLadderVisual() {
                     href="/platform"
                     className="font-semibold text-[#c88914] transition-colors hover:text-[#a9720f]"
                   >
-                    See how Synerxus builds a Level 5 record <ArrowRight className="inline h-3.5 w-3.5" />
+                    See how Synerxus builds Level 4 records for higher-level evaluation <ArrowRight className="inline h-3.5 w-3.5" />
                   </Link>
                 </p>
               )}

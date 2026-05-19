@@ -7,6 +7,10 @@ import viteConfig from "../vite.config";
 import { nanoid } from "nanoid";
 import { logger } from "./logger";
 
+// Generated once per server start so the browser re-fetches main.tsx after
+// a restart, but Vite's module cache stays valid within the same session.
+const DEV_BUILD_ID = nanoid();
+
 const viteLogger = createLogger();
 
 export function log(message: string, source = "express") {
@@ -42,6 +46,12 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
+  // Pre-compile the entry point in the background so the first browser request
+  // hits a warm cache instead of waiting for cold compilation.
+  vite.warmupRequest('/src/main.tsx').catch((err) => {
+    logger.warn('[Vite] Warmup failed:', err?.message ?? err);
+  });
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;
@@ -58,7 +68,7 @@ export async function setupVite(app: Express, server: Server) {
       let template = await fs.promises.readFile(clientTemplate, "utf-8");
       template = template.replace(
         `src="/src/main.tsx"`,
-        `src="/src/main.tsx?v=${nanoid()}"`,
+        `src="/src/main.tsx?v=${DEV_BUILD_ID}"`,
       );
       const page = await vite.transformIndexHtml(url, template);
       res.status(200).set({ "Content-Type": "text/html" }).end(page);

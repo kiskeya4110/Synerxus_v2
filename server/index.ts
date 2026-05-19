@@ -1,4 +1,5 @@
 import "dotenv/config"; // Load .env file before anything else
+import http from "http";
 import express, { type Request, Response, NextFunction } from "express";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
@@ -109,23 +110,10 @@ process.on('uncaughtException', (error: Error) => {
   // But for now, log and attempt to continue
 });
 
-// sat1325upgrade: Graceful shutdown handling with comprehensive cleanup
-let isShuttingDown = false;
-async function gracefulShutdown(signal: string) {
-  if (isShuttingDown) return;
-  isShuttingDown = true;
-
-  logger.info(`[Shutdown] ${signal} received, starting graceful shutdown...`);
-
+async function shutdownBackgroundServices() {
   try {
-    // 1. Stop accepting new requests and drain queues
-    logger.info('[Shutdown] Draining request queues...');
-    await drainQueues(10000);
-
-    // 2. Stop all background services
     logger.info('[Shutdown] Stopping background services...');
 
-    // Stop cache warmer
     try {
       stopBackgroundRefresh();
       logger.info('[Shutdown] Cache warmer stopped');
@@ -187,12 +175,7 @@ async function gracefulShutdown(signal: string) {
   } catch (error) {
     logger.error('[Shutdown] Error during graceful shutdown:', error);
   }
-
-  process.exit(0);
 }
-
-process.on('SIGTERM', () => gracefulShutdown('SIGTERM'));
-process.on('SIGINT', () => gracefulShutdown('SIGINT'));
 
 const app = express();
 
@@ -608,6 +591,21 @@ app.use((req, res, next) => {
       });
 
       logger.info(`[Server] Connection tracking enabled`);
+
+      // In development, Replit's webview may default to port 3000 (the first
+      // port in .replit). Start a second HTTP server on 3000 using the same
+      // Express app so the preview loads regardless of which port is opened.
+      if (process.env.NODE_ENV === 'development' && port !== 3000) {
+        const devAliasServer = http.createServer(app);
+        devAliasServer.listen(3000, '0.0.0.0', () => {
+          logger.info('[Server] Dev alias listening on port 3000 (Replit preview)');
+        });
+        devAliasServer.on('error', (err: NodeJS.ErrnoException) => {
+          if (err.code !== 'EADDRINUSE') {
+            logger.warn('[Server] Dev alias port 3000 error:', err.message);
+          }
+        });
+      }
     };
     
     server.once('error', onError);
@@ -630,6 +628,7 @@ app.use((req, res, next) => {
     logger.info('[Server] Draining request queues before shutdown...');
     await drainQueues(10000);
     logger.info('[Server] Request queues drained');
+    await shutdownBackgroundServices();
   });
 })().catch((err) => {
   logger.error('Fatal startup error:', err);

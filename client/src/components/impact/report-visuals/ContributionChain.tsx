@@ -6,9 +6,9 @@ export default function ContributionChain({ avgTurnaround = 16 }: ContributionCh
   const nodes = [
     { label: "Volunteer Activity", verified: false },
     { label: "Partner Confirmation ✓", verified: true, sla: `${avgTurnaround}h avg` },
-    { label: "Verified Evidence", verified: false },
+    { label: "Evidence", verified: false },
     { label: "Beneficiaries", verified: false },
-    { label: "SDG Advanced", verified: false },
+    { label: "SDG Mapped", verified: false },
   ];
 
   return (
@@ -32,7 +32,7 @@ export default function ContributionChain({ avgTurnaround = 16 }: ContributionCh
           textTransform: "uppercase",
         }}
       >
-        Contribution Chain — Verification Node
+        Contribution Chain — Review Node
       </div>
 
       <div

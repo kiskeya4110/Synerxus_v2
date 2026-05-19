@@ -1,34 +1,51 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "wouter";
+import { motion } from "framer-motion";
 import { ArrowRight, BarChart3, CheckCircle2, ChevronDown, Cloud, FileText, FolderOpen, GitBranch, Globe2, Info, Landmark, Network, ShieldAlert, ShieldCheck, Target, User, UserCheck, Users, XCircle, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedMetricValue } from "@/components/marketing/animated-metric-value";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
 // ── Data ────────────────────────────────────────────────────────────────────
 
-type CategoryData = { title: string; body: string; detail: string; icon: LucideIcon; strength: number; note?: string };
+type CategoryData = {
+  title: string;
+  body: string;
+  meaning: string;
+  reportingUse: string;
+  doesNotProve: string;
+  icon: LucideIcon;
+  strength: number;
+  note?: string;
+};
 
 const evidenceCategories: CategoryData[] = [
   {
     title: "Self-Reported Records",
-    body: "Internal records created and maintained by your organization.",
+    body: "Internal records created and maintained by your organization before external confirmation.",
     icon: User,
     strength: 20,
-    detail: "Internal records form the starting point on the Evidence Ladder — not the endpoint. Without external confirmation or attached source documents, these carry higher reporting risk. Synerxus helps you identify which self-reported records need additional support before they appear in reports.",
+    meaning: "Internal records created and maintained by your organization before external confirmation.",
+    reportingUse: "Used as the first record behind a claim, especially when teams are building a claim register or identifying source-support gaps.",
+    doesNotProve: "Does not prove that a partner reviewed the activity, that source files exist, or that the claim is ready for external review.",
   },
   {
     title: "Partner-Confirmed Records",
-    body: "Information confirmed by a trusted partner with direct knowledge.",
+    body: "Information confirmed by an authorized partner or reviewer with direct knowledge of the activity.",
     icon: Users,
     strength: 60,
-    detail: "Partner confirmation moves records toward a more defensible evidence tier. The confirming party's name, role, and authorization are documented alongside the confirmation — so reviewers know who confirmed what, not just that confirmation occurred.",
+    meaning: "Information confirmed by an authorized partner or reviewer with direct knowledge of the activity.",
+    reportingUse: "Used where ESG, CSR, community-investment, supplier, or NGO records require named external confirmation.",
+    doesNotProve: "Does not prove downstream outcomes, causal attribution, or formal assurance unless a qualified reviewer separately reaches that conclusion.",
   },
   {
     title: "Source-Supported Records",
-    body: "Backed by primary source documents and reviewable evidence.",
+    body: "Records backed by attached or referenced source documents, files, or artifacts.",
     icon: FileText,
     strength: 80,
-    detail: "Source support — invoices, reports, photos, spreadsheets, or third-party records — is the key move from moderate to lower risk. It enables reviewers to verify the claim directly without relying on internal assertion alone.",
+    meaning: "Records backed by attached or referenced source documents, files, or artifacts.",
+    reportingUse: "Used when a reporting statement needs a visible trail to documents, logs, files, photos, exports, or other artifacts.",
+    doesNotProve: "Does not prove the claim is certified, assured, compliant, or causally attributable to one program.",
   },
   {
     title: "Partner-Reported Figures",
@@ -36,7 +53,9 @@ const evidenceCategories: CategoryData[] = [
     icon: BarChart3,
     strength: 40,
     note: "Not independently confirmed",
-    detail: "Partner-reported figures are tracked separately from confirmed evidence totals. This separation is critical when reporting to auditors, funders, or regulators — it shows exactly what was externally confirmed versus what was reported by the partner without independent verification.",
+    meaning: "Figures reported by partners without treating them as independently confirmed.",
+    reportingUse: "Used for context when partner programs provide reach, output, or activity figures that need to remain labeled by source.",
+    doesNotProve: "Does not establish independent confirmation, causal attribution, or externally reviewed outcomes.",
   },
   {
     title: "Mapped Records",
@@ -44,7 +63,9 @@ const evidenceCategories: CategoryData[] = [
     icon: Network,
     strength: 50,
     note: "Context layer — not evidence strength",
-    detail: "Mapping adds context and disclosure transparency, but does not constitute certification, impact attribution, or compliance determination. Synerxus documents the mapping rationale and explicit limitations for every mapped record — keeping alignment claims honest and defensible.",
+    meaning: "Claims mapped to SDGs, frameworks, or reporting categories with limitations.",
+    reportingUse: "Used to organize evidence by disclosure, framework, SDG, stakeholder, or internal reporting category.",
+    doesNotProve: "Does not establish SDG impact, contribution attribution, certification, assurance, or compliance.",
   },
 ];
 
@@ -70,7 +91,7 @@ const frameworkCards: FrameworkCard[] = [
     title: "Climate Disclosure Context",
     items: ["TCFD", "IFRS S2"],
     description: "Organize climate-related evidence context when it is relevant to a broader ESG, CSR, supplier, or program claim.",
-    boundary: "Not carbon accounting, emissions reporting validation, or climate assurance.",
+    boundary: "Not emissions accounting, emissions reporting validation, or climate assurance.",
     detail: "Use this context when climate references are part of a broader claim record and need to be separated from the underlying evidence strength.",
     icon: Cloud,
   },
@@ -104,34 +125,34 @@ type HeroEvidenceTab = {
 
 const evidenceFlow: FlowStep[] = [
   {
-    title: "Project Metrics Defined",
-    body: "Organizations pre-identify what gets tracked",
+    title: "Claim Defined",
+    body: "The reporting statement and evidence need are clearly defined.",
     icon: Target,
-    detail: "Organizations pre-identify what gets tracked — trees planted, panels installed, sessions delivered. The schema is fixed before any volunteer logs anything.",
+    detail: "The reporting statement and evidence need are clearly defined.",
   },
   {
-    title: "Volunteer Logs Numbers",
-    body: "Skilled volunteers enter quantities against fixed metrics",
+    title: "Source Records Attached",
+    body: "Documents, logs, files, and activity records are connected to the claim.",
     icon: BarChart3,
-    detail: "Skilled volunteers enter quantities against pre-defined metrics. No free text. No interpretation. Just numbers against a fixed schema.",
+    detail: "Documents, logs, files, and activity records are connected to the claim.",
   },
   {
-    title: "Authorized Approval",
-    body: "A named authorized person confirms the record",
+    title: "Partner Confirmation Logged",
+    body: "An authorized reviewer or partner confirms the record where applicable.",
     icon: UserCheck,
-    detail: "A named authorized person at the organization confirms the volunteer was present, the numbers are accurate, and the activity happened as described.",
+    detail: "An authorized reviewer or partner confirms the record where applicable.",
   },
   {
     title: "Evidence Record Created",
-    body: "Approved records enter the evidence layer",
+    body: "The claim, evidence, confirmation, status, and limitations are preserved together.",
     icon: FileText,
-    detail: "Approved records enter the evidence layer. Unapproved submissions are excluded. Every record carries who approved it, when, and where.",
+    detail: "The claim, evidence, confirmation, status, and limitations are preserved together.",
   },
   {
-    title: "Corporate Dashboard Updated",
-    body: "Corporations see aggregate confirmed figures",
+    title: "Reporting Summary Updated",
+    body: "Teams review evidence-backed summaries before reporting or disclosure workflows.",
     icon: BarChart3,
-    detail: "The corporation sees aggregate confirmed figures filtered by employee and organization — with percentage breakdowns showing what proportion is organization-confirmed.",
+    detail: "Teams review evidence-backed summaries before reporting or disclosure workflows.",
   },
 ];
 
@@ -176,6 +197,10 @@ function strengthFillClass(strength: number): string {
   return "bg-emerald-600";
 }
 
+function shouldAnimateMetricText(value: string): boolean {
+  return /^\d[\d,]*(?:\.\d+)?(?:%| [A-Za-z].*)?$/.test(value);
+}
+
 function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
   if (activeTab === "attendance") {
     return (
@@ -201,6 +226,21 @@ function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
             </div>
           ))}
         </div>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          {[
+            ["Attendance record", "Imported"],
+            ["Participant count", "240"],
+            ["Session count", "3"],
+            ["Matched status", "Matched to claim"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-md border border-slate-200 bg-white px-3 py-2">
+              <p className="font-bold text-slate-500">{label}</p>
+              <p className="mt-1 font-extrabold tabular-nums text-[#0A1F44]">
+                {shouldAnimateMetricText(value) ? <AnimatedMetricValue value={value} /> : value}
+              </p>
+            </div>
+          ))}
+        </div>
       </div>
     );
   }
@@ -211,10 +251,10 @@ function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
         <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Partner confirmation</p>
         <div className="mt-3 grid gap-2 text-xs">
           {[
-            ["Confirmed by", "Bright Futures Nonprofit"],
-            ["Date", "May 15, 2026"],
-            ["Status", "Confirmed"],
-            ["Reviewer", "Dana Reed, Program Director"],
+            ["Confirming partner", "Bright Futures Nonprofit"],
+            ["Reviewer role", "Dana Reed, Program Director"],
+            ["Confirmation date", "May 15, 2026"],
+            ["Confirmation status", "Confirmed by partner"],
           ].map(([label, value]) => (
             <div key={label} className="flex items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2">
               <span className="font-bold text-slate-500">{label}</span>
@@ -232,7 +272,19 @@ function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
   if (activeTab === "documents") {
     return (
       <div>
-        <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">4 linked documents</p>
+        <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Source documents</p>
+        <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
+          <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+            <p className="font-bold text-slate-500">Linked files</p>
+            <p className="mt-1 font-extrabold tabular-nums text-[#0A1F44]">
+              <AnimatedMetricValue value="4 files" />
+            </p>
+          </div>
+          <div className="rounded-md border border-slate-200 bg-white px-3 py-2">
+            <p className="font-bold text-slate-500">Document types</p>
+            <p className="mt-1 font-extrabold text-[#0A1F44]">PDF · CSV</p>
+          </div>
+        </div>
         <div className="mt-3 grid gap-2">
           {[
             "Training_Attendance_Q2_2026.pdf",
@@ -256,14 +308,16 @@ function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
         <p className="text-xs font-extrabold uppercase tracking-wide text-slate-500">Training completion record</p>
         <div className="mt-3 grid grid-cols-2 gap-2 text-xs">
           {[
-            ["Completed trainees", "240"],
-            ["Program", "Workforce Development Program"],
-            ["Period", "Q2 2026"],
-            ["Record owner", "Bright Futures Nonprofit"],
+            ["Training sessions", "3"],
+            ["Completed participants", "240"],
+            ["Reporting period", "Q2 2026"],
+            ["Source record status", "Attached"],
           ].map(([label, value]) => (
             <div key={label} className="rounded-md border border-slate-200 bg-white p-3">
               <p className="font-bold text-slate-500">{label}</p>
-              <p className="mt-1 font-extrabold text-[#0A1F44]">{value}</p>
+              <p className="mt-1 font-extrabold tabular-nums text-[#0A1F44]">
+                {shouldAnimateMetricText(value) ? <AnimatedMetricValue value={value} /> : value}
+              </p>
             </div>
           ))}
         </div>
@@ -287,7 +341,7 @@ function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
         ))}
       </div>
       <p className="mt-3 rounded-md bg-[#fff9eb] px-3 py-2 text-xs leading-relaxed text-[#0A1F44]">
-        Note: mapping supports reporting context only.
+        Boundary note: mapping is context, not evidence strength.
       </p>
     </div>
   );
@@ -295,8 +349,29 @@ function HeroTabDetail({ activeTab }: { activeTab: HeroEvidenceTabId }) {
 
 function HeroEvidenceVisual() {
   const [activeTab, setActiveTab] = useState<HeroEvidenceTabId>("attendance");
+  const lastUserInteractionRef = useRef(0);
   const activeTabConfig = heroEvidenceTabs.find((tab) => tab.id === activeTab) ?? heroEvidenceTabs[0];
   const ActiveTabIcon = activeTabConfig.icon;
+
+  useEffect(() => {
+    const interval = window.setInterval(() => {
+      if (Date.now() - lastUserInteractionRef.current < 5000) return;
+
+      setActiveTab((currentTab) => {
+        const currentIndex = heroEvidenceTabs.findIndex((tab) => tab.id === currentTab);
+        const nextIndex = currentIndex >= 0 ? (currentIndex + 1) % heroEvidenceTabs.length : 0;
+        return heroEvidenceTabs[nextIndex].id;
+      });
+    }, 2400);
+
+    return () => window.clearInterval(interval);
+  }, []);
+
+  const selectTab = (id: HeroEvidenceTabId) => {
+    lastUserInteractionRef.current = Date.now();
+    setActiveTab(id);
+  };
+
   const screenContent: Record<
     HeroEvidenceTabId,
     {
@@ -313,7 +388,7 @@ function HeroEvidenceVisual() {
     }
   > = {
     attendance: {
-      status: "Log reviewed",
+      status: "Review status logged",
       claim: "Attendance evidence matched to Q2 workforce sessions",
       chips: ["240 rows", "2 files", "3 sessions"],
       leftTitle: "Roster",
@@ -363,7 +438,7 @@ function HeroEvidenceVisual() {
     mapping: {
       status: "Context only",
       claim: "Disclosure context mapped without changing evidence strength",
-      chips: ["GRI 413-1", "SDG 8", "No certification"],
+      chips: ["GRI 413-1", "SDG 8", "Context only"],
       leftTitle: "Framework",
       leftBody: "Reporting category selected.",
       centerTitle: "Mapping",
@@ -410,8 +485,8 @@ function HeroEvidenceVisual() {
                 <p className="text-[10px] font-extrabold leading-snug text-[#0A1F44]">{activeScreen.claim}</p>
                 <div className="mt-2 grid grid-cols-3 gap-2">
                   {activeScreen.chips.map((label) => (
-                    <div key={label} className="rounded bg-white px-2 py-1 text-[8px] font-bold text-slate-600 shadow-sm">
-                      {label}
+                    <div key={label} className="rounded bg-white px-2 py-1 text-[8px] font-bold tabular-nums text-slate-600 shadow-sm">
+                      {shouldAnimateMetricText(label) ? <AnimatedMetricValue value={label} /> : label}
                     </div>
                   ))}
                 </div>
@@ -472,13 +547,18 @@ function HeroEvidenceVisual() {
           {heroEvidenceTabs.map(({ id, title, meta, icon: Icon }) => {
             const isActive = activeTab === id;
             return (
-              <button
+              <motion.button
                 key={id}
                 type="button"
                 role="tab"
                 aria-selected={isActive}
                 aria-label={`Show ${title} evidence detail`}
-                onClick={() => setActiveTab(id)}
+                onClick={() => selectTab(id)}
+                onFocus={() => {
+                  lastUserInteractionRef.current = Date.now();
+                }}
+                animate={isActive ? { y: [0, -7, 0], scale: [1, 1.03, 1] } : { y: 0, scale: 1 }}
+                transition={isActive ? { duration: 0.55, ease: "easeOut" } : { duration: 0.2 }}
                 className={`group rounded-lg border p-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
                   isActive
                     ? "border-[#c88914] bg-white shadow-lg"
@@ -488,14 +568,14 @@ function HeroEvidenceVisual() {
                 <Icon className={`mx-auto h-8 w-8 ${isActive ? "text-[#0A1F44]" : "text-slate-500 group-hover:text-[#0A1F44]"}`} />
                 <p className="mt-2 text-center text-[11px] font-extrabold leading-tight text-[#0A1F44]">{title}</p>
                 <p className="mt-1 text-[10px] font-semibold text-slate-500">{meta}</p>
-              </button>
+              </motion.button>
             );
           })}
         </div>
 
         <div className="mt-4 flex items-center justify-center gap-2 px-3 py-1 text-xs font-semibold text-[#0A1F44]">
           <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
-          Traceable to approved records. Built for evidence review.
+          Traceable to source records. Built for evidence review.
         </div>
       </div>
     </div>
@@ -519,20 +599,20 @@ export default function MarketingHome() {
               ESG evidence your team can trace, review, and report.
             </h1>
             <p className="mt-5 max-w-xl text-lg leading-relaxed text-[#0A1F44]/80">
-              Synerxus helps ESG teams organize approved activity records, confirmation status, and evidence summaries before they appear in disclosure workflows.
+              Synerxus helps ESG teams organize activity records, confirmation status, source support, and evidence summaries before they appear in reporting or disclosure workflows.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
-                <Link href="/request-assessment">Request Readiness Assessment</Link>
+                <Link href="/assessment">Request Readiness Assessment</Link>
               </Button>
               <Button asChild variant="outline" className="border-[#0A1F44] text-[#0A1F44]">
-                <Link href="/for-esg-teams">For ESG Teams</Link>
+                <Link href="/solutions">For ESG Teams</Link>
               </Button>
             </div>
             <div className="mt-8 flex gap-4 rounded-md border border-[#c88914]/30 bg-[#fff9eb] p-4 text-sm leading-relaxed text-[#0A1F44]">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#c88914]" />
               <p>
-                ESG dashboard figures reflect organization-approved activity records. They are not downstream impact claims or formal assurance conclusions.
+                Dashboard figures reflect organization-approved activity records and evidence summaries. Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.
               </p>
             </div>
           </div>
@@ -547,7 +627,7 @@ export default function MarketingHome() {
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
             <h2 className="text-xl font-extrabold text-[#0A1F44]">For Organizations</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              Define your project metrics. Post opportunities. Approve contributions. Generate verified evidence summaries for funders and corporate partners.
+              Define project metrics, record activities, confirm partner-submitted records, and generate evidence summaries for funders and corporate partners.
             </p>
             <Link href="/use-cases" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
               For organizations <ArrowRight className="h-4 w-4" />
@@ -556,7 +636,7 @@ export default function MarketingHome() {
           <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
             <h2 className="text-xl font-extrabold text-[#0A1F44]">For Corporations</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
-              See your employees' confirmed contributions — filtered by person and organization, traceable to every approved record.
+              Review contribution records, confirmation status, source support, and evidence trails across partner programs and reporting workflows.
             </p>
             <Link href="/for-esg-teams" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
               For ESG teams <ArrowRight className="h-4 w-4" />
@@ -569,7 +649,7 @@ export default function MarketingHome() {
       <section className="border-b border-slate-200 bg-white py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="text-center text-2xl font-extrabold text-[#0A1F44]">
-            Most ESG reporting treats all evidence as equal. Synerxus does not.
+            ESG reporting often treats all evidence as equal. Synerxus does not.
           </h2>
           <p className="mt-1 text-center text-sm text-slate-400">Click any category to learn more.</p>
           <div className="mt-6 grid gap-4 md:grid-cols-5">
@@ -613,7 +693,20 @@ export default function MarketingHome() {
 
                   {isSelected && (
                     <div className="mt-4 border-t border-slate-200 pt-4 text-left">
-                      <p className="text-xs leading-relaxed text-slate-700">{cat.detail}</p>
+                      <div className="space-y-3">
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">What it means</p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-700">{cat.meaning}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">Where it appears</p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-700">{cat.reportingUse}</p>
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">What it does not prove</p>
+                          <p className="mt-1 text-xs leading-relaxed text-slate-700">{cat.doesNotProve}</p>
+                        </div>
+                      </div>
                       <Link
                         href="/evidence-ladder"
                         onClick={(e) => e.stopPropagation()}
@@ -774,7 +867,7 @@ export default function MarketingHome() {
               </Link>
             </div>
             <Button asChild size="lg" className="bg-[#c88914] text-white hover:bg-[#a9720f] active:bg-[#8a5f0a]">
-              <Link href="/request-assessment">
+              <Link href="/assessment">
                 Request Readiness Assessment <ArrowRight className="h-4 w-4" />
               </Link>
             </Button>

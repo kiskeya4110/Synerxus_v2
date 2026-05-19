@@ -1,5 +1,5 @@
 export const ASSURANCE_BOUNDARY =
-  "Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, independently verify all partner-reported reach figures, or establish causal attribution.";
+  "Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.";
 
 export const evidenceObjectFields = [
   "Claim ID",

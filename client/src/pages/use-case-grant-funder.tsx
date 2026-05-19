@@ -1,6 +1,7 @@
 import { Link } from "wouter";
 import { ArrowLeft, ArrowRight, CheckCircle2, Download, FileText, Paperclip, ShieldAlert, ShieldCheck, UserCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { AnimatedMetricValue } from "@/components/marketing/animated-metric-value";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
 const evidenceComponents = [
@@ -119,7 +120,9 @@ export default function UseCaseGrantFunderPage() {
                   ].map(({ label, value }) => (
                     <div key={label} className="rounded-md border border-slate-200 p-3">
                       <p className="text-[10px] font-bold text-slate-500">{label}</p>
-                      <p className="mt-1 text-xl font-extrabold tabular-nums text-[#0A1F44]">{value}</p>
+                      <p className="mt-1 text-xl font-extrabold tabular-nums text-[#0A1F44]">
+                        <AnimatedMetricValue value={value} />
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -127,7 +130,9 @@ export default function UseCaseGrantFunderPage() {
                 <div className="mt-4 rounded-md bg-slate-50 p-4">
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-extrabold text-[#0A1F44]">Evidence coverage</p>
-                    <p className="text-xs font-bold tabular-nums text-emerald-700">85%</p>
+                    <p className="text-xs font-bold tabular-nums text-emerald-700">
+                      <AnimatedMetricValue value="85%" />
+                    </p>
                   </div>
                   <div className="mt-2 h-3 overflow-hidden rounded-full bg-slate-200">
                     <div className="h-3 w-[85%] rounded-full bg-emerald-600" />

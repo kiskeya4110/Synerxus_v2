@@ -1,18 +1,18 @@
-interface VerificationDensityStripProps {
+interface ReviewDensityStripProps {
   verifiedOutcomes: number;
-  verificationRate: number;
+  reviewRate: number;
   verifiedHours: number;
   avgTurnaround: number;
   verifiedBeneficiaries: number;
 }
 
-export default function VerificationDensityStrip({
+export default function ReviewDensityStrip({
   verifiedOutcomes,
-  verificationRate,
+  reviewRate,
   verifiedHours,
   avgTurnaround,
   verifiedBeneficiaries,
-}: VerificationDensityStripProps) {
+}: ReviewDensityStripProps) {
   return (
     <div
       style={{
@@ -51,7 +51,7 @@ export default function VerificationDensityStrip({
             Outcomes ✓
           </div>
           <div style={{ fontSize: "10px", color: "#6B7280", marginTop: "6px" }}>
-            {verificationRate}% Verification Rate
+            {reviewRate}% Review Rate
           </div>
         </div>
 

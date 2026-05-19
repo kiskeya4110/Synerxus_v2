@@ -61,7 +61,7 @@ export function BoundaryNotice() {
     <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm leading-relaxed text-amber-950">
       <strong>Boundary statement:</strong> {ASSURANCE_BOUNDARY}
       <span className="mt-2 block">
-        Synerxus is an evidence infrastructure layer that helps reporting teams organize, confirm, classify, and package evidence behind claims. It is not an ESG reporting platform, assurance provider, SDG certifier, impact evaluator, volunteer marketplace, or compliance engine.
+        Synerxus is an evidence infrastructure layer that helps reporting teams organize, confirm, classify, and package evidence behind claims. It is not an ESG reporting platform, assurance provider, SDG certifier, impact evaluator, volunteer matching service, or compliance engine.
       </span>
     </div>
   );
@@ -238,7 +238,7 @@ export function EvidenceAlignmentBanner() {
             Alignment is shown as context, not as a compliance or assurance result
           </h2>
           <p className="mt-2 text-sm leading-relaxed text-slate-600">
-            Each lane keeps a different use case separate so mapped records stay easy to review without overstating what Synerxus verifies.
+            Each lane keeps a different use case separate so mapped records stay easy to review without overstating what Synerxus records.
           </p>
         </div>
 
@@ -288,7 +288,7 @@ export function EvidenceAlignmentBanner() {
         </div>
 
         <p className="mt-4 max-w-4xl text-[11px] font-medium leading-relaxed text-slate-500">
-          These labels identify where evidence may be mapped, reviewed, or prepared for discussion. Mapping context does not constitute certification, formal assurance, endorsement, regulatory compliance determination, or causal impact evidence.
+          These labels identify where evidence may be mapped, reviewed, or prepared for discussion. Mapping context does not constitute certification, formal assurance, endorsement, regulatory compliance determination, or causal attribution evidence.
         </p>
       </div>
     </section>
@@ -768,7 +768,7 @@ export function HomeSections() {
     ["Unsupported Claims", "Many ESG statements are published without a clear evidence record behind them."],
     ["Fragmented Documentation", "Photos, certificates, reports, attestations, partner letters, and metrics often live in disconnected systems."],
     ["Weak Chain of Custody", "Teams may not know who submitted evidence, who reviewed it, what changed, or which version was used in reporting."],
-    ["Greenwashing Exposure", "Claims without traceable proof can create reputational, investor, regulatory, and legal risk."],
+    ["Greenwashing Exposure", "Claims without traceable evidence can create reputational, investor, regulatory, and legal risk."],
     ["Framework Complexity", "One claim may need to support multiple reporting pathways across GRI, CSRD/ESRS, SASB/ISSB, SDGs, and internal scorecards."],
   ];
 
@@ -799,7 +799,7 @@ export function HomeSections() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 lg:grid-cols-[0.9fr_1.1fr] lg:items-center md:px-8">
           <div>
             <SectionHeader
-              title="Frameworks tell you what to disclose. Synerxus helps prove what happened."
+              title="Frameworks tell you what to disclose. Synerxus helps support what happened."
               body="ESG teams are under pressure to support sustainability statements across annual reports, investor materials, procurement responses, websites, and regulatory disclosures. But the evidence behind those claims is often fragmented across spreadsheets, emails, screenshots, field photos, partner reports, and shared drives."
             />
             <div className="rounded-2xl border border-[#0A1F44]/10 bg-slate-50 p-5">
@@ -1170,12 +1170,12 @@ export function HomeSections() {
       <section className="bg-slate-50 py-7 md:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
-            eyebrow="Verification Partner Network"
-            title="Verification Partner Network"
+            eyebrow="Partner Confirmation Network"
+            title="Partner Confirmation Network"
             body="Synerxus can involve NGOs, suppliers, implementation partners, community organizations, and field teams in structured confirmation workflows."
           />
           <div className="grid gap-4 md:grid-cols-3">
-            {["NGOs", "Suppliers", "Implementation / Verification Partners"].map((item) => (
+            {["NGOs", "Suppliers", "Implementation / Review Partners"].map((item) => (
               <div key={item} className="rounded-xl border border-slate-200 bg-white p-5">
                 <Network className="h-6 w-6 text-[#ffcc33]" />
                 <h3 className="mt-4 font-extrabold text-[#0A1F44]">{item}</h3>

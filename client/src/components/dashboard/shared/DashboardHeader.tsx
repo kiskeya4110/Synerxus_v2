@@ -41,7 +41,7 @@ function abbreviateOrgName(name: string): string {
 
 // Role label mapping
 const ROLE_LABELS: Record<string, string> = {
-  'volunteer': 'Impact Wallet',
+  'volunteer': 'Evidence Wallet',
   'organization': 'Verify Hub',
   'corporate-partner': 'ESG Console',
 };
@@ -54,7 +54,7 @@ function getMenuSections(userType: string | null, navigate: (path: string) => vo
         title: "MAIN",
         items: [
           { icon: Target, label: "Projects", desc: "AI-matched opportunities", action: () => navigate('/dashboard') },
-          { icon: BarChart3, label: "Impact Wallet", desc: "Track your impact", action: () => navigate('/dashboard') },
+          { icon: BarChart3, label: "Evidence Wallet", desc: "Track your impact", action: () => navigate('/dashboard') },
         ]
       },
       {
@@ -86,7 +86,7 @@ function getMenuSections(userType: string | null, navigate: (path: string) => vo
       {
         title: "ACTIONS",
         items: [
-          { icon: BarChart3, label: "Reports", desc: "Impact reports & analytics", action: () => navigate('/dashboard?tab=reports') },
+          { icon: BarChart3, label: "Reports", desc: "Evidence summaries & analytics", action: () => navigate('/dashboard?tab=reports') },
           { icon: ClipboardList, label: "Log Hours", desc: "Log volunteer hours & impact", action: () => navigate('/ngo/log-hours') },
           { icon: Briefcase, label: "New Project", desc: "Create a new project", action: () => navigate('/post-core-opportunity') },
         ]

@@ -241,12 +241,12 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     return Math.round(filteredActivities.reduce((sum: number, a: any) => sum + (Number(a?.hours) || 0), 0));
   }, [filteredActivities]);
 
-  // Fetch impact score summary for volunteer
+  // Fetch contribution score summary for volunteer
   const { data: aiuSummary } = useQuery<AIUSummary>({
     queryKey: ["/api/aiu/volunteer", userId],
     queryFn: async () => {
       const response = await fetch(`/api/aiu/volunteer/${userId}`);
-      if (!response.ok) throw new Error('Failed to fetch impact score');
+      if (!response.ok) throw new Error('Failed to fetch contribution score');
       return response.json();
     },
     enabled: !!userId,
@@ -297,14 +297,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       ? dashboardData.applications.filter((app: any) => app?.status === 'Pending' || app?.status === 'pending').length
       : 0;
 
-    // Get impact score from server-calculated value (hours 35%, people 30%, tasks 20%, sdg 10%, match 5%)
+    // Get contribution score from server-calculated value (hours 35%, people 30%, tasks 20%, sdg 10%, match 5%)
     const impactScore = Number(dashboardData?.impactScore) || 0;
 
     // Get completed tasks count from server
     const completedTasks = Number(dashboardData?.completedTasks) || 0;
     const totalTasks = Number(dashboardData?.totalTasks) || 0;
 
-    // Calculate Impact ROI (lives impacted per hour volunteered)
+    // Calculate Reach per Hour (people reached per hour volunteered)
     const impactROI = totalHours > 0 ? Math.round((livesImpacted / totalHours) * 10) / 10 : 0;
 
     return {
@@ -327,7 +327,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
       impactScore,
       completedTasks,
       totalTasks,
-      impactROI                 // Lives impacted per hour volunteered
+      impactROI                 // People reached per hour volunteered
     };
   }, [dashboardData, projects, volunteerProfile]);
 
@@ -350,7 +350,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
   // Impact Over Time data - use server-calculated monthlyImpactData with pts
   // pts is now calculated on the server using the official aiu-service formula
-  // and distributed proportionally by hours to ensure consistency with SDG Impact Report
+  // and distributed proportionally by hours to ensure consistency with SDG Evidence Summary
   const impactOverTimeData = useMemo(() => {
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
@@ -697,7 +697,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     };
   }, [projects, volunteerProfile?.skills, sdgDistribution, impactOverTimeData, kpis]);
 
-  // Calculate AI confidence and match level for SDG impact forecast
+  // Calculate AI confidence and match level for SDG context forecast
   // Based on: profile completeness, skills match, historical data, and project activity
   const calculateSDGForecastConfidence = (sdg: { sdg: number; value: number; projectCount: number }) => {
     let confidence = 50; // Base confidence
@@ -1118,7 +1118,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     });
   };
 
-  // Fetch impact metrics to get the default "Lives Impacted" metric ID
+  // Fetch impact metrics to get the default "People Reached" metric ID
   const { data: impactMetrics = [] } = useQuery<any[]>({
     queryKey: ["/api/impact-metrics"],
     queryFn: async () => {
@@ -1128,9 +1128,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
     },
   });
 
-  // Find the "Lives Impacted" metric ID
+  // Find the "People Reached" metric ID
   const livesImpactedMetricId = impactMetrics.find(
-    (m: any) => m.name === "Lives Impacted" || m.category === "general"
+    (m: any) => m.name === "People Reached" || m.category === "general"
   )?.id || 1;
 
   // Get tasks for impact project
@@ -1334,9 +1334,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
             )}
 
-            {/* KPI Cards - Key metrics: Lives Impacted, pts Score, Hours, SDGs */}
+            {/* KPI Cards - Key metrics: People Reached, pts Score, Hours, SDGs */}
             <div className="px-4 grid grid-cols-4 gap-2">
-              {/* Lives Impacted - Total people reached */}
+              {/* People Reached - Total people reached */}
               <button
                 onClick={() => setShowKpiModal('people')}
                 className="bg-slate-800/80 backdrop-blur-sm rounded-2xl p-3 text-center hover:bg-slate-700/80 hover:shadow-lg transition-all active:scale-95 relative overflow-hidden border border-slate-700/50 shadow-lg"
@@ -1380,7 +1380,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </button>
             </div>
 
-            {/* UN SDG Impact Report - Enhanced with UN-Compliant KPIs */}
+            {/* UN SDG Evidence Summary - Enhanced with UN-Compliant KPIs */}
             {sdgDistribution.length > 0 && (
               <div className="px-4 w-full max-w-full">
                 <div className="flex items-center justify-between mb-3">
@@ -1787,7 +1787,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </Button>
             </div>
 
-            {/* Impact Log History - Your Impact Wallet */}
+            {/* Activity Log History - Your Evidence Wallet */}
             <div className="px-4">
               <ImpactLogHistory userId={parseInt(userId)} limit={5} />
             </div>
@@ -1826,7 +1826,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 className="bg-gradient-to-br from-pink-500 to-rose-600 rounded-xl p-3 text-white text-center hover:brightness-110 transition-all active:scale-95 shadow-lg"
               >
                 <div className="text-2xl font-bold mb-1">{kpis.sdgsContributed}</div>
-                <div className="text-xs font-semibold">SDG Impact</div>
+                <div className="text-xs font-semibold">SDG Context</div>
                 <Target className="w-4 h-4 mx-auto mt-1 opacity-90" />
               </button>
             </div>
@@ -2135,7 +2135,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 </div>
               </div>
 
-              {/* SDG Impact Forecast */}
+              {/* SDG Context Forecast */}
               <div className="bg-slate-800/90 backdrop-blur-sm rounded-xl p-4 border border-slate-700/50 shadow-xl">
                 <div className="flex items-center gap-2 mb-3">
                   <Target className="w-5 h-5 text-white" />
@@ -2438,7 +2438,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
 
                 {/* Welcome Text */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-blue-100 text-xs font-medium">Impact Wallet</p>
+                  <p className="text-blue-100 text-xs font-medium">Evidence Wallet</p>
                   <h1 className="text-white text-lg font-bold truncate">
                     {(volunteerProfile?.volunteer_name || user?.displayName || 'Volunteer').split(' ')[0]}!
                   </h1>
@@ -2524,9 +2524,9 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               </div>
             )}
 
-            {/* SDG Impact Snapshot - Green Gradient Card with Interactive Metrics */}
+            {/* SDG Context Snapshot - Green Gradient Card with Interactive Metrics */}
             <div className="bg-gradient-to-r from-[#22c55e] to-[#4ade80] rounded-xl p-4 text-white shadow-lg">
-              <h2 className="text-lg font-semibold mb-3">SDG Impact Snapshot</h2>
+              <h2 className="text-lg font-semibold mb-3">SDG Context Snapshot</h2>
               <div className="grid grid-cols-2 gap-3 mb-3">
                 {/* Hours - Clickable */}
                 <button
@@ -3067,7 +3067,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 {/* People Reached */}
                 <div>
                   <label className="block text-sm font-semibold text-slate-300 mb-1">
-                    People Reached / Lives Impacted *
+                    People Reached *
                   </label>
                   <input
                     type="number"
@@ -3536,7 +3536,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                   <TrendingUp className="w-5 h-5 text-white" />
                 </div>
                 <div className="flex-1">
-                  <div className="text-white font-medium">Impact ROI</div>
+                  <div className="text-white font-medium">Reach per Hour</div>
                   <div className="text-slate-400 text-xs">Your return on investment metrics</div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 rotate-[-90deg]" />
@@ -3866,14 +3866,14 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                 <>
                   <div className="text-center py-4">
                     <div className="text-5xl font-bold text-emerald-600 mb-2">{kpis.impactROI}</div>
-                    <div className="text-slate-500">Lives Impacted Per Hour</div>
+                    <div className="text-slate-500">Reach Per Hour</div>
                   </div>
                   {/* ROI Visualization */}
                   <div className="bg-gradient-to-br from-emerald-50 to-teal-50 rounded-lg p-4 border border-emerald-100 mb-4">
                     <div className="flex items-center justify-center gap-3 mb-4">
                       <div className="text-center">
                         <div className="text-2xl font-bold text-rose-600">{kpis.livesImpacted}</div>
-                        <div className="text-xs text-slate-400">Lives Impacted</div>
+                        <div className="text-xs text-slate-400">People Reached</div>
                       </div>
                       <div className="text-2xl text-slate-400">÷</div>
                       <div className="text-center">
@@ -3883,7 +3883,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
                       <div className="text-2xl text-slate-400">=</div>
                       <div className="text-center">
                         <div className="text-2xl font-bold text-emerald-600">{kpis.impactROI}</div>
-                        <div className="text-xs text-slate-400">Impact ROI</div>
+                        <div className="text-xs text-slate-400">Reach per Hour</div>
                       </div>
                     </div>
                   </div>
@@ -4161,7 +4161,7 @@ export default function MobilePWAView({ userId, user, dashboardData, initialActi
               <h2 className="text-white text-lg font-semibold">
                 {showProjectStatsModal === 'active' && 'Active Projects'}
                 {showProjectStatsModal === 'total' && 'All Projects'}
-                {showProjectStatsModal === 'sdgs' && 'SDG Impact Distribution'}
+                {showProjectStatsModal === 'sdgs' && 'SDG Context Distribution'}
               </h2>
               <button
                 onClick={() => setShowProjectStatsModal(null)}

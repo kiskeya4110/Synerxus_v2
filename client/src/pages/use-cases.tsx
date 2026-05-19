@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, type KeyboardEvent } from "react";
 import { Link } from "wouter";
-import { ArrowRight, BarChart3, Building2, CheckCircle2, FileText, Handshake, Landmark, ShieldAlert, ShieldCheck, Target, Truck, Users, XCircle, type LucideIcon } from "lucide-react";
+import { ArrowRight, BarChart3, Building2, CheckCircle2, FileText, Handshake, Landmark, ShieldAlert, Target, Truck, Users, XCircle, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
@@ -11,10 +11,11 @@ type UseCase = {
   claim: string;
   evidence: string[];
   limitation: string;
-  detail: string;
-  whoUses: string;
+  confirmationWorkflow: string;
+  sourceSupport: string[];
+  mappingContext: string;
+  recommendedOutput: string;
   featured?: boolean;
-  detailHref?: string;
 };
 
 const useCases: UseCase[] = [
@@ -22,94 +23,107 @@ const useCases: UseCase[] = [
     title: "Corporate ESG / CSR Reporting",
     icon: Building2,
     color: "#0A1F44",
-    claim: "Our community investment programs supported workforce development across 12 partner organizations in 2025, as reported under GRI 413.",
-    evidence: [
-      "Partner confirmation from 12 organizations",
-      "Source artifacts per partner (reports, logs, attendance records)",
-      "Mapping to GRI 413 disclosure requirements",
-      "Exception log showing 2 partners with incomplete confirmation",
-      "Limitation notes: confirmed activities do not prove long-term employment outcomes",
-    ],
-    limitation: "Community investment claims reflect partner-confirmed activity and source-supported records. They do not prove outcome or causal attribution. Assurance conclusions require an independent assurance provider.",
-    detail: "Corporate ESG reporting requires structured evidence behind each claim. Synerxus connects community investment claims to partner confirmations, source artifacts, and GRI mapping context — ensuring each reported statement is backed by reviewable evidence rather than internal assertion alone. Exception flags and limitation notes are documented explicitly so assurance reviewers understand what the claim does and does not prove.",
-    whoUses: "ESG Managers and CSR Directors preparing disclosure reports, board summaries, or assurance-preparation packages under GRI, ESRS, CSRD, or internal reporting standards.",
+    claim: "Our community investment program supported local workforce development activities during the reporting period.",
+    evidence: ["Activity records", "Source documents", "Partner confirmation", "Limitation notes"],
+    limitation: "Reporting support does not determine regulatory compliance or provide formal assurance.",
+    confirmationWorkflow: "Program owner or partner reviewer confirms the activity record, reviewer role, date, and scope reviewed.",
+    sourceSupport: ["Attendance records", "Program files", "Partner reports", "Activity logs"],
+    mappingContext: "May support GRI, ESRS, CSR, board, or internal reporting categories as context only.",
+    recommendedOutput: "Evidence Summary with claim, records, confirmation status, source support, and limitations.",
   },
   {
     title: "Corporate Volunteering",
     icon: Users,
     color: "#1f7ae0",
-    claim: "Employees contributed volunteer hours to community programs.",
-    evidence: ["Volunteer logs", "Partner confirmation", "Event records", "Source documentation"],
-    limitation: "Hours do not prove community outcome or causal attribution.",
-    detail: "Volunteer hour reporting often relies on internal logs. Synerxus structures these records with partner confirmation, event documentation, and source artifacts — moving claims from internal assertion toward a more defensible evidence position. Attribution limitations are stated clearly: hours recorded do not establish community outcome without additional outcome evaluation data.",
-    whoUses: "Corporate CSR or HR teams tracking volunteer program impact for reporting.",
+    claim: "Employees participated in volunteer activities across partner programs.",
+    evidence: ["Volunteer logs", "Partner confirmation", "Attendance records", "Source support"],
+    limitation: "Volunteer hours do not prove community outcomes without additional outcome evidence.",
+    confirmationWorkflow: "Partner or program administrator confirms participation records and event attendance where applicable.",
+    sourceSupport: ["Volunteer logs", "Attendance rosters", "Event records", "Partner notes"],
+    mappingContext: "Can be mapped to employee engagement, community investment, or SDG-aligned context without changing evidence strength.",
+    recommendedOutput: "Volunteer evidence summary showing participation records, confirmation status, and limitations.",
   },
   {
     title: "Partner-Delivered Outputs",
     icon: Handshake,
     color: "#0f9f96",
-    claim: "Our partner delivered training sessions during the reporting period.",
-    evidence: ["Training logs", "Partner confirmation", "Attendance records", "Source artifacts"],
-    limitation: "Training completion does not prove behavior change or long-term outcome.",
-    detail: "When a partner delivers your program activities, evidence quality depends on their record-keeping and your confirmation process. Synerxus captures training logs, partner confirmations, attendance records, and source artifacts — and documents what the partner-delivered claim does not prove on its own. Partner-reported figures remain separate from independently confirmed totals.",
-    whoUses: "Program managers and NGOs documenting partner-delivered activities for funders or corporate clients.",
+    claim: "Implementation partners delivered training, services, or program activities during the reporting period.",
+    evidence: ["Partner reports", "Confirmation records", "Attendance logs", "Source artifacts"],
+    limitation: "Delivered outputs do not prove long-term outcomes or causal attribution.",
+    confirmationWorkflow: "Implementation partner confirms what was delivered, when, by whom, and which source records support the entry.",
+    sourceSupport: ["Partner reports", "Attendance logs", "Service records", "Delivery documentation"],
+    mappingContext: "Can be mapped to program, funder, SDG, or internal reporting categories as context.",
+    recommendedOutput: "Partner-delivered output summary with source artifacts and stated boundaries.",
   },
   {
     title: "Supplier / Value Chain Evidence",
     icon: Truck,
     color: "#7551b5",
-    claim: "Supplier sustainability activities were reviewed during the reporting period.",
-    evidence: ["Supplier submissions", "Inspection records", "Certificates", "Source documents"],
-    limitation: "Supplier-submitted evidence is self-reported unless independently reviewed. Synerxus organizes and tracks it — it does not verify supplier claims independently.",
-    detail: "Supply chain sustainability claims carry significant risk when based solely on supplier-submitted evidence. Synerxus tracks the confirmation status and source-support tier of each supplier record, flagging what has been independently reviewed versus what remains at partner-reported status — a critical distinction before assurance or compliance reliance.",
-    whoUses: "Procurement and ESG teams managing supplier sustainability evidence.",
+    claim: "Supplier sustainability records were collected and reviewed during the reporting period.",
+    evidence: ["Supplier submissions", "Certificates", "Inspection records", "Corrective action records"],
+    limitation: "Supplier-reported data may require independent review before compliance reliance.",
+    confirmationWorkflow: "Internal reviewer logs whether supplier records were received, checked, pending clarification, or flagged.",
+    sourceSupport: ["Supplier files", "Certificates", "Inspection records", "Corrective action logs"],
+    mappingContext: "Can be mapped to supplier, value-chain, procurement, or disclosure categories with limitation notes.",
+    recommendedOutput: "Supplier evidence packet showing source status, review status, exceptions, and limitations.",
   },
   {
     title: "Grant / Funder Reporting",
     icon: Landmark,
     color: "#c88914",
     claim: "Grant-funded activities were completed as reported.",
-    evidence: ["Grant reports", "Source artifacts", "Partner confirmation", "Exception log"],
+    evidence: ["Grant reports", "Activity records", "Disbursement documentation", "Source artifacts"],
     limitation: "Completion evidence does not establish causal attribution unless outcome evaluation is performed.",
-    detail: "Funders require evidence that grant-funded activities were delivered as reported. Synerxus structures grant evidence records with source artifacts, partner confirmations, and exception logs — so completion claims are backed by reviewable documentation rather than narrative reports alone. Causal attribution limitations are stated explicitly in every output.",
-    whoUses: "NGOs and nonprofits reporting to grant funders with evidence requirements.",
+    confirmationWorkflow: "Grant owner or delivery partner confirms completion status, source records, and unresolved exceptions.",
+    sourceSupport: ["Grant reports", "Activity records", "Disbursement records", "Source artifacts"],
+    mappingContext: "Can be mapped to funder reporting categories and grant outcome frameworks with boundaries preserved.",
+    recommendedOutput: "Funder-ready Evidence Summary showing completion evidence, source support, and limitations.",
     featured: true,
-    detailHref: "/use-cases/grant-funder-reporting",
   },
   {
     title: "SDG-Aligned Activity Mapping",
     icon: Target,
     color: "#3b8c28",
     claim: "Activities were mapped to SDG-aligned reporting context.",
-    evidence: ["Activity record", "Mapping rationale", "Supporting evidence tier", "Limitation notes"],
-    limitation: "SDG mapping does not certify SDG impact, prove contribution, or determine compliance.",
-    detail: "SDG mapping requires clear documentation of what activities relate to which goals — and what the mapping does not certify. Synerxus records the mapping rationale, evidence tier, and explicit limitations for each mapped activity, ensuring SDG alignment claims are transparent and defensible rather than aspirational. Mapping is kept separate from confirmed impact claims.",
-    whoUses: "Teams mapping activities to SDG reporting context for funder, board, or disclosure purposes.",
-  },
-  {
-    title: "ESG Assurance Preparation",
-    icon: ShieldCheck,
-    color: "#1b5e82",
-    claim: "All material ESG claims in our 2025 sustainability report are supported by reviewable evidence.",
-    evidence: [
-      "Full claim register with evidence status per claim",
-      "Source artifact index",
-      "Partner confirmation summary",
-      "Exception log with resolution status",
-      "Assurance-preparation export package",
-    ],
-    limitation: "Synerxus organizes and structures evidence for review. It does not perform assurance engagements, provide assurance opinions, or determine regulatory compliance. A qualified assurance provider is required for formal assurance conclusions.",
-    detail: "ESG assurance reviews require teams to present reviewable evidence behind each material claim. Synerxus structures that evidence — a full claim register, source artifact index, partner confirmation summary, exception log, and assurance-preparation export — so teams can respond to auditor requests without manual assembly under deadline pressure. What Synerxus prepares is not an assurance opinion; that determination belongs to a qualified assurance provider.",
-    whoUses: "ESG Managers preparing for limited or reasonable assurance reviews, working with Big Four or specialist assurance providers.",
+    evidence: ["Activity record", "Mapping rationale", "Evidence tier", "Limitation note"],
+    limitation: "SDG mapping does not certify SDG impact, establish contribution, or determine compliance.",
+    confirmationWorkflow: "Reviewer documents who mapped the activity, what rationale was used, and whether source evidence supports the underlying activity record.",
+    sourceSupport: ["Activity record", "Mapping rationale", "Evidence tier", "Limitation note"],
+    mappingContext: "SDGs, internal categories, or reporting themes are used as context, not evidence strength.",
+    recommendedOutput: "Mapping context summary with rationale, evidence tier, and limitation note.",
   },
 ];
 
-type FilterGroup = { label: string; cardIndexes: number[] };
+type FilterGroup = {
+  label: string;
+  cardIndexes: number[];
+  summary: string;
+  focus: string;
+  outcome: string;
+};
 
 const filterGroups: FilterGroup[] = [
-  { label: "Corporate ESG / CSR teams", cardIndexes: [0, 1, 3, 6] },
-  { label: "NGO and funder reporting", cardIndexes: [2, 4] },
-  { label: "Framework and mapping context", cardIndexes: [5] },
+  {
+    label: "Corporate ESG / CSR teams",
+    cardIndexes: [0, 1, 3],
+    summary: "Build defensible evidence packages behind corporate ESG / CSR reporting, community investment, volunteering, and supplier records.",
+    focus: "Claim registers, partner confirmation, source artifacts, exception logs, and reviewable summaries.",
+    outcome: "A clearer evidence trail before claims reach leadership, reports, or assurance review.",
+  },
+  {
+    label: "NGO and funder reporting",
+    cardIndexes: [2, 4],
+    summary: "Document partner-delivered activities and grant-funded outputs with source support and explicit reporting boundaries.",
+    focus: "Delivery records, attendance logs, partner confirmations, grant reports, and funder-ready summaries.",
+    outcome: "Less manual assembly when funders ask what happened, who confirmed it, and what evidence exists.",
+  },
+  {
+    label: "Framework and mapping context",
+    cardIndexes: [5],
+    summary: "Map activity records to SDG or framework context without overstating alignment as evidence of outcomes.",
+    focus: "Mapping rationale, evidence tier, limitation notes, and stakeholder reporting context.",
+    outcome: "A cleaner distinction between useful reporting context and claims that require stronger evidence.",
+  },
 ];
 
 type FlowStep = {
@@ -130,37 +144,37 @@ const flow: FlowStep[] = [
   },
   {
     title: "Evidence",
-    body: "Collect relevant source support.",
+    body: "Attach relevant activity records, documents, or artifacts.",
     icon: FileText,
-    detail: "Collect activity logs, partner reports, invoices, surveys, and monitoring data that support the claim. Document what evidence exists and what is missing. The presence or absence of source evidence determines where the claim sits on the Evidence Ladder.",
+    detail: "Attach relevant activity records, documents, or artifacts.",
     platformHref: "/platform",
   },
   {
     title: "Confirmation",
-    body: "Record who confirmed the activity.",
+    body: "Capture who confirmed or reviewed the record.",
     icon: CheckCircle2,
-    detail: "Record who reviewed and confirmed the activity — an internal program owner, delivery partner, or external reviewer. Confirmation status directly affects the evidence tier and defensibility of the claim. Unconfirmed records are flagged separately from confirmed ones.",
+    detail: "Capture who confirmed or reviewed the record.",
     platformHref: "/platform",
   },
   {
     title: "Source Support",
-    body: "Reference documents and records.",
+    body: "Preserve source files, logs, and references.",
     icon: FileText,
-    detail: "Reference primary source documents that substantiate the claim: invoices, reports, photos, spreadsheets, or third-party records. Source support moves a claim from internal assertion toward reviewable evidence that an auditor or funder can inspect directly.",
+    detail: "Preserve source files, logs, and references.",
     platformHref: "/platform",
   },
   {
     title: "Limitation",
-    body: "State what the claim does not prove.",
+    body: "State what remains unconfirmed or outside the claim.",
     icon: ShieldAlert,
-    detail: "Every claim has a boundary. State explicitly what the claim does not prove — causal attribution, long-term outcomes, regulatory compliance, or impact beyond the reported activity scope. Documented limitations protect against over-statement and are required for review-ready evidence packets.",
+    detail: "State what remains unconfirmed or outside the claim.",
     platformHref: "/platform",
   },
   {
-    title: "Output",
+    title: "Evidence Summary",
     body: "Produce a reviewable evidence summary.",
     icon: BarChart3,
-    detail: "Produce a structured evidence summary that includes the claim, supporting evidence, confirmation status, mapping context, exceptions, and limitations. This output is ready for internal review, reporting submissions, or assurance preparation — without requiring manual assembly when a deadline arrives.",
+    detail: "Generate a reviewable summary for reporting preparation.",
     platformHref: "/platform",
   },
 ];
@@ -179,24 +193,34 @@ export default function UseCasesPage() {
     setSelectedCase(null);
   };
 
+  const handleCaseKeyDown = (event: KeyboardEvent<HTMLElement>, index: number) => {
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleCaseSelect(index);
+    }
+  };
+
   return (
     <MarketingLayout>
       {/* ── Header ───────────────────────────────────────────────────────── */}
       <section className="bg-white py-10 md:py-14">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.7fr] lg:items-start">
           <div>
-            <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Use Cases</p>
-            <h1 className="mt-4 max-w-3xl text-4xl font-extrabold leading-tight text-[#0A1F44] md:text-5xl">
+            <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Solutions</p>
+            <h1 className="mt-4 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
               Built for claims that need defensible evidence.
             </h1>
+            <p className="mt-4 max-w-2xl text-xl font-semibold leading-tight text-[#0A1F44] sm:text-2xl">
+              Different programs. Different stakeholders. One evidence structure.
+            </p>
             <div className="mt-4 h-1 w-24 bg-[#c88914]" />
             <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
-              Different programs. Different stakeholders. Same evidence backbone. Synerxus provides a consistent structure: claim to evidence to confirmation to source support to mapping context to limitation to output.
+              Synerxus helps teams connect claims to evidence, confirmation, source support, mapping context, limitations, and reviewable summaries across ESG, CSR, and social-impact workflows.
             </p>
             <div className="mt-7 flex flex-col gap-3 sm:flex-row">
               <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
-                <Link href="/request-assessment">
-                  Request Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
+                <Link href="/assessment">
+                  Request Evidence Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
               <Button asChild variant="outline" className="border-[#0A1F44] text-[#0A1F44]">
@@ -210,7 +234,7 @@ export default function UseCasesPage() {
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
               Find your use case
             </p>
-            <p className="mt-1 text-xs text-slate-500">Select an audience to highlight relevant cards.</p>
+            <p className="mt-1 text-xs text-slate-500">Select an audience to reveal the relevant solution path.</p>
             <div className="mt-4 space-y-2">
               {filterGroups.map((group, i) => {
                 const isActive = selectedFilter === i;
@@ -243,6 +267,33 @@ export default function UseCasesPage() {
                 </button>
               )}
             </div>
+            <div className="mt-5 rounded-lg border border-slate-200 bg-slate-50 p-4">
+              {selectedFilter === null ? (
+                <>
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-slate-400">Solution brief</p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">
+                    Choose an audience above to see which cards matter most and what evidence workflow they support.
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
+                    {filterGroups[selectedFilter].label}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-700">{filterGroups[selectedFilter].summary}</p>
+                  <div className="mt-3 grid gap-3 border-t border-slate-200 pt-3">
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Focus</p>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-600">{filterGroups[selectedFilter].focus}</p>
+                    </div>
+                    <div>
+                      <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Outcome</p>
+                      <p className="mt-1 text-xs leading-relaxed text-slate-600">{filterGroups[selectedFilter].outcome}</p>
+                    </div>
+                  </div>
+                </>
+              )}
+            </div>
           </aside>
         </div>
       </section>
@@ -258,16 +309,21 @@ export default function UseCasesPage() {
               const isFilteredOut = selectedFilter !== null && !filterGroups[selectedFilter].cardIndexes.includes(index);
               const isDimmed = isFilteredOut || (selectedCase !== null && !isSelected && !isFilteredOut && selectedFilter === null);
               return (
-                <button
+                <article
                   key={item.title}
-                  type="button"
+                  role="button"
+                  tabIndex={0}
+                  aria-pressed={isSelected}
+                  aria-expanded={isSelected}
+                  aria-label={`${isSelected ? "Collapse" : "Expand"} ${item.title} use case`}
                   onClick={() => handleCaseSelect(index)}
-                  className={`relative flex flex-col rounded-md border bg-white p-5 text-left shadow-md transition-all duration-200 ${
+                  onKeyDown={(event) => handleCaseKeyDown(event, index)}
+                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-white p-5 text-left shadow-md outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
                     isSelected
-                      ? "min-h-[640px] border-[#0A1F44] shadow-xl ring-2 ring-[#0A1F44]/20"
+                      ? "min-h-[560px] border-[#0A1F44] shadow-xl ring-2 ring-[#c88914]/30 md:min-h-[640px]"
                       : isDimmed
-                      ? "h-[340px] border-slate-200 opacity-50 hover:opacity-80"
-                      : "h-[340px] border-slate-200 hover:-translate-y-0.5 hover:shadow-xl"
+                      ? "min-h-[300px] border-slate-200 bg-slate-50 opacity-70 hover:opacity-95 md:h-[360px]"
+                      : "min-h-[300px] border-slate-200 hover:-translate-y-0.5 hover:border-[#0A1F44]/35 hover:shadow-xl md:h-[360px]"
                   }`}
                 >
                   {/* Featured badge */}
@@ -277,10 +333,12 @@ export default function UseCasesPage() {
                     </span>
                   )}
 
-                  <div className="h-1 -translate-y-5 rounded-t-md" style={{ backgroundColor: item.color }} />
+                  <div className="absolute inset-x-0 top-0 h-1.5" style={{ backgroundColor: item.color }} />
                   <div className="flex items-start gap-4">
                     <span
-                      className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white"
+                      className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-white shadow-sm transition-transform duration-200 ${
+                        isSelected ? "scale-105" : "group-hover:scale-105"
+                      }`}
                       style={{ backgroundColor: item.color }}
                     >
                       <Icon className="h-6 w-6" />
@@ -336,44 +394,55 @@ export default function UseCasesPage() {
                     </div>
                   )}
 
-                  {/* Who uses this — always visible */}
-                  <div className={`mt-4 border-t border-slate-100 pt-3 ${isSelected ? "" : "min-h-[70px]"}`}>
-                    <p className="text-[11px] font-bold uppercase tracking-wide text-slate-400">Who uses this</p>
-                    <p className={`mt-0.5 text-xs leading-relaxed text-slate-600 ${isSelected ? "" : "line-clamp-2"}`}>
-                      {item.whoUses}
-                    </p>
-                  </div>
-
                   {isSelected && (
-                    <div className="mt-4 border-t border-slate-200 pt-4">
-                      <p className="text-sm leading-relaxed text-slate-700">{item.detail}</p>
+                    <div className="mt-4 grid gap-3 border-t border-slate-200 pt-4 text-sm">
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Confirmation workflow</p>
+                        <p className="mt-1 leading-relaxed text-slate-700">{item.confirmationWorkflow}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Source-support examples</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {item.sourceSupport.map((source) => (
+                            <span key={source} className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-semibold text-[#0A1F44]">
+                              {source}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Mapping context</p>
+                        <p className="mt-1 leading-relaxed text-slate-700">{item.mappingContext}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">What the claim does not prove</p>
+                        <p className="mt-1 leading-relaxed text-slate-700">{item.limitation}</p>
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-extrabold uppercase tracking-wide text-slate-400">Recommended output</p>
+                        <p className="mt-1 leading-relaxed text-slate-700">{item.recommendedOutput}</p>
+                      </div>
                       <Link
-                        href="/request-assessment"
+                        href="/assessment"
                         onClick={(e) => e.stopPropagation()}
                         className="mt-3 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] transition-colors hover:text-[#a9720f]"
                       >
-                        Request an assessment <ArrowRight className="h-4 w-4" />
+                        Request Evidence Readiness Assessment <ArrowRight className="h-4 w-4" />
                       </Link>
                     </div>
                   )}
 
                   <div className="mt-auto border-t border-slate-100 pt-3">
-                    {item.detailHref ? (
-                      <Link
-                        href={item.detailHref}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] transition-colors hover:text-[#a9720f]"
-                      >
-                        See detail <ArrowRight className="h-4 w-4" />
-                      </Link>
-                    ) : (
-                      <span className="inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914]">
-                        {isSelected ? "Hide detail" : "See detail"}
-                        <ArrowRight className={`h-4 w-4 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`} />
-                      </span>
-                    )}
+                    <span className={`inline-flex w-full items-center justify-between rounded-md border px-3 py-2 text-sm font-bold transition-colors ${
+                      isSelected
+                        ? "border-[#0A1F44]/20 bg-slate-100 text-[#0A1F44]"
+                        : "border-[#c88914]/35 bg-[#fff8e8] text-[#7a520d] group-hover:border-[#c88914] group-hover:bg-[#ffefd0] group-hover:text-[#0A1F44]"
+                    }`}>
+                      {isSelected ? "Collapse details" : "Expand details"}
+                      <ArrowRight className={`h-4 w-4 transition-transform duration-200 ${isSelected ? "rotate-90" : ""}`} />
+                    </span>
                   </div>
-                </button>
+                </article>
               );
             })}
           </div>
@@ -385,7 +454,7 @@ export default function UseCasesPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
             <h2 className="text-center text-sm font-extrabold uppercase tracking-[0.18em] text-[#0A1F44]">
-              One consistent evidence flow for every use case
+              One evidence structure across use cases.
             </h2>
             <p className="mt-1 text-center text-xs text-slate-400">Click any step to learn more.</p>
 
@@ -450,7 +519,7 @@ export default function UseCasesPage() {
           <div>
             <p className="text-sm font-extrabold uppercase text-[#ffcc33]">Ready to strengthen your evidence?</p>
             <h2 className="mt-3 text-3xl font-extrabold text-white">
-              Explore use cases or get a tailored evidence readiness assessment.
+              Start with a focused review of your claims, evidence gaps, source support, confirmation status, and limitations.
             </h2>
           </div>
           <Button asChild className="border-2 border-white/60 bg-white/10 text-white hover:bg-white hover:text-[#061A36]">
@@ -459,8 +528,8 @@ export default function UseCasesPage() {
             </Link>
           </Button>
           <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
-            <Link href="/request-assessment">
-              Request Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
+            <Link href="/assessment">
+              Request Evidence Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
           </Button>
         </div>

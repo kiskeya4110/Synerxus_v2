@@ -49,8 +49,8 @@ export const reportTemplates: ReportTemplate[] = [
   },
   {
     id: "sdg-impact",
-    name: "SDG Evidence Summary",
-    description: "Progress tracking against UN Sustainable Development Goals.",
+    name: "SDG Mapping Summary",
+    description: "SDG reporting-context mapping with evidence limitations preserved.",
     category: "impact",
     icon: "🌍",
     formats: ["PDF"],
@@ -67,7 +67,7 @@ export const reportTemplates: ReportTemplate[] = [
   },
   {
     id: "verified-evidence-summary",
-    name: "Verified Evidence Summary",
+    name: "Evidence Summary",
     description: "Partner-confirmed evidence records supporting ESG/CSR reporting and assurance preparation.",
     category: "evidence",
     icon: "📊",
@@ -117,8 +117,8 @@ export const reportCategories = [
   { id: "all", label: "All Reports", icon: "📄" },
   { id: "executive", label: "Executive", icon: "📊" },
   { id: "engagement", label: "Engagement", icon: "👥" },
-  { id: "impact", label: "Impact", icon: "🌍" },
+  { id: "impact", label: "Mapping Context", icon: "🌍" },
   { id: "evidence", label: "Evidence", icon: "🧾" },
-  { id: "compliance", label: "Compliance", icon: "✅" },
+  { id: "compliance", label: "Review Context", icon: "✅" },
   { id: "financial", label: "Financial", icon: "💰" },
 ];

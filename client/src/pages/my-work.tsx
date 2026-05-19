@@ -10,8 +10,8 @@ import DashboardMobileNav from "@/components/dashboard/shared/DashboardMobileNav
 import { getSDGColor } from "@shared/sdg-goals";
 
 /**
- * History Page (MVP) — Simple chronological list of submitted impact logs
- * with verification status. No tabs, no charts, no search.
+ * History Page (MVP) — Simple chronological list of submitted activity logs
+ * with review status. No tabs, no charts, no search.
  */
 export default function MyWork() {
   const [, navigate] = useLocation();
@@ -22,7 +22,7 @@ export default function MyWork() {
   const [filter, setFilter] = useState<"all" | "pending" | "verified" | "rejected">("all");
   const [visibleCount, setVisibleCount] = useState(20);
 
-  // Fetch all impact logs for this user
+  // Fetch all activity logs for this user
   const { data: allLogs = [], isLoading } = useQuery({
     queryKey: ["/api/logs", userId],
     queryFn: async () => {
@@ -154,7 +154,7 @@ export default function MyWork() {
                       : "bg-amber-100 text-amber-700"
               }`}
             >
-              {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : status === "incomplete" ? "⚠ Needs Update" : "⏳ Pending"}
+              {status === "approved" ? "✓ Confirmed" : status === "rejected" ? "✗ Rejected" : status === "incomplete" ? "⚠ Needs Update" : "⏳ Pending"}
             </span>
           </div>
 
@@ -219,7 +219,7 @@ export default function MyWork() {
                     : "bg-amber-100 text-amber-700"
             }`}
           >
-            {status === "approved" ? "✓ Verified" : status === "rejected" ? "✗ Rejected" : status === "incomplete" ? "⚠ Needs Update" : "⏳ Pending"}
+            {status === "approved" ? "✓ Confirmed" : status === "rejected" ? "✗ Rejected" : status === "incomplete" ? "⚠ Needs Update" : "⏳ Pending"}
           </span>
         </div>
 

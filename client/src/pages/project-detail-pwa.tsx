@@ -98,7 +98,7 @@ export default function ProjectDetailPWA() {
   });
 
   const livesImpactedMetricId = impactMetrics.find(
-    (m: any) => m.name === "Lives Impacted" || m.category === "general"
+    (m: any) => m.name === "People Reached" || m.category === "general"
   )?.id || 1;
 
   // Fetch volunteer's AIU summary to get accurate project AIU
@@ -188,7 +188,7 @@ export default function ProjectDetailPWA() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/project-impacts"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
-      toast({ title: "Impact Logged", description: `${taskImpact} people impacted recorded.` });
+      toast({ title: "Impact Logged", description: `${taskImpact} people reached recorded.` });
     },
     onError: () => {
       toast({ title: "Error", description: "Failed to log impact", variant: "destructive" });
@@ -422,7 +422,7 @@ export default function ProjectDetailPWA() {
                   <div className="flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-emerald-600" />
                     <div>
-                      <p className="text-xs font-semibold text-slate-700">Your Impact Score</p>
+                      <p className="text-xs font-semibold text-slate-700">Your Contribution Score</p>
                       <p className="text-xs text-slate-500">Tracked Impact Points</p>
                     </div>
                   </div>
@@ -631,7 +631,7 @@ export default function ProjectDetailPWA() {
               <div>
                 <label className="flex items-center gap-2 text-sm font-medium text-slate-700 mb-2">
                   <Users className="w-4 h-4 text-emerald-500" />
-                  People Impacted
+                  People Reached
                 </label>
                 <Input
                   type="number"

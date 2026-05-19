@@ -288,7 +288,7 @@ const CorporateView = memo(function CorporateView({
                 <ChevronLeft className="h-4 w-4" />
                 Close
               </button>
-              <span className="text-sm font-semibold text-gray-900">Verified Evidence Summary</span>
+              <span className="text-sm font-semibold text-gray-900">Evidence Summary</span>
               <div className="flex items-center gap-2">
                 <button
                   onClick={downloadReport}
@@ -310,7 +310,7 @@ const CorporateView = memo(function CorporateView({
               srcDoc={reportContent.sourceHtml}
               className="flex-1 w-full"
               style={{ border: "none", display: "block" }}
-              title="Verified Evidence Summary"
+              title="Evidence Summary"
               sandbox="allow-same-origin"
             />
           </div>
@@ -323,7 +323,7 @@ const CorporateView = memo(function CorporateView({
               <FileText className="h-5 w-5 text-indigo-600" />
             </div>
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Verified Evidence Summary</h3>
+              <h3 className="text-sm font-semibold text-gray-900">Evidence Summary</h3>
               <p className="text-xs text-gray-500">Prepared for ESG / CSR Reporting and Assurance Support</p>
             </div>
           </div>
@@ -673,7 +673,7 @@ const CorporateView = memo(function CorporateView({
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-slate-900">ESG Console</h1>
-          <p className="text-slate-600 mt-1">View verified evidence records from your partner organizations</p>
+          <p className="text-slate-600 mt-1">View evidence records from your partner organizations</p>
         </div>
         <div className="flex items-center gap-3">
           <button
@@ -1159,7 +1159,7 @@ const CorporateView = memo(function CorporateView({
           {reportContent && (
             <div className="bg-white rounded-xl border border-slate-200 shadow-sm overflow-hidden">
               <div className="flex items-center justify-between px-6 py-3 border-b border-slate-200 bg-slate-50">
-              <span className="text-sm font-semibold text-slate-800">Verified Evidence Summary Preview</span>
+              <span className="text-sm font-semibold text-slate-800">Evidence Summary Preview</span>
                 <div className="flex items-center gap-2">
                   <button
                     onClick={downloadReport}
@@ -1181,7 +1181,7 @@ const CorporateView = memo(function CorporateView({
                 srcDoc={reportContent.sourceHtml}
                 className="w-full"
                 style={{ border: "none", display: "block", height: "70vh" }}
-                title="Verified Evidence Summary Preview"
+                title="Evidence Summary Preview"
                 sandbox="allow-same-origin"
               />
             </div>
@@ -1191,7 +1191,7 @@ const CorporateView = memo(function CorporateView({
             <div className="text-center py-16 text-slate-400 bg-white rounded-xl border border-dashed border-slate-300">
               <FileText className="h-12 w-12 mx-auto mb-3 opacity-30" />
               <p className="text-sm font-medium">Select a reporting period and click Generate Report</p>
-              <p className="text-xs mt-1">Report includes verified evidence records, partner-reported reach, and framework alignment context</p>
+              <p className="text-xs mt-1">Report includes evidence records, partner-reported reach, and framework alignment context</p>
             </div>
           )}
         </div>

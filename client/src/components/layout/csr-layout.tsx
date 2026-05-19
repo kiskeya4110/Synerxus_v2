@@ -78,7 +78,7 @@ const navSections = [
   {
     title: "ANALYTICS & REPORTS",
     items: [
-      { id: "impact", label: "Evidence Summary", icon: BarChart3, href: "/impact-report-generator", description: "Generate Verified Evidence Summaries" },
+      { id: "impact", label: "Evidence Summary", icon: BarChart3, href: "/impact-report-generator", description: "Generate Evidence Summaries" },
       { id: "geographic", label: "Geographic Impact", icon: Building2, href: "/csr-dashboard?tab=geographic", description: "Map view of activities" },
     ]
   },

@@ -109,7 +109,7 @@ export function AINarrativeSection({
         body: JSON.stringify({
           projectTitle: context.reportType === "volunteer"
             ? `${context.volunteerName || "Volunteer"}'s Impact`
-            : context.organizationName || "Organization Impact",
+            : context.organizationName || "Organization Evidence",
           reportingPeriod: context.period || "This Year",
           locationsServed: "Multiple locations",
           keyStories: context.achievements?.join(". ") || "",
@@ -215,7 +215,7 @@ export function AINarrativeSection({
     }
 
     if (context.peopleImpacted > 0) {
-      parts.push(`${context.peopleImpacted.toLocaleString()} lives impacted`);
+      parts.push(`${context.peopleImpacted.toLocaleString()} people reached`);
     }
 
     if (context.sdgs.length > 0) {
@@ -297,7 +297,7 @@ export function AINarrativeSection({
           </div>
         </div>
 
-        {/* Verified Metrics Summary */}
+        {/* Confirmed Metrics Summary */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4 p-3 bg-gray-50 dark:bg-gray-800/50 rounded-lg border border-gray-200 dark:border-gray-700">
           <div className="text-center p-2">
             <div className="flex items-center justify-center gap-1 text-blue-600 dark:text-blue-400 mb-1">
@@ -311,7 +311,7 @@ export function AINarrativeSection({
               <Users className="h-3.5 w-3.5" />
               <span className="text-lg font-bold">{context.peopleImpacted}</span>
             </div>
-            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">Lives Impacted</p>
+            <p className="text-[10px] text-gray-500 dark:text-gray-400 uppercase tracking-wide">People Reached</p>
           </div>
           <div className="text-center p-2">
             <div className="flex items-center justify-center gap-1 text-purple-600 dark:text-purple-400 mb-1">
@@ -433,7 +433,7 @@ export function AINarrativeSection({
           </motion.div>
         )}
 
-        {/* Report Footer with Data Source & Verification */}
+        {/* Report Footer with Data Source & Review */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mt-4 pt-3 border-t border-gray-200 dark:border-gray-700">
           <div className="flex items-center gap-3 text-[10px] text-gray-400 dark:text-gray-500">
             <span className="flex items-center gap-1">

@@ -47,13 +47,13 @@ const statusConfig = {
   },
   approved: {
     icon: CheckCircle,
-    label: "Verified",
+    label: "Confirmed",
     color: "bg-emerald-100 text-emerald-700 border-emerald-200",
     iconColor: "text-emerald-500"
   },
-  verified: {
+  confirmed: {
     icon: CheckCircle,
-    label: "Verified",
+    label: "Confirmed",
     color: "bg-emerald-100 text-emerald-700 border-emerald-200",
     iconColor: "text-emerald-500"
   },
@@ -95,7 +95,7 @@ export default function ImpactLogHistory({
   // Calculate summary stats
   const stats = {
     total: logs.length,
-    verified: logs.filter(l => l.verificationStatus === 'approved').length,
+    confirmed: logs.filter(l => l.verificationStatus === 'approved').length,
     pending: logs.filter(l => l.verificationStatus === 'pending').length,
     rejected: logs.filter(l => l.verificationStatus === 'rejected').length,
     totalHours: logs.reduce((sum, l) => sum + (l.hours || 0), 0),
@@ -128,7 +128,7 @@ export default function ImpactLogHistory({
           <div className="flex items-center justify-between">
             <CardTitle className="flex items-center gap-2 text-lg">
               <Wallet className="w-5 h-5 text-emerald-600" />
-              Impact Wallet
+              Evidence Wallet
             </CardTitle>
             <Link href="/log-activity">
               <Button variant="outline" size="sm" className="text-emerald-600 border-emerald-200 hover:bg-emerald-50">

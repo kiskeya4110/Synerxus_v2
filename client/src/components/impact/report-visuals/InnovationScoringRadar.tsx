@@ -12,7 +12,7 @@ interface InnovationScoringRadarProps {
 }
 
 const DEFAULT_DIMENSIONS: ScoringDimension[] = [
-  { label: "Verification Integrity", shortLabel: "Verification\nIntegrity", rawScore: 92, weight: 0.40 },
+  { label: "Review Integrity", shortLabel: "Review\nIntegrity", rawScore: 92, weight: 0.40 },
   { label: "Scale",                  shortLabel: "Scale",                  rawScore: 68, weight: 0.25 },
   { label: "Persistence",            shortLabel: "Persistence",            rawScore: 85, weight: 0.15 },
   { label: "Geographic Reach",       shortLabel: "Geographic\nReach",      rawScore: 33, weight: 0.10 },
@@ -339,7 +339,7 @@ export default function InnovationScoringRadar({
           background: "#F9FAFB",
         }}
       >
-        Weighted scoring table is the primary and authoritative audit source for this index. The radar chart is a supplemental visual representation only and does not constitute verified evidence. Axis order is fixed — not manipulated.
+        Weighted scoring table is the primary and authoritative audit source for this index. The radar chart is a supplemental visual representation only and does not constitute evidence. Axis order is fixed — not manipulated.
       </div>
     </div>
   );

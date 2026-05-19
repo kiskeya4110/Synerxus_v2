@@ -40,7 +40,7 @@ export default function ScreeningStatusMatrix() {
           borderBottom: "1px solid #E5E7EB",
         }}
       >
-        {["Screening Dimension", "Status", "Outcomes Affected", "Verification Method"].map(
+        {["Screening Dimension", "Status", "Outcomes Affected", "Review Method"].map(
           (h, i) => (
             <div
               key={i}

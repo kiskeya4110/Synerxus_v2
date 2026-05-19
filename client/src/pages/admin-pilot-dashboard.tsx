@@ -144,7 +144,7 @@ function VerificationFeed({ items }: { items: RecentVerification[] }) {
   if (items.length === 0) {
     return (
       <div className="text-center py-8 text-slate-400">
-        <p className="text-sm">No verifications yet</p>
+        <p className="text-sm">No confirmations yet</p>
       </div>
     );
   }
@@ -412,7 +412,7 @@ export default function AdminPilotDashboard() {
               <StatCard
                 icon="📋"
                 value={stats?.totalPending ?? 0}
-                label="Pending Verification"
+                label="Pending Review"
                 sublabel="Awaiting partner confirmation"
                 color="violet"
               />
@@ -420,7 +420,7 @@ export default function AdminPilotDashboard() {
                 icon="⚠️"
                 value={stats?.silentNGOs ?? 0}
                 label="Silent NGOs"
-                sublabel="No verification in 14+ days"
+                sublabel="No confirmation in 14+ days"
                 color="amber"
               />
             </>
@@ -429,14 +429,14 @@ export default function AdminPilotDashboard() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
-          {/* Left Column: Country Health + Live Verifications */}
+          {/* Left Column: Country Health + Live Confirmations */}
           <div className="lg:col-span-2 space-y-6">
 
-            {/* Verification Health by Country */}
+            {/* Confirmation Health by Country */}
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-800">Verification Health</h2>
+                  <h2 className="text-lg font-semibold text-slate-800">Confirmation Health</h2>
                   <p className="text-sm text-slate-500">By country · outcomes + hours shown together</p>
                 </div>
                 <div className="flex items-center gap-3 text-xs">
@@ -460,7 +460,7 @@ export default function AdminPilotDashboard() {
               ) : (data?.verificationHealth?.length ?? 0) === 0 ? (
                 <div className="text-center py-10 text-slate-400">
                   <p className="text-sm">No activity data yet</p>
-                  <p className="text-xs mt-1">Verification health will appear once volunteers log activities</p>
+                  <p className="text-xs mt-1">Confirmation health will appear once volunteers log activities</p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -475,7 +475,7 @@ export default function AdminPilotDashboard() {
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-100">
               <div className="flex items-center justify-between mb-4">
                 <div>
-                  <h2 className="text-lg font-semibold text-slate-800">Live Verifications</h2>
+                  <h2 className="text-lg font-semibold text-slate-800">Live Confirmations</h2>
                   <p className="text-sm text-slate-500">Real-time partner confirmations</p>
                 </div>
                 <span className="flex items-center gap-1 text-xs text-emerald-600 flex-shrink-0">
@@ -562,7 +562,7 @@ export default function AdminPilotDashboard() {
         </div>
 
         <div className="mt-8 text-center text-sm text-slate-400 pb-4">
-          <p>Every element either diagnoses <em>why verification is low</em> or proves <em>value to corporate pilots</em>.</p>
+          <p>Every element either diagnoses <em>why evidence readiness is low</em> or shows <em>value to corporate pilots</em>.</p>
           <p className="mt-1 text-xs">
             Hours are <strong>partner-confirmed</strong> alongside outputs, not self-reported. Both are structured for review.
           </p>

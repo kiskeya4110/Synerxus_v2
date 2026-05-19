@@ -123,7 +123,7 @@ export default function NgoVerification() {
     refetchInterval: 30000,
   });
 
-  // Fetch past verified logs
+  // Fetch past reviewed logs
   const { data: approvedLogs = [] } = useQuery<PendingLog[]>({
     queryKey: ["/api/logs", { ngo_id: currentUser?.organizationId, status: "approved" }],
     queryFn: async () => {
@@ -180,8 +180,8 @@ export default function NgoVerification() {
       queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
-        title: "Log Verified",
-        description: "The impact log has been verified successfully.",
+        title: "Record Confirmed",
+        description: "The activity log has been confirmed successfully.",
       });
       setIsVerifying(null);
       setEditModalOpen(false);
@@ -226,7 +226,7 @@ export default function NgoVerification() {
       queryClient.invalidateQueries({ queryKey: ["/api/notifications"] });
       toast({
         title: "Log Rejected",
-        description: "The impact log has been rejected with your feedback.",
+        description: "The activity log has been rejected with your feedback.",
       });
       setRejectModalOpen(false);
       setSelectedLogId(null);
@@ -488,7 +488,7 @@ export default function NgoVerification() {
     </Card>
   );
 
-  // History card renderer — read-only display of past verified/rejected logs
+  // History card renderer — read-only display of past confirmed/rejected logs
   const renderHistoryCard = (log: PendingLog, compact: boolean) => {
     const isApproved = log.verificationStatus === 'approved';
     return (
@@ -509,7 +509,7 @@ export default function NgoVerification() {
             </div>
             <Badge variant="outline" className={`text-xs ${isApproved ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-red-50 text-red-600 border-red-200'}`}>
               {isApproved ? <CheckCircle className="w-3 h-3 mr-1" /> : <XCircle className="w-3 h-3 mr-1" />}
-              {isApproved ? 'Verified' : 'Rejected'}
+              {isApproved ? 'Confirmed' : 'Rejected'}
             </Badge>
           </div>
           {(log.outcomeText || log.description) && (
@@ -553,7 +553,7 @@ export default function NgoVerification() {
 
   const downloadReport = async () => {
     try {
-      const response = await fetch("/api/reports/verified-evidence-summary", {
+      const response = await fetch("/api/reports/reviewed-evidence-summary", {
         headers: await getAuthHeaders()
       });
       if (!response.ok) throw new Error("Failed to generate report");
@@ -561,11 +561,11 @@ export default function NgoVerification() {
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = "verified-evidence-summary.html";
+      a.download = "reviewed-evidence-summary.html";
       a.click();
       URL.revokeObjectURL(url);
     } catch {
-      toast({ title: "Download failed", description: "Could not generate the Verified Evidence Summary.", variant: "destructive" });
+      toast({ title: "Download failed", description: "Could not generate the Evidence Summary.", variant: "destructive" });
     }
   };
 
@@ -575,7 +575,7 @@ export default function NgoVerification() {
       <OrganizationPWALayout activeTab="verify">
         <div className="px-4 py-4">
           <div className="flex items-center justify-between mb-3">
-            <h1 className="text-xl font-bold text-slate-800">Verification</h1>
+            <h1 className="text-xl font-bold text-slate-800">Partner Review</h1>
             <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
               <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             </Button>
@@ -583,11 +583,11 @@ export default function NgoVerification() {
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1">
               <ShieldCheck className="w-3.5 h-3.5" />
-              {approvedLogs.length} Verified by Synerxus
+              {approvedLogs.length} Confirmed by Synerxus
             </div>
             <Button variant="outline" size="sm" onClick={downloadReport} className="text-xs gap-1.5">
               <Download className="w-3.5 h-3.5" />
-              Verified Evidence Summary
+              Evidence Summary
             </Button>
           </div>
 
@@ -632,7 +632,7 @@ export default function NgoVerification() {
                 <CardContent>
                   <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-slate-700 mb-2">No History Yet</h3>
-                  <p className="text-slate-500">Verified and rejected logs will appear here.</p>
+                  <p className="text-slate-500">Confirmed and rejected records will appear here.</p>
                 </CardContent>
               </Card>
             ) : (
@@ -773,7 +773,7 @@ export default function NgoVerification() {
         <div className="max-w-4xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold text-slate-800">Verification</h1>
+              <h1 className="text-xl font-semibold text-slate-800">Partner Review</h1>
               <p className="text-sm text-slate-500">
                 {viewMode === 'pending'
                   ? `${pendingLogs.length} pending ${pendingLogs.length === 1 ? 'log' : 'logs'}`
@@ -784,7 +784,7 @@ export default function NgoVerification() {
               {approvedLogs.length > 0 && (
                 <div className="flex items-center gap-1.5 text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-full px-3 py-1.5">
                   <ShieldCheck className="w-3.5 h-3.5" />
-                  {approvedLogs.length} Verified by Synerxus
+                  {approvedLogs.length} Confirmed by Synerxus
                 </div>
               )}
               {/* Tab switcher */}
@@ -810,7 +810,7 @@ export default function NgoVerification() {
               </div>
               <Button variant="outline" size="sm" onClick={downloadReport}>
                 <Download className="w-4 h-4 mr-2" />
-                Verified Evidence Summary
+                Evidence Summary
               </Button>
               <Button variant="outline" size="sm" onClick={() => refetch()} disabled={isLoading}>
                 <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
@@ -848,7 +848,7 @@ export default function NgoVerification() {
               <CardContent>
                 <CheckCircle className="w-16 h-16 text-slate-300 mx-auto mb-4" />
                 <h3 className="text-lg font-medium text-slate-700 mb-2">No History Yet</h3>
-                <p className="text-slate-500">Verified and rejected logs will appear here.</p>
+                <p className="text-slate-500">Confirmed and rejected records will appear here.</p>
               </CardContent>
             </Card>
           ) : (

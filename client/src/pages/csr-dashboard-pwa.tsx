@@ -78,7 +78,7 @@ export default function CSRDashboardPWA() {
     return params.toString();
   }, [userId, filterSdg, filterProject, filterOutcomeType, filterStartDate, filterEndDate]);
 
-  // Fetch verified outcomes
+  // Fetch confirmed activity records
   const { data: outcomesData, isLoading, refetch } = useQuery<VerifiedOutcomesResponse>({
     queryKey: ["/api/logs/corporate-verified", queryParams],
     queryFn: async () => {
@@ -130,7 +130,7 @@ export default function CSRDashboardPWA() {
   const handleExportCSV = () => {
     if (outcomes.length === 0) return;
 
-    const headers = ["Date", "Outcome", "Type", "Quantity", "SDGs", "NGO", "Volunteer", "Project", "Verified At", "Hours"];
+    const headers = ["Date", "Record", "Type", "Quantity", "SDGs", "NGO", "Volunteer", "Project", "Confirmed At", "Hours"];
     const rows = outcomes.map(o => [
       o.date ? format(new Date(o.date), "yyyy-MM-dd") : "",
       (o.outcomeText || "").replace(/"/g, '""'),
@@ -153,7 +153,7 @@ export default function CSRDashboardPWA() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.setAttribute("href", url);
-    link.setAttribute("download", `verified-outcomes-${format(new Date(), "yyyy-MM-dd")}.csv`);
+    link.setAttribute("download", `confirmed-records-${format(new Date(), "yyyy-MM-dd")}.csv`);
     link.click();
     URL.revokeObjectURL(url);
   };
@@ -199,11 +199,11 @@ export default function CSRDashboardPWA() {
       <main className="flex-1 overflow-y-auto overflow-x-hidden px-4 py-4 space-y-4">
         {/* Summary Bar */}
         <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm">
-          <h1 className="text-lg font-bold text-slate-900 mb-3">Confirmed Outcomes</h1>
+          <h1 className="text-lg font-bold text-slate-900 mb-3">Confirmed Activity Records</h1>
           <div className="grid grid-cols-3 gap-3">
             <div className="text-center">
               <div className="text-2xl font-bold text-emerald-600">{summary.totalVerifiedOutcomes}</div>
-              <div className="text-[10px] text-slate-500 uppercase font-medium">Verified</div>
+              <div className="text-[10px] text-slate-500 uppercase font-medium">Confirmed</div>
             </div>
             <div className="text-center">
               <div className="text-2xl font-bold text-blue-600">{summary.sdgsCovered.length}</div>
@@ -267,7 +267,7 @@ export default function CSRDashboardPWA() {
         {showFilters && (
           <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-slate-700">Filter Outcomes</span>
+              <span className="text-sm font-medium text-slate-700">Filter Records</span>
               {activeFilterCount > 0 && (
                 <button onClick={clearFilters} className="text-xs text-blue-600 hover:underline">
                   Clear all
@@ -302,13 +302,13 @@ export default function CSRDashboardPWA() {
                 </select>
               </div>
               <div>
-                <label className="text-[10px] text-slate-500 uppercase font-medium">Outcome Type</label>
+                <label className="text-[10px] text-slate-500 uppercase font-medium">Record Type</label>
                 <select
                   value={filterOutcomeType}
                   onChange={e => setFilterOutcomeType(e.target.value)}
                   className="w-full mt-0.5 px-2 py-1.5 border border-slate-200 rounded-lg text-xs bg-white"
                 >
-                  <option value="">All Types</option>
+                  <option value="">All Record Types</option>
                   {uniqueOutcomeTypes.map(type => (
                     <option key={type} value={type}>{type}</option>
                   ))}
@@ -336,25 +336,25 @@ export default function CSRDashboardPWA() {
           </div>
         )}
 
-        {/* Outcome List */}
+        {/* Record list */}
         {isLoading ? (
           <div className="text-center py-12">
             <RefreshCw className="w-8 h-8 text-slate-400 animate-spin mx-auto mb-4" />
-            <p className="text-slate-500 text-sm">Loading confirmed outcomes...</p>
+            <p className="text-slate-500 text-sm">Loading confirmed records...</p>
           </div>
         ) : outcomes.length === 0 ? (
           <div className="text-center py-12 bg-white rounded-xl border border-slate-200">
             <CheckCircle className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-            <h3 className="text-slate-700 font-medium mb-1">No confirmed outcomes yet</h3>
+            <h3 className="text-slate-700 font-medium mb-1">No confirmed records yet</h3>
             <p className="text-slate-500 text-sm">
-              {activeFilterCount > 0 ? "Try adjusting your filters." : "Outcomes will appear here once NGOs verify volunteer submissions."}
+              {activeFilterCount > 0 ? "Try adjusting your filters." : "Records will appear here once partners confirm activity submissions."}
             </p>
           </div>
         ) : (
           <div className="space-y-2">
             {outcomes.map((outcome) => (
               <div key={outcome.id} className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
-                {/* Outcome text */}
+                {/* Record text */}
                 {outcome.outcomeText && (
                   <p className="text-sm font-medium text-slate-800 mb-2">
                     {outcome.outcomeText}

@@ -58,9 +58,9 @@ function abbreviateOrgName(name: string): string {
 // ============================================================================
 // Types
 // ============================================================================
-type MobileTab = "home" | "verify" | "projects" | "team" | "more";
+type MobileTab = "home" | "confirm" | "projects" | "team" | "more";
 
-interface PendingVerification {
+interface PendingReview {
   id: number;
   volunteerName: string;
   volunteerAvatar?: string;
@@ -138,7 +138,7 @@ function BottomNav({
 }) {
   const tabs = [
     { id: "home" as const, icon: Home, label: "Home" },
-    { id: "verify" as const, icon: Shield, label: "Verify", badge: pendingCount },
+    { id: "confirm" as const, icon: Shield, label: "Confirm", badge: pendingCount },
     { id: "projects" as const, icon: FolderOpen, label: "Projects" },
     { id: "team" as const, icon: Users, label: "Team" },
     { id: "more" as const, icon: Menu, label: "Options" },
@@ -251,15 +251,15 @@ function QuickStats({
 }
 
 // ============================================================================
-// Verification Card Component (Mobile Optimized)
+// Review Card Component (Mobile Optimized)
 // ============================================================================
-function VerificationCard({
+function ReviewCard({
   item,
   onApprove,
   onReject,
   isProcessing
 }: {
-  item: PendingVerification;
+  item: PendingReview;
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
   isProcessing?: boolean;
@@ -575,7 +575,7 @@ function SlideOutMenu({
               <p className="text-sm font-semibold text-foreground truncate">
                 {organization?.name || "Organization"}
               </p>
-              <p className="text-xs text-muted-foreground">Verify Hub</p>
+              <p className="text-xs text-muted-foreground">Confirm Hub</p>
             </div>
           </div>
         </div>
@@ -657,7 +657,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
     enabled: !!userId,
   });
 
-  // Fetch pending verifications
+  // Fetch pending partner reviews
   const { data: pendingData, refetch: refetchPending } = useQuery({
     queryKey: ["/api/pending-approvals", organizationId],
     queryFn: async () => {
@@ -699,13 +699,13 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
   // Approve mutation
   const approveMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("POST", `/api/volunteer-activities/${id}/verify`, {
+      const response = await apiRequest("POST", `/api/volunteer-activities/${id}/confirm`, {
         status: "verified",
       });
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Approved", description: "Activity verified successfully" });
+      toast({ title: "Approved", description: "Activity confirmed successfully" });
       refetchPending();
     },
     onError: () => {
@@ -716,7 +716,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
   // Reject mutation
   const rejectMutation = useMutation({
     mutationFn: async (id: number) => {
-      const response = await apiRequest("POST", `/api/volunteer-activities/${id}/verify`, {
+      const response = await apiRequest("POST", `/api/volunteer-activities/${id}/confirm`, {
         status: "rejected",
       });
       return response.json();
@@ -772,7 +772,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
     ? abbreviateOrgName(organization.displayName)
     : organization?.name
     ? abbreviateOrgName(organization.name)
-    : "Verify Hub";
+    : "Confirm Hub";
 
   return (
     <div className="min-h-screen bg-background pb-20">
@@ -780,7 +780,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
         title={orgShortName}
         pendingCount={pendingCount}
         onMenuClick={() => setMenuOpen(true)}
-        onNotificationClick={() => setActiveTab("verify")}
+        onNotificationClick={() => setActiveTab("confirm")}
       />
 
       {/* Main Content Area */}
@@ -820,10 +820,10 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
                 variant="outline"
                 size="sm"
                 className="flex-shrink-0"
-                onClick={() => setActiveTab("verify")}
+                onClick={() => setActiveTab("confirm")}
               >
                 <Shield className="h-4 w-4 mr-1" />
-                Verify ({pendingCount})
+                Confirm ({pendingCount})
               </Button>
               <Button
                 variant="outline"
@@ -845,13 +845,13 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
               </Button>
             </div>
 
-            {/* Pending Verifications Preview */}
+            {/* Pending Reviews Preview */}
             {pendingCount > 0 && (
               <section>
                 <div className="flex items-center justify-between mb-3">
-                  <h2 className="text-sm font-semibold text-foreground">Pending Verification</h2>
+                  <h2 className="text-sm font-semibold text-foreground">Pending Review</h2>
                   <button
-                    onClick={() => setActiveTab("verify")}
+                    onClick={() => setActiveTab("confirm")}
                     className="text-xs text-primary font-medium"
                   >
                     View All
@@ -859,7 +859,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
                 </div>
                 <div className="space-y-3">
                   {allPending.slice(0, 2).map((item) => (
-                    <VerificationCard
+                    <ReviewCard
                       key={item.id}
                       item={item}
                       onApprove={(id) => approveMutation.mutate(id)}
@@ -907,12 +907,12 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
           </>
         )}
 
-        {/* Verify Tab */}
-        {activeTab === "verify" && (
+        {/* Confirm Tab */}
+        {activeTab === "confirm" && (
           <section className="space-y-3">
             <div className="flex items-center justify-between">
               <h2 className="text-lg font-semibold text-foreground">
-                Verification Queue
+                Review Queue
               </h2>
               {pendingCount > 0 && (
                 <Badge variant="destructive">{pendingCount} pending</Badge>
@@ -922,7 +922,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
             {allPending.length > 0 ? (
               <div className="space-y-3">
                 {allPending.map((item) => (
-                  <VerificationCard
+                  <ReviewCard
                     key={item.id}
                     item={item}
                     onApprove={(id) => approveMutation.mutate(id)}
@@ -936,7 +936,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
                 <EmptyState
                   icon={<CheckCircle2 className="h-10 w-10 text-success" />}
                   title="All caught up!"
-                  description="No pending verifications at the moment"
+                  description="No pending partner reviews at the moment"
                   size="sm"
                 />
               </Card>
@@ -974,7 +974,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
                 <EmptyState
                   icon={<FolderOpen className="h-10 w-10 text-muted-foreground" />}
                   title="No projects yet"
-                  description="Create your first project to start making an impact"
+                  description="Create your first project to start recording evidence"
                   action={{ label: "Create Project", onClick: () => navigate("/post-core-opportunity") }}
                 />
               </Card>
@@ -989,7 +989,7 @@ export default function OrganizationMobileView({ userId, organizationId }: Organ
             <Card variant="glass" className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-semibold text-foreground">Log Volunteer Hours & Impact</p>
+                  <p className="text-sm font-semibold text-foreground">Log Volunteer Hours & Outputs</p>
                   <p className="text-xs text-muted-foreground mt-0.5">Record confirmed outcomes for your team</p>
                 </div>
                 <Button

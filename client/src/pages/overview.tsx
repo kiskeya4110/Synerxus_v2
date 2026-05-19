@@ -891,7 +891,7 @@ export default function Overview() {
               <div className="p-2 bg-rose-100 rounded-lg">
                 <Award size={20} className="text-rose-600" />
               </div>
-              <span className="text-sm font-medium text-gray-700">Impact Score</span>
+              <span className="text-sm font-medium text-gray-700">Contribution Score</span>
             </div>
             <p className="text-3xl font-bold text-rose-600">{(dashboardData?.keyMetrics?.aiuEarned || dashboardData?.keyMetrics?.livesTouched || 0).toLocaleString()}</p>
           </button>

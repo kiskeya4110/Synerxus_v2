@@ -208,7 +208,7 @@ function generateInsights(dashboardData: any, orgProfile: any): AIInsightsData {
       id: 'ch-default',
       category: 'challenge',
       title: 'Set Quarterly Impact Goals',
-      description: 'Define measurable targets for volunteer hours, projects completed, and lives impacted to track your SDG progress.',
+      description: 'Define measurable targets for volunteer hours, projects completed, and people reached to track your SDG progress.',
       relatedSDGs: insights.sdgCommitments.slice(0, 2),
       priority: 'low',
     });

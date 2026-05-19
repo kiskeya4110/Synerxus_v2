@@ -60,7 +60,7 @@ import { cn } from "@/lib/utils";
 // ============================================================================
 // Types
 // ============================================================================
-interface PendingVerification {
+interface PendingReview {
   id: number;
   volunteerName: string;
   volunteerAvatar?: string;
@@ -96,16 +96,16 @@ interface Volunteer {
 }
 
 // ============================================================================
-// Verification Queue Item Component
+// Review Queue Item Component
 // ============================================================================
-interface VerificationItemProps {
-  item: PendingVerification;
+interface ReviewItemProps {
+  item: PendingReview;
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
   isProcessing?: boolean;
 }
 
-function VerificationItem({ item, onApprove, onReject, isProcessing }: VerificationItemProps) {
+function ReviewItem({ item, onApprove, onReject, isProcessing }: ReviewItemProps) {
   return (
     <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/30 border border-border hover:border-primary/30 transition-all">
       {/* Volunteer Avatar */}
@@ -167,7 +167,7 @@ function VerificationItem({ item, onApprove, onReject, isProcessing }: Verificat
           className="w-24"
         >
           <CheckCircle2 className="h-4 w-4 mr-1" />
-          Verify
+          Confirm
         </Button>
         <Button
           size="sm"
@@ -185,10 +185,10 @@ function VerificationItem({ item, onApprove, onReject, isProcessing }: Verificat
 }
 
 // ============================================================================
-// Verification Queue Component
+// Review Queue Component
 // ============================================================================
-interface VerificationQueueProps {
-  items: PendingVerification[];
+interface ReviewQueueProps {
+  items: PendingReview[];
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
   onApproveAll: () => void;
@@ -197,7 +197,7 @@ interface VerificationQueueProps {
   isLoading?: boolean;
 }
 
-function VerificationQueue({
+function ReviewQueue({
   items,
   onApprove,
   onReject,
@@ -205,7 +205,7 @@ function VerificationQueue({
   processingIds,
   isApprovingAll,
   isLoading,
-}: VerificationQueueProps) {
+}: ReviewQueueProps) {
   const [filter, setFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
 
@@ -219,7 +219,7 @@ function VerificationQueue({
   }, [items, searchQuery]);
 
   if (isLoading) {
-    return <LoadingState message="Loading verification queue..." />;
+    return <LoadingState message="Loading review queue..." />;
   }
 
   return (
@@ -255,13 +255,13 @@ function VerificationQueue({
         <EmptyState
           icon={<CheckCircle2 className="h-6 w-6 text-success" />}
           title="All caught up!"
-          description="No pending verifications at the moment."
+          description="No pending partner reviews at the moment."
           size="sm"
         />
       ) : (
         <div className="space-y-3">
           {filteredItems.map((item) => (
-            <VerificationItem
+            <ReviewItem
               key={item.id}
               item={item}
               onApprove={onApprove}
@@ -390,7 +390,7 @@ function VolunteerRoster({ volunteers, isLoading, onViewVolunteer }: VolunteerRo
 }
 
 // ============================================================================
-// SDG Impact Summary Component
+// SDG reporting context summary component
 // ============================================================================
 interface SDGImpactProps {
   sdgData: Array<{ goal: number; hours: number; projects: number }>;
@@ -409,7 +409,7 @@ function SDGImpactSummary({ sdgData }: SDGImpactProps) {
     return (
       <EmptyState
         title="No SDG data"
-        description="SDG impact will appear when projects log activities."
+        description="SDG reporting context will appear when projects log activities."
         size="sm"
       />
     );
@@ -512,7 +512,7 @@ export default function OrganizationDashboardNew() {
     enabled: !!userId,
   });
 
-  // Fetch pending verifications
+  // Fetch pending partner reviews
   const { data: pendingData, isLoading: isLoadingPending, refetch: refetchPending } = useQuery({
     queryKey: ["/api/pending-approvals", currentUser?.organizationId],
     queryFn: async () => {
@@ -593,8 +593,8 @@ export default function OrganizationDashboardNew() {
 
   const activeUser = currentUser || demoUser;
 
-  // Process pending items into verification format
-  const pendingVerifications: PendingVerification[] = useMemo(() => {
+  // Process pending items into review format
+  const pendingReviews: PendingReview[] = useMemo(() => {
     if (!pendingData) return [];
 
     const activities = pendingData.pendingActivities || [];
@@ -616,7 +616,7 @@ export default function OrganizationDashboardNew() {
       })),
       ...impacts.map((i: any) => ({
         id: i.id,
-        volunteerName: i.volunteerName || "Impact Record",
+        volunteerName: i.volunteerName || "Activity Record",
         projectName: i.projectName || "Unknown Project",
         hours: 0,
         description: `${i.metricName}: ${i.value}`,
@@ -634,11 +634,11 @@ export default function OrganizationDashboardNew() {
       activeProjects: data.activeProjects || projects.filter((p: any) => p.status === "active").length,
       totalVolunteers: data.activeVolunteers || dashboardData?.volunteerSummaries?.length || volunteers.length,
       totalHours: data.totalHours || 0,
-      pendingVerifications: pendingVerifications.length || data.pendingCount || 0,
+      pendingReviews: pendingReviews.length || data.pendingCount || 0,
       impactScore: data.aiuEarned || 0,
       sdgsAddressed: data.sdgsAddressed || 0,
     };
-  }, [dashboardData, projects, volunteers, pendingVerifications]);
+  }, [dashboardData, projects, volunteers, pendingReviews]);
 
   // Helper: redact volunteer name to initials for external report privacy
   const redactName = (name: string): string => {
@@ -648,7 +648,7 @@ export default function OrganizationDashboardNew() {
     return parts.map(p => p.charAt(0).toUpperCase() + ".").join("");
   };
 
-  // Generate Synerxus-branded Verified Evidence Summary report from server
+  // Generate Synerxus-branded Evidence Summary report from server
   const generateSynerxusReport = async () => {
     setIsSynerxusLoading(true);
     try {
@@ -682,9 +682,9 @@ export default function OrganizationDashboardNew() {
       await apiRequest("POST", `/api/volunteer-activities/${id}/approve`, { reviewerId: userId });
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
-      toast({ title: "Verified!", description: "Hours have been verified successfully." });
+      toast({ title: "Confirmed!", description: "Hours have been confirmed successfully." });
     } catch (err) {
-      toast({ title: "Error", description: "Failed to verify hours.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to confirm hours.", variant: "destructive" });
     } finally {
       setProcessingIds((prev) => {
         const next = new Set(prev);
@@ -712,10 +712,10 @@ export default function OrganizationDashboardNew() {
   };
 
   const handleApproveAll = async () => {
-    if (pendingVerifications.length === 0) return;
+    if (pendingReviews.length === 0) return;
 
     setIsApprovingAll(true);
-    const ids = pendingVerifications.map((p) => p.id);
+    const ids = pendingReviews.map((p) => p.id);
     ids.forEach((id) => setProcessingIds((prev) => new Set(prev).add(id)));
 
     try {
@@ -727,11 +727,11 @@ export default function OrganizationDashboardNew() {
       refetchPending();
       queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
       toast({
-        title: "All Verified!",
-        description: `${ids.length} submission${ids.length !== 1 ? "s" : ""} verified.`,
+        title: "All Confirmed!",
+        description: `${ids.length} submission${ids.length !== 1 ? "s" : ""} confirmed.`,
       });
     } catch (err) {
-      toast({ title: "Error", description: "Failed to verify some items.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to confirm some items.", variant: "destructive" });
     } finally {
       setProcessingIds(new Set());
       setIsApprovingAll(false);
@@ -769,7 +769,7 @@ export default function OrganizationDashboardNew() {
         <div className="pwa-frame">
           {/* Shared PWA Header with working hamburger menu */}
           <OrganizationPWAHeader
-            organizationName={organization?.name || "Verify Hub"}
+            organizationName={organization?.name || "Confirm Hub"}
             metrics={{
               activeProjects: stats.activeProjects,
               activeVolunteers: stats.totalVolunteers,
@@ -784,14 +784,14 @@ export default function OrganizationDashboardNew() {
           <main className="pwa-scroll px-4 py-2 space-y-3 pwa-compact-x" style={{ paddingBottom: 'calc(90px + env(safe-area-inset-bottom, 0px))' }}>
           {/* Core Metrics - 2x2 Grid */}
           <div className="grid grid-cols-2 gap-2">
-            {/* Pending Verification */}
+            {/* Pending Review */}
             <div className="bg-white rounded-xl p-3 border border-gray-200 shadow-sm">
               <div className="flex items-center gap-1.5 mb-1">
                 <AlertCircle className="h-4 w-4 text-amber-600" />
                 <span className="text-xs font-medium text-gray-500 uppercase">Pending</span>
               </div>
-              <p className="text-2xl font-bold text-gray-900">{stats.pendingVerifications}</p>
-              <p className="text-xs text-gray-500 mt-0.5">to verify</p>
+              <p className="text-2xl font-bold text-gray-900">{stats.pendingReviews}</p>
+              <p className="text-xs text-gray-500 mt-0.5">to confirm</p>
             </div>
 
             {/* Total Hours */}
@@ -825,21 +825,21 @@ export default function OrganizationDashboardNew() {
             </div>
           </div>
 
-          {/* Verification Queue Preview */}
+          {/* Review Queue Preview */}
           <div className="bg-white rounded-xl border border-gray-200 shadow-sm">
             <div className="px-4 py-2 border-b border-gray-100 flex items-center justify-between">
               <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                 <Shield className="h-4 w-4 text-amber-600" />
-                Pending Verification
+                Pending Review
               </h2>
-              {pendingVerifications.length > 0 && (
+              {pendingReviews.length > 0 && (
                 <span className="text-xs font-medium text-amber-600 bg-amber-50 px-2 py-1 rounded-full">
-                  {pendingVerifications.length} pending
+                  {pendingReviews.length} pending
                 </span>
               )}
             </div>
             <div className="divide-y divide-gray-100">
-              {pendingVerifications.map((item) => (
+              {pendingReviews.map((item) => (
                 <div key={item.id} className="px-4 py-2">
                   <div className="flex items-center justify-between mb-1.5">
                     <div className="flex items-center gap-2">
@@ -870,7 +870,7 @@ export default function OrganizationDashboardNew() {
                       disabled={processingIds.has(item.id)}
                       className="flex-1 py-2 px-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      ✓ Verify
+                      ✓ Confirm
                     </button>
                     <button
                       onClick={() => handleReject(item.id)}
@@ -882,11 +882,11 @@ export default function OrganizationDashboardNew() {
                   </div>
                 </div>
               ))}
-              {pendingVerifications.length === 0 && (
+              {pendingReviews.length === 0 && (
                 <div className="px-4 py-8 text-center">
                   <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
                   <p className="text-sm font-medium text-gray-900">All caught up!</p>
-                  <p className="text-xs text-gray-500 mt-1">No pending verifications</p>
+                  <p className="text-xs text-gray-500 mt-1">No pending partner reviews</p>
                 </div>
               )}
             </div>
@@ -939,8 +939,8 @@ export default function OrganizationDashboardNew() {
       <main className={`container max-w-7xl mx-auto px-4 py-8 space-y-8 ${isMobile ? 'pb-24' : ''}`}>
         {/* Page Header */}
         <PageHeader
-          title={organization?.name || "Verify Hub"}
-          description="Verify volunteer hours, manage projects, and track your impact."
+          title={organization?.name || "Confirm Hub"}
+          description="Review volunteer hours, manage projects, and track your evidence."
           actions={
             <div className="flex gap-3">
               <Button variant="outline" onClick={() => navigate("/ngo/log-hours")}>
@@ -976,8 +976,8 @@ export default function OrganizationDashboardNew() {
             icon={<Clock className="h-5 w-5 text-accent" />}
           />
           <MetricCard
-            label="Pending Verification"
-            value={stats.pendingVerifications}
+            label="Pending Review"
+            value={stats.pendingReviews}
             accentColor="cyan"
             icon={<AlertCircle className="h-5 w-5 text-[#22D3EE]" />}
           />
@@ -990,12 +990,12 @@ export default function OrganizationDashboardNew() {
               <BarChart3 className="h-4 w-4 mr-2" />
               Overview
             </TabsTrigger>
-            <TabsTrigger value="verify" className="flex-1 relative">
+            <TabsTrigger value="confirm" className="flex-1 relative">
               <Shield className="h-4 w-4 mr-2" />
-              Verify
-              {stats.pendingVerifications > 0 && (
+              Confirm
+              {stats.pendingReviews > 0 && (
                 <Badge variant="destructive" size="sm" className="ml-2">
-                  {stats.pendingVerifications}
+                  {stats.pendingReviews}
                 </Badge>
               )}
             </TabsTrigger>
@@ -1012,18 +1012,18 @@ export default function OrganizationDashboardNew() {
           {/* Overview Tab */}
           <TabsContent value="overview" className="mt-6 space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-              {/* Impact Score Card */}
+              {/* Contribution Score Card */}
               <Card variant="glass" className="lg:col-span-2">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <TrendingUp className="h-5 w-5 text-primary" />
-                    Organization Impact
+                    Organization Evidence
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="grid grid-cols-3 gap-6">
                     <Stat
-                      label="People Impacted"
+                      label="People Reached"
                       value={dashboardData?.keyMetrics?.peopleImpacted || 0}
                       size="lg"
                     />
@@ -1043,12 +1043,12 @@ export default function OrganizationDashboardNew() {
                 </CardContent>
               </Card>
 
-              {/* SDG Impact */}
+              {/* SDG context */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Globe className="h-5 w-5 text-success" />
-                    SDG Impact
+                    SDG Context
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -1087,33 +1087,33 @@ export default function OrganizationDashboardNew() {
                 </CardContent>
               </Card>
 
-              {/* Quick Verification Preview */}
+              {/* Quick Review Preview */}
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <CardTitle className="flex items-center gap-2">
                     <Shield className="h-5 w-5 text-accent" />
-                    Pending Verification
+                    Pending Review
                   </CardTitle>
-                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("verify")}>
+                  <Button variant="ghost" size="sm" onClick={() => setActiveTab("confirm")}>
                     View All
                     <ChevronRight className="h-4 w-4 ml-1" />
                   </Button>
                 </CardHeader>
                 <CardContent>
-                  {pendingVerifications.length === 0 ? (
+                  {pendingReviews.length === 0 ? (
                     <EmptyState
                       icon={<CheckCircle2 className="h-5 w-5 text-success" />}
-                      title="All verified"
+                      title="All reviewed"
                       description="No pending items to review."
                       size="sm"
                     />
                   ) : (
                     <div className="space-y-3">
-                      {pendingVerifications.map((item) => (
+                      {pendingReviews.map((item) => (
                         <div
                           key={item.id}
                           className="flex items-center gap-3 p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors cursor-pointer"
-                          onClick={() => setActiveTab("verify")}
+                          onClick={() => setActiveTab("confirm")}
                         >
                           <UserAvatar src={item.volunteerAvatar} name={item.volunteerName} size="sm" />
                           <div className="flex-1 min-w-0">
@@ -1135,18 +1135,18 @@ export default function OrganizationDashboardNew() {
             </div>
           </TabsContent>
 
-          {/* Verify Tab */}
-          <TabsContent value="verify" className="mt-6">
+          {/* Confirm Tab */}
+          <TabsContent value="confirm" className="mt-6">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Shield className="h-5 w-5 text-primary" />
-                  Verification Queue
+                  Review Queue
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <VerificationQueue
-                  items={pendingVerifications}
+                <ReviewQueue
+                  items={pendingReviews}
                   onApprove={handleApprove}
                   onReject={handleReject}
                   onApproveAll={handleApproveAll}
@@ -1172,7 +1172,7 @@ export default function OrganizationDashboardNew() {
               {projects.length === 0 ? (
                 <EmptyState
                   title="No projects yet"
-                  description="Create your first project to start tracking volunteer impact."
+                  description="Create your first project to start tracking volunteer evidence."
                   action={{
                     label: "Create Project",
                     onClick: () => navigate("/post-core-opportunity"),
@@ -1300,7 +1300,7 @@ export default function OrganizationDashboardNew() {
                   <MetricCard label="Logged Hours" value={reportData.summary?.totalHours || 0} />
                   <MetricCard label="Confirmed Hours" value={reportData.summary?.verifiedHours || 0} />
                   <MetricCard label="Volunteers" value={reportData.summary?.totalVolunteers || 0} />
-                  <MetricCard label="People Impacted" value={reportData.summary?.peopleImpacted || 0} />
+                  <MetricCard label="People Reached" value={reportData.summary?.peopleImpacted || 0} />
                   <MetricCard label="Projects" value={reportData.summary?.totalProjects || 0} />
                   <MetricCard label="Active Projects" value={reportData.summary?.activeProjects || 0} />
                   <MetricCard label="SDGs Addressed" value={reportData.summary?.sdgsAddressed || 0} />
@@ -1321,9 +1321,9 @@ export default function OrganizationDashboardNew() {
                               <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Project</th>
                               <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Status</th>
                               <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Hours</th>
-                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Verified</th>
+                              <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Confirmed</th>
                               <th className="text-right py-2 pr-4 font-medium text-muted-foreground">Volunteers</th>
-                              <th className="text-right py-2 font-medium text-muted-foreground">People Impacted</th>
+                              <th className="text-right py-2 font-medium text-muted-foreground">People Reached</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -1436,7 +1436,7 @@ export default function OrganizationDashboardNew() {
         <div id="synerxus-report-overlay" className="fixed inset-0 z-[9999] flex flex-col bg-white">
           {/* Toolbar */}
           <div className="report-toolbar flex items-center justify-between px-4 py-2 border-b border-stone-200 bg-stone-50 flex-shrink-0">
-            <span className="text-sm font-semibold text-stone-800">Verified Evidence Summary Preview</span>
+            <span className="text-sm font-semibold text-stone-800">Evidence Summary Preview</span>
             <div className="flex items-center gap-2">
               <Button
                 size="sm"
@@ -1463,7 +1463,7 @@ export default function OrganizationDashboardNew() {
             srcDoc={reportContent.sourceHtml}
             className="flex-1 w-full"
             style={{ border: "none", display: "block" }}
-            title="Verified Evidence Summary Preview"
+            title="Evidence Summary Preview"
             sandbox="allow-same-origin"
           />
         </div>

@@ -1,13 +1,14 @@
 import { useState } from "react";
 import { Link } from "wouter";
-import { ArrowRight, BarChart3, BookOpen, CheckCircle2, FileText, FolderOpen, GitBranch, Globe2, LockKeyhole, PackageCheck, ShieldCheck, Users, XCircle } from "lucide-react";
+import { ArrowRight, BookOpen, CheckCircle2, ChevronDown, FileText, FolderOpen, GitBranch, PackageCheck, ShieldCheck, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
-const NEWSLETTER_URL = "https://www.linkedin.com/newsletters/the-verifiable-7454325436261498880/";
+const NEWSLETTER_URL = "https://www.linkedin.com/build-relation/newsletter-follow?entityUrn=7454325436261498880";
 const VERIFIABLE_HERO_IMAGE = "/optimized/the-verifiable-preview.png";
 
 type ProcessStage = { title: string; body: string; detail: string; note: string; icon: typeof ShieldCheck };
+type InfoArticle = { title: string; summary: string; sections: string[] };
 
 const processStages: ProcessStage[] = [
   {
@@ -19,9 +20,9 @@ const processStages: ProcessStage[] = [
   },
   {
     title: "Partner Confirmation",
-    body: "What partner confirmation adds, and what it still does not prove.",
+    body: "What partner confirmation adds — and what it still does not prove.",
     icon: FileText,
-    detail: "Use this theme to show who confirmed the claim, what they reviewed, and where confirmation stops so readers do not confuse confirmation with proof.",
+    detail: "Use this theme to show who confirmed the claim, what they reviewed, and where confirmation stops so readers do not confuse confirmation with evidence strength.",
     note: "Confirmation adds accountability, not automatic substantiation.",
   },
   {
@@ -33,7 +34,7 @@ const processStages: ProcessStage[] = [
   },
   {
     title: "SDG Mapping Boundaries",
-    body: "How to use SDG mapping as context without treating it as impact proof.",
+    body: "How to use SDG mapping as context without treating it as evidence strength.",
     icon: GitBranch,
     detail: "Use this theme to keep SDG labels separate from evidence strength, so mapping adds context without inflating what the claim establishes.",
     note: "Mapping helps readers orient the claim, but it does not upgrade evidence strength by itself.",
@@ -49,72 +50,91 @@ const processStages: ProcessStage[] = [
 
 const articles = [
   {
-    issue: "#7",
-    category: "Evidence Precision",
-    title: `Why I'm Becoming More Careful With the Word "Impact"`,
-    description: "The distinction between activity, output, outcome, and real impact — and why precision in claims matters.",
-    href: "https://www.linkedin.com/pulse/why-im-becoming-more-careful-word-impact-alc%C3%A9nat-honorat-bdswf",
-    date: "May 14, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D4D12AQG3E560CAjaDQ/article-cover_image-shrink_720_1280/B4DZ4fpD_IHgAQ-/0/1778647323448?e=2147483647&v=beta&t=F5sA9Jw5tUF8tU69ARIDqxmrd47SmqtMwa9kLLE1FZM",
+    issue: 7,
+    category: "IMPACT LANGUAGE",
+    title: "Why I'm Becoming More Careful With the Word Impact",
+    description: "A closer look at when impact language clarifies the claim, and when it starts to overstate what the evidence can support.",
   },
   {
-    issue: "#6",
-    category: "Frontline Evidence",
+    issue: 6,
+    category: "PROXIMITY AND TRUST",
     title: "When Distance Creates Doubt: What I've Seen Up Close",
-    description: "Why geographical distance shapes ESG reporting and what better evidence infrastructure looks like.",
-    href: "https://www.linkedin.com/pulse/issue-6-when-distance-creates-doubt-what-ive-seen-up-honorat-1xsrc",
-    date: "May 12, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D5612AQE1TbgyGf9TWw/article-cover_image-shrink_720_1280/B56Z4aJNMDHEAI-/0/1778555085646?e=2147483647&v=beta&t=0X3fyI5O5JQThjpeD_1bDUwA5FPyPGFgxZFIk-VwXNc",
+    description: "Why distance between reporters, partners, and affected communities changes the evidence burden behind sustainability claims.",
   },
   {
-    issue: "#5",
-    category: "Environmental Equity",
-    title: "Nature Claims Without Context: Who Pays the Price?",
-    description: "How sustainability frameworks overlook frontline communities, and why equity must be part of verification.",
-    href: "https://www.linkedin.com/pulse/nature-claims-without-context-who-pays-price-alc%C3%A9nat-honorat-ppurc",
-    date: "May 7, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D5612AQFhRShJiHofbg/article-cover_image-shrink_720_1280/B56Z3_Ia_aH4AI-/0/1778101894290?e=2147483647&v=beta&t=9xQ54FY4SO13g6fBJsr6BVhsNUnF9TNU6IvClUFa0HM",
+    issue: 5,
+    category: "NATURE CLAIMS",
+    title: "Nature Claims Without Context; Who Pays the Price?",
+    description: "How nature-positive language can lose credibility when claims are separated from local context, costs, and accountability.",
   },
   {
-    issue: "#4",
-    category: "Climate Compliance",
+    issue: 4,
+    category: "CLIMATE DISCLOSURE",
     title: "California's Climate Rules: Ambitious Deadlines, Missing Infrastructure",
-    description: "The gap between regulatory mandates and most organizations' capacity to execute compliant reporting.",
-    href: "https://www.linkedin.com/pulse/issue-4-californias-climate-rules-ambitious-deadlines-alc%C3%A9nat-honorat-slqfc",
-    date: "May 5, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D5612AQE56oFYzFc-Mw/article-cover_image-shrink_720_1280/B56Z31XyzUGUAI-/0/1777938149815?e=2147483647&v=beta&t=0_4oFRK2mPIcYuip4L8Bee4Y2c9YKbgQeS0tHGsgx6g",
+    description: "A verification lens on climate disclosure timelines, reporting capacity, and the infrastructure needed to make rules workable.",
   },
   {
-    issue: "#3",
-    category: "ESG Trends",
+    issue: 3,
+    category: "GEOPOLITICS",
     title: "Impact Is Becoming a Geopolitical Asset",
-    description: "How verification has become a strategic necessity as impact data gains geopolitical weight.",
-    href: "https://www.linkedin.com/pulse/impact-becoming-geopolitical-asset-alc%C3%A9nat-honorat-suv3c",
-    date: "Apr 30, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D5612AQHUOzkfL_-T_Q/article-cover_image-shrink_720_1280/B56Z3fiMNmIIAI-/0/1777571781492?e=2147483647&v=beta&t=XWxzM1hNwY1Rt8b2BAK5yhxKV7j1_O_OCe5Byi2nyA0",
+    description: "Why impact evidence is becoming strategically valuable as governments, companies, and funders compete over credibility.",
   },
   {
-    issue: "#2",
-    category: "Verification Lens",
+    issue: 2,
+    category: "VERIFICATION LENS",
     title: "Major Sustainability News This Week. Let's Apply the Verification Lens",
-    description: "From pledges to proof — examining major sustainability announcements and the evidence behind them.",
-    href: "https://www.linkedin.com/pulse/major-sustainability-news-week-lets-apply-lens-alc%C3%A9nat-honorat-cfoyc",
-    date: "Apr 28, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D5612AQEH8z8igekoNg/article-cover_image-shrink_720_1280/B56Z3UoKSvKIAI-/0/1777388792485?e=2147483647&v=beta&t=seNK8Iyit1MpkIlh5dOT8IBipTm2tiIZzVlZ_Hl8sFI",
+    description: "A practical reading of sustainability headlines through claim boundaries, source support, and evidence quality.",
   },
   {
-    issue: "#1",
-    category: "Founder Story",
+    issue: 1,
+    category: "FOUNDER STORY",
     title: "The Verifiable: A Founder Story",
-    description: "The story behind Synerxus and why unverified impact claims prompted the creation of The Verifiable.",
-    href: "https://www.linkedin.com/pulse/verifiable-founder-story-alc%C3%A9nat-honorat-o27kc",
-    date: "Apr 27, 2026",
-    image: "https://media.licdn.com/dms/image/v2/D5612AQGVgoTIP6s7Xw/article-cover_image-shrink_720_1280/B56Z3MxfEoJ4AI-/0/1777257022834?e=2147483647&v=beta&t=sMUS4c7qYujmgZYhWl7720CGe4-UYimQpADoVOzk-sE",
+    description: "The origin of The Verifiable and why claim defensibility, evidence discipline, and reporting boundaries matter.",
+  },
+];
+
+const infoArticles: InfoArticle[] = [
+  {
+    title: "What SDG Mapping Can and Cannot Do",
+    summary: "SDG mapping can provide useful context, but it should not be treated as proof that an outcome happened or that a claim is strong.",
+    sections: [
+      "SDG mapping is a classification layer. It can help readers understand which global goal or target a claim relates to, but it does not verify the activity, confirm the result, or establish causality.",
+      "A stronger use of SDG mapping keeps the mapping separate from evidence strength. The evidence record should still show what happened, who reported it, who confirmed it, what source artifacts exist, and what limitations remain.",
+      "The risk is overstatement. A weak claim does not become more defensible because it carries an SDG label. Mapping helps organize context; evidence supports the claim.",
+    ],
+  },
+  {
+    title: "Partner-Confirmed Is Not Independent Assurance",
+    summary: "Partner confirmation adds accountability and review context, but it should not be confused with formal assurance.",
+    sections: [
+      "Partner confirmation means an authorized partner reviewed or confirmed a relevant record, activity, or data point. That can be valuable because it reduces the distance between the reporter and the underlying activity.",
+      "Independent assurance is different. It involves a separate assurance provider applying defined procedures and issuing a conclusion under an applicable standard or engagement scope.",
+      "The cleanest language is precise: partner-confirmed evidence can support review readiness, but it does not by itself create an assurance opinion, compliance guarantee, or proof of impact.",
+    ],
+  },
+  {
+    title: "The Evidence Ladder: A Practical Guide",
+    summary: "The Evidence Ladder helps teams understand how claims become more reviewable as evidence quality improves.",
+    sections: [
+      "At the bottom of the ladder are unsupported claims: statements with no attached record, source artifact, confirmation, or limitation note. These claims may be true, but they are hard to review.",
+      "The middle of the ladder adds structure: internal records, source artifacts, partner confirmation, and mapped context. Each layer makes the claim easier to inspect and less dependent on trust alone.",
+      "At the top are review-ready evidence packets. These connect the claim to source support, confirmation status, exceptions, boundaries, and reporting context without implying that formal assurance has already occurred.",
+    ],
+  },
+  {
+    title: "Why Claims Need Limitations",
+    summary: "Limitations protect credibility by making clear what a claim does and does not establish.",
+    sections: [
+      "A limitation is not a weakness by default. It is a boundary statement that prevents readers from assuming more than the evidence supports.",
+      "Good limitations clarify scope, time period, source constraints, confirmation status, data gaps, and whether the claim is descriptive, mapped, estimated, or independently assured.",
+      "Without limitations, even well-intended claims can become inflated. A clear limitation helps a claim remain useful, reviewable, and proportionate to the evidence behind it.",
+    ],
   },
 ];
 
 export default function ResourcesPage() {
   const [activeStage, setActiveStage] = useState<number | null>(null);
+  const [activeInfoArticle, setActiveInfoArticle] = useState<number | null>(0);
 
   return (
     <MarketingLayout>
@@ -165,12 +185,15 @@ export default function ResourcesPage() {
                 <p className="mt-5 text-sm leading-relaxed text-slate-700">
                   This is not about making every claim bigger. It is about making every claim clearer.
                 </p>
-                <p className="mt-5 text-sm leading-relaxed text-slate-700">
-                  Editorial boundary: The Verifiable does not certify impact, verify claims, provide formal assurance, determine compliance, or prove causal attribution.
-                </p>
-                <p className="mt-5 text-sm leading-relaxed text-slate-700">
-                  It helps readers think more clearly about the evidence that makes ESG and social-impact claims credible.
-                </p>
+                <div className="mt-6 rounded-lg border border-[#f0dba7] bg-[#fff8e8] p-4">
+                  <p className="text-sm font-extrabold text-[#0A1F44]">Editorial boundary</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[#0A1F44]">
+                    The Verifiable does not certify impact, verify claims, provide formal assurance, determine compliance, or prove causal attribution.
+                  </p>
+                  <p className="mt-3 text-sm leading-relaxed text-[#0A1F44]">
+                    It helps readers think more clearly about the evidence that makes ESG and social-impact claims credible.
+                  </p>
+                </div>
               </div>
 
               <div className="grid gap-2">
@@ -185,33 +208,34 @@ export default function ResourcesPage() {
                       key={stage.title}
                       type="button"
                       onClick={() => setActiveStage((prev) => (prev === i ? null : i))}
-                      className={`flex items-start gap-4 rounded-lg border p-4 text-left transition-all duration-200 ${
+                      className={`relative flex items-start gap-4 overflow-hidden rounded-lg border p-4 text-left transition-all duration-200 ${
                         isActive
-                          ? "border-[#061A36] bg-[#061A36] shadow-md"
-                          : "border-slate-200 bg-white hover:border-[#0A1F44]/30 hover:shadow-sm"
+                          ? "border-[#0A1F44] bg-white shadow-[0_18px_40px_rgba(10,31,68,0.18)] ring-2 ring-[#c88914]/35"
+                          : "border-slate-200 bg-white hover:border-[#0A1F44]/35 hover:shadow-sm"
                       }`}
                     >
+                      {isActive && <span className="absolute inset-y-0 left-0 w-1.5 bg-[#c88914]" aria-hidden="true" />}
                       <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-full transition-colors ${
-                        isActive ? "bg-white/15" : "bg-slate-100"
+                        isActive ? "bg-[#0A1F44]" : "bg-slate-100"
                       }`}>
                         <Icon className={`h-5 w-5 transition-colors ${isActive ? "text-[#f2cf7f]" : "text-[#0A1F44]"}`} />
                       </span>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className={`text-[11px] font-extrabold uppercase tracking-wide ${isActive ? "text-[#f2cf7f]" : "text-slate-400"}`}>
+                          <p className={`text-[11px] font-extrabold uppercase tracking-wide ${isActive ? "text-[#a66c0d]" : "text-slate-400"}`}>
                             Stage {i + 1}
                           </p>
                         </div>
-                        <p className={`text-sm font-extrabold ${isActive ? "text-white" : "text-[#0A1F44]"}`}>{stage.title}</p>
-                        <p className={`mt-0.5 text-xs leading-relaxed ${isActive ? "text-white/90" : "text-slate-500"}`}>{stage.body}</p>
+                        <p className={`text-sm font-extrabold ${isActive ? "text-[#0A1F44]" : "text-[#0A1F44]"}`}>{stage.title}</p>
+                        <p className={`mt-0.5 text-xs leading-relaxed ${isActive ? "text-slate-700" : "text-slate-500"}`}>{stage.body}</p>
                         {isActive && (
-                          <div className="mt-3 border-t border-white/20 pt-3 text-xs leading-relaxed text-white/95">
+                          <div className="mt-3 border-t border-slate-200 pt-3 text-xs leading-relaxed text-slate-700">
                             <p>{stage.detail}</p>
-                            <p className="mt-3 rounded-md bg-white/12 px-3 py-2 text-[11px] leading-relaxed text-white/90">{stage.note}</p>
+                            <p className="mt-3 rounded-md border border-[#f0dba7] bg-[#fff8e8] px-3 py-2 text-[11px] leading-relaxed text-[#5f3f09]">{stage.note}</p>
                           </div>
                         )}
                       </div>
-                      <XCircle className={`mt-0.5 h-4 w-4 shrink-0 transition-opacity ${isActive ? "text-white/65 opacity-100" : "opacity-0"}`} />
+                      <XCircle className={`mt-0.5 h-4 w-4 shrink-0 transition-opacity ${isActive ? "text-slate-400 opacity-100" : "opacity-0"}`} />
                     </button>
                   );
                 })}
@@ -225,28 +249,69 @@ export default function ResourcesPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="font-serif text-3xl text-[#0A1F44]">Featured Articles</h2>
+              <h2 className="font-serif text-3xl text-[#0A1F44]">LinkedIn Newsletter Issues</h2>
               <div className="mt-3 h-0.5 w-14 bg-[#c88914]" />
             </div>
             <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer" className="hidden items-center gap-2 text-sm font-bold text-[#c88914] transition-colors hover:text-[#a9720f] md:flex">
-              View all on LinkedIn <ArrowRight className="h-4 w-4" />
+              Read The Verifiable on LinkedIn <ArrowRight className="h-4 w-4" />
             </a>
           </div>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
             {articles.map((article) => (
-              <article key={article.title} className="group overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg">
-                <a href={article.href} target="_blank" rel="noopener noreferrer" className="block">
-                  <img src={article.image} alt={article.title} className="h-40 w-full object-cover transition-opacity group-hover:opacity-90" />
-                  <div className="p-4">
-                    <p className="text-xs font-extrabold uppercase tracking-wide text-[#c88914]">{article.issue} · {article.category}</p>
-                    <h3 className="mt-3 font-serif text-base leading-tight text-[#0A1F44]">{article.title}</h3>
-                    <p className="mt-3 text-sm leading-relaxed text-slate-700">{article.description}</p>
-                    <p className="mt-4 text-[11px] text-slate-400">{article.date}</p>
-                    <p className="mt-3 inline-flex items-center gap-2 text-sm font-bold text-[#c88914] transition-colors group-hover:text-[#a9720f]">Read on LinkedIn <ArrowRight className="h-4 w-4" /></p>
-                  </div>
+              <article key={article.title} className="group flex min-h-[260px] flex-col rounded-md border border-slate-200 bg-white p-5 shadow-md transition-all hover:-translate-y-0.5 hover:border-[#0A1F44]/25 hover:shadow-lg">
+                <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer" className="flex h-full flex-col">
+                  <p className="text-xs font-extrabold uppercase tracking-wide text-[#c88914]">{article.category}</p>
+                  <h3 className="mt-4 font-serif text-lg leading-tight text-[#0A1F44]">{`Issue #${article.issue}: ${article.title}`}</h3>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-700">{article.description}</p>
+                  <p className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-bold text-[#c88914] transition-colors group-hover:text-[#a9720f]">
+                    Read The Verifiable <ArrowRight className="h-4 w-4" />
+                  </p>
                 </a>
               </article>
             ))}
+          </div>
+        </div>
+      </section>
+
+      <section className="bg-white pb-10">
+        <div className="mx-auto max-w-7xl px-4 md:px-8">
+          <div className="mb-6 max-w-3xl">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#c88914]">On-site explainers</p>
+            <h2 className="mt-3 font-serif text-3xl text-[#0A1F44]">Information articles</h2>
+            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+              These short explainers stay on the Synerxus site and expand in place so readers can understand the evidence concepts behind the newsletter.
+            </p>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            {infoArticles.map((article, index) => {
+              const isOpen = activeInfoArticle === index;
+              return (
+                <article key={article.title} className="rounded-md border border-slate-200 bg-white shadow-md">
+                  <button
+                    type="button"
+                    aria-expanded={isOpen}
+                    onClick={() => setActiveInfoArticle((current) => (current === index ? null : index))}
+                    className="flex w-full items-start justify-between gap-4 p-5 text-left"
+                  >
+                    <div>
+                      <p className="text-xs font-extrabold uppercase tracking-wide text-[#c88914]">Information article</p>
+                      <h3 className="mt-3 font-serif text-xl leading-tight text-[#0A1F44]">{article.title}</h3>
+                      <p className="mt-3 text-sm leading-relaxed text-slate-700">{article.summary}</p>
+                    </div>
+                    <ChevronDown className={`mt-1 h-5 w-5 shrink-0 text-[#c88914] transition-transform ${isOpen ? "rotate-180" : ""}`} />
+                  </button>
+                  {isOpen && (
+                    <div className="border-t border-slate-200 px-5 pb-5 pt-4">
+                      <div className="space-y-3 text-sm leading-relaxed text-slate-700">
+                        {article.sections.map((section) => (
+                          <p key={section}>{section}</p>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
@@ -255,10 +320,10 @@ export default function ResourcesPage() {
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="grid gap-6 rounded-lg bg-[#f8f6f2] p-8 md:grid-cols-[auto_1fr_auto] md:items-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#061A36] text-[#c88914]"><BookOpen className="h-10 w-10" /></span>
-            <div><h2 className="font-serif text-3xl text-[#0A1F44]">Explore articles, guides, and insights.</h2><p className="mt-2 text-slate-700">Practical perspectives to help you build evidence-led, credible ESG and social-impact claims.</p></div>
+            <div><h2 className="font-serif text-3xl text-[#0A1F44]">Explore articles, guides, and insights.</h2><p className="mt-2 text-slate-700">Practical perspectives for making ESG and social-impact claims clearer, bounded, and more reviewable.</p></div>
             <Button asChild className="bg-[#061A36] text-white hover:bg-[#102b5a]">
               <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer">
-                View all on LinkedIn <ArrowRight className="h-4 w-4" />
+                Read The Verifiable on LinkedIn <ArrowRight className="h-4 w-4" />
               </a>
             </Button>
           </div>

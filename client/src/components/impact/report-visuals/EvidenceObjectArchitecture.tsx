@@ -36,7 +36,7 @@ export default function EvidenceObjectArchitecture() {
           textTransform: "uppercase",
         }}
       >
-        Evidence Object: Structured Verification Unit
+        Evidence Object: Structured Evidence Unit
       </div>
 
       {/* Three columns */}
@@ -81,7 +81,7 @@ export default function EvidenceObjectArchitecture() {
         ))}
       </div>
 
-      {/* Footer arrow + verification badge */}
+      {/* Footer arrow + confirmation badge */}
       <div
         style={{
           padding: "10px 16px",

@@ -62,7 +62,7 @@ export default function AssuranceBoundaryDiagram() {
           textTransform: "uppercase",
         }}
       >
-        Assurance Boundary: Global Verification Scope
+        Assurance Boundary: Global Review Scope
       </div>
 
       {/* Intro */}

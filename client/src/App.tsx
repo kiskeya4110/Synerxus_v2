@@ -2,10 +2,10 @@ import { Route, Router, Switch, Redirect } from "wouter";
 import { useEffect, lazy, Suspense } from "react";
 
 // ============================================================================
-// SYNERXUS MVP - VERIFIED IMPACT DATA PIPELINE
+// SYNERXUS MVP - CLAIM-LEVEL EVIDENCE INFRASTRUCTURE
 // ============================================================================
 // Core Loop: VOLUNTEER MATCHED → LOGS IMPACT → NGO VERIFIES → CORPORATE SEES SDG DATA
-// Every feature must answer YES to: "Does this generate a Verified Impact Log?"
+// Every feature must answer YES to: "Does this strengthen claim-to-evidence traceability?"
 // ============================================================================
 
 // Core pages - lazy loaded
@@ -17,6 +17,7 @@ const ForEsgTeams = lazy(() => import("@/pages/for-esg-teams"));
 const Integrations = lazy(() => import("@/pages/integrations"));
 const UseCaseGrantFunder = lazy(() => import("@/pages/use-case-grant-funder"));
 const Resources = lazy(() => import("@/pages/insights"));
+const Assessment = lazy(() => import("@/pages/assessment"));
 const Contact = lazy(() => import("@/pages/contact"));
 const LoginDemo = lazy(() => import("@/pages/login")); // Legacy demo login for reference
 const LoginAuth = lazy(() => import("@/pages/auth/login")); // Real Firebase auth login
@@ -112,10 +113,11 @@ export default function App() {
           <Route path="/use-cases" component={UseCases} />
           <Route path="/use-cases/grant-funder-reporting" component={UseCaseGrantFunder} />
           <Route path="/resources" component={Resources} />
-          <Route path="/request-assessment" component={Contact} />
-          <Route path="/contact">{() => <Redirect to="/request-assessment" />}</Route>
+          <Route path="/assessment" component={Assessment} />
+          <Route path="/request-assessment" component={Assessment} />
+          <Route path="/contact">{() => <Redirect to="/assessment" />}</Route>
           <Route path="/evidence-objects">{() => <Redirect to="/landing" />}</Route>
-          <Route path="/solutions">{() => <Redirect to="/landing" />}</Route>
+          <Route path="/solutions" component={UseCases} />
           <Route path="/how-it-works">{() => <Redirect to="/landing" />}</Route>
           <Route path="/frameworks">{() => <Redirect to="/landing" />}</Route>
           <Route path="/for-partners">{() => <Redirect to="/landing" />}</Route>

@@ -262,7 +262,7 @@ export default function CorporatePartnerProfileSettings() {
       queryClient.invalidateQueries({ queryKey: ["/api/organizations"] });
       toast({
         title: "NGO partner added",
-        description: "The partner is saved as a pending NGO record and can be used for future verification workflows.",
+        description: "The partner is saved as a pending NGO record and can be used for future confirmation workflows.",
       });
     },
     onError: (error) => {
@@ -1025,18 +1025,18 @@ export default function CorporatePartnerProfileSettings() {
                             <Clock className="w-4 h-4 text-gray-500" />
                             <span className="font-medium text-sm">Quarterly Reports</span>
                           </div>
-                          <p className="text-xs text-gray-500">Auto-generate quarterly impact reports</p>
+                          <p className="text-xs text-gray-500">Auto-generate quarterly evidence summaries</p>
                         </div>
                         <Checkbox defaultChecked />
                       </div>
                     </div>
                   </div>
 
-                  {/* Compliance & Reporting Section */}
+                  {/* Reporting context section */}
                   <div className="border-t pt-6 mt-6">
                     <div className="flex items-center gap-2 mb-6">
                       <Shield className="w-5 h-5 text-purple-500" />
-                      <h3 className="text-lg font-semibold">Compliance & Reporting Standards</h3>
+                      <h3 className="text-lg font-semibold">Reporting Context & Standards</h3>
                     </div>
 
                     <div className="space-y-4">
@@ -1057,7 +1057,7 @@ export default function CorporatePartnerProfileSettings() {
                             <FileText className="w-4 h-4 text-blue-600" />
                             <span className="font-medium text-sm">B-Corp Metrics Tracking</span>
                           </div>
-                          <p className="text-xs text-gray-500">Track metrics aligned with B-Corp certification</p>
+                          <p className="text-xs text-gray-500">Track metrics aligned with B-Corp reporting context</p>
                         </div>
                         <Checkbox />
                       </div>

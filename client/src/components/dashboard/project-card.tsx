@@ -370,7 +370,7 @@ export default function ProjectCard({
               <div className="p-3 bg-emerald-50 rounded-xl text-center border border-emerald-100">
                 <TrendingUp className="h-5 w-5 text-emerald-600 mx-auto mb-1" />
                 <div className="text-xl font-bold text-emerald-700">{formatDecimal(aiuEarned)}</div>
-                <div className="text-xs text-emerald-600/80">{isAIUEnabled ? "AIU Earned" : "Impact Score"}</div>
+                <div className="text-xs text-emerald-600/80">{isAIUEnabled ? "AIU Earned" : "Contribution Score"}</div>
               </div>
               <div className="p-3 bg-purple-50 rounded-xl text-center border border-purple-100">
                 <Users className="h-5 w-5 text-purple-600 mx-auto mb-1" />

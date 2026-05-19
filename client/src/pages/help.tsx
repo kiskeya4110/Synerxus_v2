@@ -64,7 +64,7 @@ const faqData: FAQItem[] = [
     category: "Volunteers",
     question: "How do I log my volunteer hours?",
     answer:
-      "Go to 'Log Activity' from your dashboard. Select the project, enter the hours worked, describe what you accomplished, and submit for verification.",
+      "Go to 'Log Activity' from your dashboard. Select the project, enter the hours worked, describe what you accomplished, and submit for partner review.",
   },
   {
     category: "Organizations",
@@ -86,9 +86,9 @@ const faqData: FAQItem[] = [
   },
   {
     category: "Corporate Partners",
-    question: "What is the Impact Score?",
+    question: "What is the Contribution Score?",
     answer:
-      "Impact Score summarizes tracked contribution signals for internal prioritization. It is not a compliance score, certification, or assurance opinion.",
+      "Contribution Score summarizes tracked contribution signals for internal prioritization. It is not a compliance score, certification, or assurance opinion.",
   },
   {
     category: "SDG Goals",

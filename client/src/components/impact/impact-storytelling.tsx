@@ -178,7 +178,7 @@ ${customNotes ? `\n\nAdditional context: ${customNotes}` : ""}`;
     document.body.removeChild(element);
     toast({
       title: "Story downloaded",
-      description: `Impact report from ${new Date(story.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} downloaded`,
+      description: `Evidence summary from ${new Date(story.date).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })} downloaded`,
     });
   };
 

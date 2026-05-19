@@ -266,7 +266,7 @@ export default function ImpactChart({
                 beginAtZero: true,
                 title: {
                   display: true,
-                  text: 'Impact Score',
+                  text: 'Contribution Score',
                   color: theme === "dark" ? "#9ca3af" : "#6b7280",
                   font: { size: 11 },
                 },
@@ -336,7 +336,7 @@ export default function ImpactChart({
                     }
                     if (context.parsed.y !== null) {
                       const value = context.parsed.y;
-                      if (context.dataset.label?.includes('Impact Score')) {
+                      if (context.dataset.label?.includes('Contribution Score')) {
                         label += formatDecimal(value);
                       } else if (value >= 1000) {
                         label += formatDecimal(value / 1000) + 'k';

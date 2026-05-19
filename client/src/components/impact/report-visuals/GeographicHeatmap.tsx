@@ -1,7 +1,7 @@
 interface GeoLocation {
   city: string;
   country: string;
-  verifications: number;
+  confirmations: number;
 }
 
 interface GeographicHeatmapProps {
@@ -11,11 +11,11 @@ interface GeographicHeatmapProps {
 }
 
 const DEFAULT_LOCATIONS: GeoLocation[] = [
-  { city: "Sacramento", country: "USA", verifications: 134 },
-  { city: "Zambia", country: "", verifications: 47 },
-  { city: "Philippines", country: "", verifications: 29 },
-  { city: "Zimbabwe", country: "", verifications: 18 },
-  { city: "Mexico", country: "", verifications: 12 },
+  { city: "Sacramento", country: "USA", confirmations: 134 },
+  { city: "Zambia", country: "", confirmations: 47 },
+  { city: "Philippines", country: "", confirmations: 29 },
+  { city: "Zimbabwe", country: "", confirmations: 18 },
+  { city: "Mexico", country: "", confirmations: 12 },
 ];
 
 export default function GeographicHeatmap({
@@ -23,7 +23,7 @@ export default function GeographicHeatmap({
   verificationRate = 85,
   avgTurnaround = 16,
 }: GeographicHeatmapProps) {
-  const max = Math.max(...locations.map((l) => l.verifications));
+  const max = Math.max(...locations.map((l) => l.confirmations));
 
   return (
     <div
@@ -47,12 +47,12 @@ export default function GeographicHeatmap({
           textTransform: "uppercase",
         }}
       >
-        Global Verification Density — Q1 2026
+        Global Confirmation Density — Q1 2026
       </div>
 
       <div style={{ padding: "12px 16px", background: "#F9FAFB" }}>
         {locations.map((loc, i) => {
-          const barPct = (loc.verifications / max) * 100;
+          const barPct = (loc.confirmations / max) * 100;
           return (
             <div
               key={i}
@@ -110,7 +110,7 @@ export default function GeographicHeatmap({
                   fontWeight: 500,
                 }}
               >
-                {loc.verifications} verifications
+                {loc.confirmations} confirmations
               </div>
             </div>
           );
@@ -130,7 +130,7 @@ export default function GeographicHeatmap({
         }}
       >
         <span>
-          Verification Rate:{" "}
+          Confirmation Rate:{" "}
           <strong style={{ color: "#0A2463" }}>{verificationRate}%</strong>
         </span>
         <span>

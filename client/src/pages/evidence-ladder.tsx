@@ -13,6 +13,7 @@ type LevelData = {
   badgeColor: string;
   detail: string;
   notMeaning: string;
+  nextAction: string;
 };
 
 const levels: LevelData[] = [
@@ -20,61 +21,67 @@ const levels: LevelData[] = [
     n: 5,
     title: "Review-Ready Evidence Packet",
     meaning: "Claim, evidence, confirmation, source support, mapping context, exceptions, and limitations are packaged for review.",
-    risk: "Lowest risk",
+    risk: "LOWEST RISK",
     riskClass: "text-green-800",
     badgeColor: "#166534",
     detail: "A complete evidence packet includes: a clearly stated claim, attached source documents, a confirmed reviewer, mapped framework context, documented exceptions, and stated limitations. This is the highest defensibility tier — a reviewer can trace every statement end-to-end without additional requests.",
-    notMeaning: "Does not mean formal assurance has been performed or compliance determined.",
+    notMeaning: "Does not mean formal assurance has been performed, compliance determined, or acceptance guaranteed.",
+    nextAction: "Prepare the review package and keep exceptions, limitations, and source references visible for the reviewer.",
   },
   {
     n: 4,
     title: "Source-Supported AND Confirmed",
     meaning: "Record has both partner confirmation and attached source artifacts.",
-    risk: "Low risk",
+    risk: "LOW RISK",
     riskClass: "text-green-700",
     badgeColor: "#15803d",
     detail: "The claim has attached source evidence AND has been confirmed by an authorized partner or reviewer. Both conditions must be met. A record with source documents but no confirmation, or confirmation without source support, does not reach this tier. This combination substantially reduces the primary evidence risks.",
     notMeaning: "Does not mean the claim is mapped or packaged for formal review.",
+    nextAction: "Add packaging context: exception flags, limitation notes, mapping context, and a review package or assurance-preparation export where applicable.",
   },
   {
     n: 3,
     title: "Partner-Confirmed",
     meaning: "Authorized partner or reviewer confirmed the record.",
-    risk: "Lower risk",
+    risk: "LOWER RISK",
     riskClass: "text-green-600",
     badgeColor: "#16a34a",
     detail: "A named authorized party — a delivery partner, program owner, or external reviewer — has confirmed the activity or data. Partner confirmation adds external validation beyond internal assertion, reducing single-source risk.",
-    notMeaning: "Does not mean the claim is source-supported or assurance-ready.",
+    notMeaning: "Does not mean the claim is source-supported or ready for review packaging.",
+    nextAction: "Attach or reference source materials that support the confirmed record.",
   },
   {
     n: 2,
     title: "Source Evidence Attached",
     meaning: "Claim has attached or referenced source material.",
-    risk: "Moderate risk",
+    risk: "MODERATE RISK",
     riskClass: "text-[#c88914]",
     badgeColor: "#c88914",
     detail: "Source documents — invoices, reports, photos, spreadsheets, or third-party records — are attached or referenced. This moves the claim beyond assertion by pointing to reviewable primary material, but without external confirmation it remains moderately exposed.",
     notMeaning: "Does not mean the claim has been externally confirmed or reviewed by a named third party.",
+    nextAction: "Request confirmation from an authorized partner or reviewer with direct knowledge of the activity.",
   },
   {
     n: 1,
     title: "Internal Assertion",
     meaning: "Claim is internally stated but not externally confirmed.",
-    risk: "High risk",
+    risk: "HIGH RISK",
     riskClass: "text-orange-700",
     badgeColor: "#ea580c",
     detail: "The claim exists in internal records but has not been confirmed by an external party or supported by attached source documents. Risk is high because the claim relies entirely on internal statements with no external reference point.",
-    notMeaning: "Does not mean the claim has external support; it cannot withstand independent review without additional evidence.",
+    notMeaning: "Does not mean the claim has external support; it cannot withstand review without additional evidence.",
+    nextAction: "Attach the first source record or artifact so the claim can move beyond internal assertion.",
   },
   {
     n: 0,
     title: "Unsupported Claim",
     meaning: "Claim has no reviewable support attached.",
-    risk: "Highest risk",
+    risk: "HIGHEST RISK",
     riskClass: "text-red-600",
     badgeColor: "#dc2626",
     detail: "No source material, no confirmation, no stated limitations. This claim cannot be substantiated if reviewed or questioned. Every claim starts here; moving up the ladder begins with attaching the first piece of source evidence.",
     notMeaning: "Does not mean the underlying claim is false — only that no reviewable support has been attached yet.",
+    nextAction: "Attach or reference the first piece of source evidence and state the claim boundary clearly.",
   },
 ];
 
@@ -373,7 +380,7 @@ function EvidenceLadderVisual() {
                 onClick={() => setSelectedLevel(lvl.n)}
                 aria-pressed={selected}
                 aria-expanded={selected}
-                className={`w-full rounded-2xl border p-3 text-left shadow-sm transition-all duration-200 sm:p-4 ${
+                className={`w-full rounded-2xl border p-3 text-left shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 sm:p-4 ${
                   selected ? "border-[#0A1F44] bg-white shadow-lg ring-2 ring-[#0A1F44]/20" : "border-slate-200 bg-white hover:border-[#0A1F44]/25 hover:shadow-md"
                 }`}
                 style={{
@@ -423,19 +430,28 @@ function EvidenceLadderVisual() {
                   }}
                 >
                   <div className="rounded-xl border border-dashed border-slate-200 bg-white/60 p-3 sm:p-3.5">
-                    <p className="text-[12px] leading-relaxed text-slate-700 sm:text-sm">{lvl.detail}</p>
+                    <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 sm:text-[11px]">
+                      What this level means
+                    </p>
+                    <p className="mt-1 text-[12px] leading-relaxed text-slate-700 sm:text-sm">{lvl.detail}</p>
                     <div className="mt-3 border-t border-slate-200 pt-3">
                       <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 sm:text-[11px]">
                         What this level does not mean
                       </p>
                       <p className="mt-1 text-[12px] leading-relaxed text-slate-600 sm:text-sm">{lvl.notMeaning}</p>
                     </div>
+                    <div className="mt-3 border-t border-slate-200 pt-3">
+                      <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-slate-400 sm:text-[11px]">
+                        Next action
+                      </p>
+                      <p className="mt-1 text-[12px] leading-relaxed text-slate-600 sm:text-sm">{lvl.nextAction}</p>
+                    </div>
                   </div>
                 </div>
               </button>
               {lvl.n === 4 && (
                 <p className="mt-2 rounded-lg border border-[#c88914]/30 bg-[#fff9eb] px-4 py-3 text-[12px] leading-relaxed text-[#0A1F44] sm:text-sm">
-                  Synerxus structures evidence to reach Level 4 by default — partner confirmation with name, role, and date, plus source artifacts attached to the specific claim. Level 5 adds packaging: exceptions, limitations, and an assurance-preparation export.
+                  Synerxus structures evidence to reach Level 4 by default — partner confirmation with name, role, and date, plus source artifacts attached to the specific claim. Level 5 adds packaging: exceptions, limitations, and a review package or assurance-preparation export where applicable.
                 </p>
               )}
               {lvl.n === 5 && (
@@ -462,12 +478,12 @@ export default function EvidenceLadderPage() {
       <section className="bg-white py-10 md:py-14">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.48fr] lg:items-start">
           <div>
-            <h1 className="text-4xl font-extrabold leading-tight text-[#0A1F44] sm:text-5xl md:text-6xl">The Evidence Ladder</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 sm:mt-5 sm:text-2xl">A maturity model for claim defensibility. Move from unsupported to review-ready.</p>
+            <h1 className="text-4xl font-extrabold leading-tight text-[#0A1F44] sm:text-5xl md:text-5xl">The Evidence Ladder</h1>
+            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 sm:mt-5 sm:text-xl md:text-2xl">A maturity model for claim defensibility. Move from unsupported to review-ready.</p>
             <p className="mt-5 max-w-2xl text-base leading-relaxed text-[#0A1F44] sm:mt-6 sm:text-lg">The Evidence Ladder helps you strengthen claims over time by building better evidence, context, and confirmations so you are ready when it matters.</p>
             <div className="mt-6 flex flex-col gap-3 sm:mt-7">
               <Button asChild className="w-fit bg-[#c88914] text-white hover:bg-[#a9720f]">
-                <Link href="/request-assessment">Request Assessment</Link>
+                <Link href="/assessment">Request Assessment</Link>
               </Button>
               <Link
                 href="/platform"
@@ -480,7 +496,7 @@ export default function EvidenceLadderPage() {
           <aside className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <div className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#061A36] text-white"><Info className="h-5 w-5" /></span><div><h2 className="font-extrabold text-[#0A1F44]">What this page shows</h2><p className="mt-2 text-sm leading-relaxed text-slate-700">A maturity model for claim-defensibility. It illustrates how evidence, context, and confirmations reduce risk as you move up the ladder.</p></div></div>
             <div className="my-6 border-t border-slate-200" />
-            <div className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#c88914] text-white"><XCircle className="h-5 w-5" /></span><div><h2 className="font-extrabold text-[#0A1F44]">What this page does not show</h2><p className="mt-2 text-sm leading-relaxed text-slate-700">It does not represent formal assurance, regulatory compliance, proven impact, or a guarantee of acceptance.</p></div></div>
+            <div className="flex gap-4"><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#c88914] text-white"><XCircle className="h-5 w-5" /></span><div><h2 className="font-extrabold text-[#0A1F44]">What this page does not show</h2><p className="mt-2 text-sm leading-relaxed text-slate-700">It does not represent formal assurance, regulatory compliance, causal attribution, or a guarantee of acceptance.</p></div></div>
           </aside>
         </div>
       </section>
@@ -508,9 +524,9 @@ export default function EvidenceLadderPage() {
 
       <section className="bg-white pb-12">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="flex gap-5 rounded-lg bg-[#f8efe0] p-8">
-            <ShieldCheck className="h-16 w-16 shrink-0 text-[#0A1F44]" />
-            <div><h2 className="text-xl font-extrabold text-[#0A1F44]">The Evidence Ladder shows claim-defensibility maturity.</h2><p className="mt-2 text-lg text-[#0A1F44]">It does not represent formal assurance, regulatory compliance, or proven impact.</p></div>
+          <div className="grid gap-4 rounded-lg bg-[#f8efe0] p-5 sm:grid-cols-[auto_1fr] sm:p-8">
+            <ShieldCheck className="h-12 w-12 shrink-0 text-[#0A1F44] sm:h-16 sm:w-16" />
+            <div><h2 className="text-lg font-extrabold text-[#0A1F44] sm:text-xl">The Evidence Ladder shows claim-defensibility maturity.</h2><p className="mt-2 text-base leading-relaxed text-[#0A1F44] sm:text-lg">Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.</p></div>
           </div>
         </div>
       </section>

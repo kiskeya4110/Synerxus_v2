@@ -13,17 +13,19 @@ const navItems = [
 ];
 
 const solutionItems = [
+  { label: "Solutions Overview", href: "/solutions" },
   { label: "For ESG Teams", href: "/for-esg-teams" },
-  { label: "For NGOs and Partners (future)", href: "/use-cases" },
+  { label: "For NGOs and Partners", href: "/use-cases" },
 ];
 
 const ASSURANCE_FOOTER_NOTE =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, or establish causal attribution.";
+  "Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.";
 
 const footerLinks = [
   ["Platform", "/platform"],
   ["Integrations", "/integrations"],
   ["Evidence Ladder", "/evidence-ladder"],
+  ["Solutions", "/solutions"],
   ["For ESG Teams", "/for-esg-teams"],
   ["Use Cases", "/use-cases"],
   ["Resources", "/resources"],
@@ -46,6 +48,7 @@ const socialLinks = [
 
 export function MarketingLayout({ children }: { children: ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [solutionsOpen, setSolutionsOpen] = useState(false);
   const [location, navigate] = useLocation();
   const isLanding = location === "/landing" || location === "/";
   const { dbUser, loading: authLoading } = useAuth();
@@ -94,22 +97,37 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 </Link>
               );
             })}
-            <div className="group relative">
+            <div
+              className="group relative"
+              onMouseEnter={() => setSolutionsOpen(true)}
+              onMouseLeave={() => setSolutionsOpen(false)}
+            >
               <button
                 type="button"
+                aria-expanded={solutionsOpen}
+                aria-haspopup="menu"
+                onClick={() => setSolutionsOpen((open) => !open)}
                 className={`flex items-center gap-1 border-b-2 px-0 py-2 text-sm font-semibold transition-colors ${
-                  location === "/for-esg-teams" || location.startsWith("/use-cases")
+                  location === "/solutions" || location === "/for-esg-teams" || location.startsWith("/use-cases")
                     ? "border-[#c88914] text-[#0A1F44]"
                     : "border-transparent text-[#0A1F44] hover:border-[#c88914]/60"
                 }`}
               >
-                Solutions <ChevronDown className="h-4 w-4" />
+                Solutions <ChevronDown className={`h-4 w-4 transition-transform duration-150 ${solutionsOpen ? "rotate-180" : ""}`} />
               </button>
-              <div className="invisible absolute left-0 top-full z-50 w-72 translate-y-2 rounded-lg border border-slate-200 bg-white p-2 opacity-0 shadow-xl transition-all group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+              <div
+                role="menu"
+                className={`absolute left-0 top-full z-50 w-72 rounded-lg border border-slate-200 bg-white p-2 shadow-xl transition-all ${
+                  solutionsOpen
+                    ? "visible translate-y-0 opacity-100"
+                    : "invisible translate-y-2 opacity-0 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100"
+                }`}
+              >
                 {solutionItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={() => setSolutionsOpen(false)}
                     className={`block rounded-md px-3 py-2 text-sm font-semibold transition-colors ${
                       location === item.href
                         ? "bg-slate-100 text-[#0A1F44]"
@@ -132,14 +150,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 </Link>
               </Button>
             ) : (
-              <>
-                <Link href="/login" className="rounded-md px-3 py-2 text-sm font-semibold text-[#0A1F44] transition-colors hover:text-[#c88914]">
-                  Sign In
+              <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
+                <Link href="/login">
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Access Dashboard
                 </Link>
-                <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
-                  <Link href="/request-assessment">Request Assessment</Link>
-                </Button>
-              </>
+              </Button>
             )}
           </div>
 
@@ -187,14 +203,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   </Link>
                 </Button>
               ) : (
-                <>
-                  <Link href="/login" className="rounded-md px-3 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50" onClick={() => setMobileOpen(false)}>
-                    Sign In
+                <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
+                  <Link href="/login" onClick={() => setMobileOpen(false)}>
+                    <LayoutDashboard className="mr-2 h-4 w-4" />
+                    Access Dashboard
                   </Link>
-                  <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
-                    <Link href="/request-assessment" onClick={() => setMobileOpen(false)}>Request Assessment</Link>
-                  </Button>
-                </>
+                </Button>
               )}
             </div>
           </div>

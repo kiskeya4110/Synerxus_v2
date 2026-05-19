@@ -1,3 +1,6 @@
+import { motion, useReducedMotion } from "framer-motion";
+import { AnimatedMetricValue } from "@/components/marketing/animated-metric-value";
+
 type ClaimMetric = {
   label: string;
   value: string;
@@ -13,6 +16,7 @@ type ClaimRecordCardProps = {
   supportSummary?: string;
   details?: ClaimMetric[];
   compact?: boolean;
+  animateMetrics?: boolean;
 };
 
 function statusClass(tone: ClaimRecordCardProps["statusTone"] = "review") {
@@ -37,7 +41,11 @@ export function ClaimRecordCard({
   supportSummary,
   details = [],
   compact = false,
+  animateMetrics = true,
 }: ClaimRecordCardProps) {
+  const shouldReduceMotion = useReducedMotion();
+  const shouldAnimateMetrics = animateMetrics && !shouldReduceMotion;
+
   return (
     <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
       <div className="rounded-md border border-slate-200 p-5">
@@ -55,11 +63,40 @@ export function ClaimRecordCard({
 
         {metrics.length > 0 && (
           <div className={`mt-5 grid gap-3 ${compact ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-4"}`}>
-            {metrics.map(({ label, value }) => (
-              <div key={label} className="rounded-md border border-slate-200 p-3">
+            {metrics.map(({ label, value }, index) => (
+              <motion.div
+                key={label}
+                className="rounded-md border border-slate-200 bg-white p-3"
+                animate={
+                  shouldAnimateMetrics
+                    ? {
+                        y: [0, -4, 0],
+                        borderColor: ["#e2e8f0", "#c88914", "#e2e8f0"],
+                        boxShadow: [
+                          "0 0 0 rgba(200, 137, 20, 0)",
+                          "0 10px 24px rgba(200, 137, 20, 0.16)",
+                          "0 0 0 rgba(200, 137, 20, 0)",
+                        ],
+                      }
+                    : undefined
+                }
+                transition={
+                  shouldAnimateMetrics
+                    ? {
+                        duration: 1.8,
+                        delay: index * 0.28,
+                        repeat: Infinity,
+                        repeatDelay: metrics.length * 0.28,
+                        ease: "easeInOut",
+                      }
+                    : undefined
+                }
+              >
                 <p className="text-[10px] font-bold text-slate-500">{label}</p>
-                <p className="mt-1 text-xl font-extrabold tabular-nums text-[#0A1F44]">{value}</p>
-              </div>
+                <p className="mt-1 text-xl font-extrabold tabular-nums text-[#0A1F44]">
+                  <AnimatedMetricValue value={value} active={animateMetrics} />
+                </p>
+              </motion.div>
             ))}
           </div>
         )}

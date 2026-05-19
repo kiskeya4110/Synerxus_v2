@@ -28,10 +28,10 @@ const areas: Area[] = [
   {
     title: "Confirmation and Evidence Quality",
     icon: Users,
-    copy: "Track partner confirmation, confirmation status, confidence tier, source-support status, exception flags, and evidence gap tracking without treating every record as equal.",
-    bullets: ["Partner confirmation", "Evidence gap tracking", "Exception log", "Confidence tiers"],
+    copy: "Track partner confirmation, confidence tier, source-support status, exception flags, and evidence gaps without treating every record as equal.",
+    bullets: ["Partner confirmation", "Exception log", "Evidence gap tracking", "Confidence tiers"],
     bulletDetails: {
-      "Confidence tiers": "High: partner-confirmed with source support. Medium: confirmed without full source support. Low: pending or unconfirmed.",
+      "Confidence tiers": "Confidence tiers reflect evidence completeness, source support, and confirmation status. They are not assurance opinions.",
     },
     panel: "quality",
     contextLink: { label: "Grant / Funder Reporting", href: "/use-cases/grant-funder-reporting" },
@@ -50,7 +50,7 @@ const areas: Area[] = [
 const qualityRows = [
   { id: "Partner A confirmation", status: "Confirmed", confidence: "High", alignment: "Aligned" },
   { id: "Partner B confirmation", status: "Confirmed", confidence: "Medium", alignment: "Aligned" },
-  { id: "Partner C confirmation", status: "Pending", confidence: "High", alignment: "Aligned" },
+  { id: "Partner C confirmation", status: "Pending", confidence: "Low", alignment: "Review needed" },
   { id: "Partner D submission", status: "Confirmed", confidence: "High", alignment: "Aligned" },
 ] as const;
 
@@ -59,7 +59,13 @@ function PreviewPanel({ type }: { type: string }) {
     return (
       <div className="grid gap-3 lg:grid-cols-[1fr_160px]">
         <div className="rounded-md border border-slate-200 bg-white p-4">
-          <p className="text-xs font-extrabold text-[#0A1F44]">Confirmation & Quality</p>
+          <p className="text-xs font-extrabold text-[#0A1F44]">Partner confirmation table</p>
+          <div className="mt-3 grid grid-cols-4 gap-2 border-b border-slate-100 pb-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">
+            <span>Record</span>
+            <span>Status</span>
+            <span>Confidence</span>
+            <span>Alignment</span>
+          </div>
           {qualityRows.map((row) => {
             const isPending = row.status === "Pending";
             return (
@@ -74,19 +80,22 @@ function PreviewPanel({ type }: { type: string }) {
                   {row.status}
                 </span>
                 <span>{row.confidence}</span>
-                <span className={`font-bold ${isPending ? "text-slate-500" : "text-emerald-700"}`}>
+                <span className={`font-bold ${isPending ? "text-amber-600" : "text-emerald-700"}`}>
                   {row.alignment}
                 </span>
               </div>
             );
           })}
+          <p className="mt-3 rounded-md bg-[#fff9eb] px-3 py-2 text-[11px] leading-relaxed text-[#0A1F44]">
+            Confidence tiers reflect evidence completeness, source support, and confirmation status. They are not assurance opinions.
+          </p>
         </div>
         <div className="rounded-md border border-slate-200 bg-white p-4">
           <p className="text-xs font-extrabold text-[#0A1F44]">Exceptions</p>
           <p className="mt-4 text-4xl font-extrabold text-[#0A1F44]">3</p>
           <p className="mt-2 text-xs text-slate-500">Visible before report output.</p>
           <p className="mt-2 text-xs text-slate-500">
-            Exceptions are included in the output with flags — they are not removed or hidden.
+            Exceptions are visible before report output. They are included in the record with flags — they are not removed or hidden.
           </p>
         </div>
       </div>
@@ -99,9 +108,9 @@ function PreviewPanel({ type }: { type: string }) {
         <div className="rounded-md border border-slate-200 bg-white p-4">
           <p className="text-xs font-extrabold text-[#0A1F44]">Mapping overview</p>
           {[
-            ["7", "Affordable and Clean Energy"],
-            ["13", "Climate Action"],
-            ["12", "Responsible Consumption"],
+            ["GRI 413", "Local communities"],
+            ["SDG 8", "Decent work and economic growth"],
+            ["Internal", "Workforce development"],
           ].map(([n, label]) => (
             <div key={n} className="mt-3 flex items-center gap-3 text-xs font-semibold text-slate-700">
               <span className="flex h-8 w-8 items-center justify-center rounded bg-[#c88914] font-extrabold text-white">
@@ -111,7 +120,7 @@ function PreviewPanel({ type }: { type: string }) {
             </div>
           ))}
           <p className="mt-3 border-t border-slate-100 pt-2 text-[10px] italic text-slate-400">
-            SDG mapping is a classification layer. It does not certify SDG contribution or prove impact.
+            SDG mapping is a classification layer. It does not certify SDG contribution or establish impact.
           </p>
         </div>
         <div className="rounded-md border border-slate-200 bg-white p-4">
@@ -119,9 +128,9 @@ function PreviewPanel({ type }: { type: string }) {
           <div className="mt-4 h-28 rounded-full border-[18px] border-[#c88914] border-r-slate-200 border-t-emerald-600" />
           <div className="mt-3 space-y-1.5">
             {[
-              { label: "Confirmed evidence", color: "bg-emerald-600", pct: "76%" },
+              { label: "Confirmed evidence total", color: "bg-emerald-600", pct: "76%" },
               { label: "Partner-reported", color: "bg-[#c88914]", pct: "14%" },
-              { label: "Unverified", color: "bg-slate-300", pct: "10%" },
+              { label: "Unsupported or incomplete", color: "bg-slate-300", pct: "10%" },
             ].map(({ label, color, pct }) => (
               <div key={label} className="flex items-center justify-between text-xs">
                 <div className="flex items-center gap-1.5">
@@ -135,12 +144,12 @@ function PreviewPanel({ type }: { type: string }) {
         </div>
         <div className="rounded-md border border-slate-200 bg-white p-4 lg:col-span-2">
           <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
-            <Link href="/request-assessment">
-              <Download className="mr-2 h-4 w-4" /> Export assurance-preparation package
+            <Link href="/assessment">
+              <Download className="mr-2 h-4 w-4" /> Prepare review package
             </Link>
           </Button>
           <p className="mt-2 text-xs text-slate-600">
-            Includes evidence index, mappings, exceptions, and limitations.
+            Includes evidence index, mappings, exceptions, and limitations. Where applicable, exports support assurance-preparation workflows but do not represent formal assurance.
           </p>
         </div>
       </div>
@@ -188,17 +197,17 @@ export default function PlatformPage() {
         <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Platform</p>
-            <h1 className="mt-4 max-w-xl font-serif text-5xl font-bold leading-tight text-[#0A1F44] md:text-6xl">
+            <h1 className="mt-4 max-w-xl font-serif text-4xl font-bold leading-tight text-[#0A1F44] sm:text-5xl md:text-6xl">
               The Synerxus Platform
             </h1>
             <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#0A1F44]">
-              Synerxus helps teams connect claims to evidence, confirmation, mapping context, status, exceptions, and limitations so every reported number is explainable and reviewable.
+              Synerxus helps teams connect reportable claims and records to evidence, confirmation, mapping context, status, exceptions, and limitations so each supported statement is easier to explain and review.
             </p>
           </div>
 
-          <div className="shadow-2xl">
+          <div className="shadow-lg sm:shadow-2xl">
             <ClaimRecordCard
-              claim="Our employee volunteer program contributed to community workforce development programs across 8 partner organizations in 2025."
+              claim="Our employee volunteer program supported community workforce development activities across 8 partner organizations in 2025."
               status="In Review"
               metrics={[
                 { label: "Claimed participants", value: "312" },
@@ -207,8 +216,12 @@ export default function PlatformPage() {
                 { label: "Evidence packets", value: "8" },
               ]}
               evidenceCoverage={76}
-              supportSummary="Supported 76% · Partial 14% · Unverified 10%"
+              supportSummary="Source-supported 76% · Partial 14% · Incomplete 10%"
+              animateMetrics
             />
+            <p className="mt-3 rounded-md border border-slate-200 bg-white px-4 py-3 text-xs leading-relaxed text-slate-600">
+              Confidence reflects evidence completeness, confirmation status, and source-support coverage. It is not an assurance opinion.
+            </p>
           </div>
         </div>
       </section>
@@ -225,7 +238,8 @@ export default function PlatformPage() {
                   key={a.title}
                   type="button"
                   onClick={() => setActiveArea(i)}
-                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200 ${
+                  aria-pressed={isActive}
+                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
                     isActive
                       ? "border-[#0A1F44] bg-[#0A1F44] shadow-md"
                       : "border-slate-200 bg-white hover:border-[#0A1F44]/40 hover:shadow-sm"
@@ -291,7 +305,7 @@ export default function PlatformPage() {
                 </div>
                 <div className="mt-5 flex flex-wrap gap-4">
                   <Link
-                    href="/request-assessment"
+                    href="/assessment"
                     className="inline-flex items-center gap-2 text-sm font-bold text-[#c88914] transition-colors hover:text-[#a9720f]"
                   >
                     Get started <ArrowRight className="h-4 w-4" />
@@ -333,7 +347,7 @@ export default function PlatformPage() {
       <section className="bg-[#061A36] py-10 text-white">
         <div className="mx-auto max-w-7xl px-4 text-center md:px-8">
           <Button asChild size="lg" className="bg-[#c88914] text-white hover:bg-[#a9720f] active:bg-[#8a5f0a]">
-            <Link href="/request-assessment">
+            <Link href="/assessment">
               Request Readiness Assessment <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </Button>

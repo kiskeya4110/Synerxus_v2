@@ -73,7 +73,7 @@ const VolunteerView = memo(function VolunteerView({
   const [kpiModal, setKpiModal] = useState<null | 'sdgs' | 'hours' | 'impact' | 'projects'>(null);
 
   // History tab state
-  const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'verified' | 'rejected'>('all');
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'pending' | 'confirmed' | 'rejected'>('all');
   const [visibleCount, setVisibleCount] = useState(20);
 
   // Selected log for detail expansion
@@ -87,7 +87,7 @@ const VolunteerView = memo(function VolunteerView({
     setExpandedSection(prev => prev === section ? null : section);
   };
 
-  const handleHistoryFilterChange = (filter: 'all' | 'pending' | 'verified' | 'rejected') => {
+  const handleHistoryFilterChange = (filter: 'all' | 'pending' | 'confirmed' | 'rejected') => {
     setHistoryFilter(filter);
     setVisibleCount(20);
   };
@@ -241,12 +241,12 @@ const VolunteerView = memo(function VolunteerView({
 
   // Hours by project (for Hours modal)
   const hoursByProject = useMemo(() => {
-    const map = new Map<string, { name: string; hours: number; verified: number }>();
+    const map = new Map<string, { name: string; hours: number; confirmed: number }>();
     allLogs.forEach((l: any) => {
       const name = l.project?.name || 'Unknown Project';
-      const existing = map.get(name) || { name, hours: 0, verified: 0 };
+      const existing = map.get(name) || { name, hours: 0, confirmed: 0 };
       existing.hours += l.hours || 0;
-      if (l.verificationStatus === 'approved') existing.verified += l.hours || 0;
+      if (l.verificationStatus === 'approved') existing.confirmed += l.hours || 0;
       map.set(name, existing);
     });
     return Array.from(map.values()).sort((a, b) => b.hours - a.hours);
@@ -261,7 +261,7 @@ const VolunteerView = memo(function VolunteerView({
   const filteredHistoryLogs = useMemo(() => {
     const statusMap: Record<string, string> = {
       'pending': 'pending',
-      'verified': 'approved',
+      'confirmed': 'approved',
       'rejected': 'rejected',
     };
     let logs = historyFilter === 'all'
@@ -346,7 +346,7 @@ const VolunteerView = memo(function VolunteerView({
                       <BarChart3 className="w-6 h-6 text-amber-600" />
                     </div>
                     <div className="flex-1 text-left">
-                      <span className="text-sm font-semibold text-stone-800 block">Impact Wallet</span>
+                      <span className="text-sm font-semibold text-stone-800 block">Evidence Wallet</span>
                       <span className="text-xs text-stone-500">{stats.hoursLogged}h logged • {sdgsContributed} SDGs</span>
                     </div>
                     <ChevronRight className={`w-5 h-5 text-stone-400 transition-transform ${expandedSection === 'wallet' ? 'rotate-90' : ''}`} />
@@ -487,11 +487,11 @@ const VolunteerView = memo(function VolunteerView({
                                 </div>
                                 <div className="flex items-center gap-2">
                                   <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                                    log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                                    log.status === 'confirmed' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
                                     log.status === 'rejected' ? 'bg-red-100 text-red-700' :
                                     'bg-amber-100 text-amber-700'
                                   }`}>
-                                    {log.status === 'approved' ? 'Verified' : log.status || 'pending'}
+                                    {log.status === 'approved' ? 'Confirmed' : log.status || 'pending'}
                                   </span>
                                   <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${selectedLogId === log.id ? 'rotate-90' : ''}`} />
                                 </div>
@@ -616,7 +616,7 @@ const VolunteerView = memo(function VolunteerView({
                 </button>
               </div>
 
-              {/* Pending Verification Notice - Interactive */}
+              {/* Pending Review Notice - Interactive */}
               {stats.pendingVerifications > 0 && (
                 <button
                   onClick={() => navigate('/volunteer/history')}
@@ -626,7 +626,7 @@ const VolunteerView = memo(function VolunteerView({
                     <div className="flex items-center gap-2">
                       <AlertCircle className="h-4 w-4 text-amber-600" />
                       <span className="text-sm font-medium text-amber-700">
-                        {stats.pendingVerifications} log{stats.pendingVerifications > 1 ? 's' : ''} pending verification
+                        {stats.pendingVerifications} log{stats.pendingVerifications > 1 ? 's' : ''} pending partner review
                       </span>
                     </div>
                     <ChevronRight className="h-4 w-4 text-amber-600" />
@@ -659,11 +659,11 @@ const VolunteerView = memo(function VolunteerView({
                         </div>
                         <div className="flex items-center gap-2">
                           <span className={`text-xs font-medium px-2 py-1 rounded-full ${
-                            log.status === 'verified' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
+                            log.status === 'confirmed' || log.status === 'approved' ? 'bg-emerald-100 text-emerald-700' :
                             log.status === 'rejected' ? 'bg-red-100 text-red-700' :
                             'bg-amber-100 text-amber-700'
                           }`}>
-                            {log.status === 'approved' ? 'Verified' : log.status || 'pending'}
+                            {log.status === 'approved' ? 'Confirmed' : log.status || 'pending'}
                           </span>
                           <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${selectedLogId === log.id ? 'rotate-90' : ''}`} />
                         </div>
@@ -953,7 +953,7 @@ const VolunteerView = memo(function VolunteerView({
                   </div>
                   <div>
                     <p className="text-2xl font-bold text-white">{stats.outcomesVerified}</p>
-                    <p className="text-[10px] text-emerald-200">Verified</p>
+                    <p className="text-[10px] text-emerald-200">Confirmed</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-3 gap-3 text-center mt-3 pt-3 border-t border-emerald-500/30">
@@ -974,7 +974,7 @@ const VolunteerView = memo(function VolunteerView({
 
               {/* Filter Pills */}
               <div className="flex gap-2">
-                {(['all', 'pending', 'verified', 'rejected'] as const).map((filter) => (
+                {(['all', 'pending', 'confirmed', 'rejected'] as const).map((filter) => (
                   <button
                     key={filter}
                     onClick={() => handleHistoryFilterChange(filter)}
@@ -986,7 +986,7 @@ const VolunteerView = memo(function VolunteerView({
                   >
                     {filter === 'all' ? `All (${allLogs.length})` : `${filter.charAt(0).toUpperCase() + filter.slice(1)} (${
                       filter === 'pending' ? allLogs.filter((l: any) => l.verificationStatus === 'pending').length
-                        : filter === 'verified' ? allLogs.filter((l: any) => l.verificationStatus === 'approved').length
+                        : filter === 'confirmed' ? allLogs.filter((l: any) => l.verificationStatus === 'approved').length
                           : allLogs.filter((l: any) => l.verificationStatus === 'rejected').length
                     })`}
                   </button>
@@ -1059,7 +1059,7 @@ const VolunteerView = memo(function VolunteerView({
                                   ? 'bg-red-100 text-red-700'
                                   : 'bg-amber-100 text-amber-700'
                             }`}>
-                              {status === 'approved' ? 'Verified' : status === 'rejected' ? 'Rejected' : 'Pending'}
+                              {status === 'approved' ? 'Confirmed' : status === 'rejected' ? 'Rejected' : 'Pending'}
                             </span>
                             <ChevronRight className={`h-4 w-4 text-stone-400 transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                           </div>
@@ -1187,7 +1187,7 @@ const VolunteerView = memo(function VolunteerView({
           {/* Page Header */}
           <PageHeader
             title={`Welcome back, ${activeUser?.displayName?.split(" ")[0] || "Volunteer"}`}
-            description="Log activity, track verification status, and view your contribution record."
+            description="Log activity, track review status, and view your contribution record."
             actions={
               <Button variant="accent" size="lg" onClick={() => navigate('/log-activity')}>
                 <Plus className="h-5 w-5 mr-2" />
@@ -1211,7 +1211,7 @@ const VolunteerView = memo(function VolunteerView({
               <MetricCard
                 label="Hours Logged"
                 value={stats.hoursLogged}
-                subtitle={`${stats.verifiedHours} verified`}
+                subtitle={`${stats.verifiedHours} confirmed`}
                 accentColor="accent"
                 icon={<Clock className="h-5 w-5 text-accent" />}
               />
@@ -1430,7 +1430,7 @@ const VolunteerView = memo(function VolunteerView({
 
           {/* Filter Pills */}
           <div className="flex gap-2">
-            {(['all', 'pending', 'verified', 'rejected'] as const).map((filter) => (
+            {(['all', 'pending', 'confirmed', 'rejected'] as const).map((filter) => (
               <button
                 key={filter}
                 onClick={() => handleHistoryFilterChange(filter)}
@@ -1445,7 +1445,7 @@ const VolunteerView = memo(function VolunteerView({
                   <span className="ml-1.5 opacity-70">
                     ({filter === 'pending'
                       ? allLogs.filter((l: any) => l.verificationStatus === 'pending').length
-                      : filter === 'verified'
+                      : filter === 'confirmed'
                         ? allLogs.filter((l: any) => l.verificationStatus === 'approved').length
                         : allLogs.filter((l: any) => l.verificationStatus === 'rejected').length
                     })
@@ -1546,7 +1546,7 @@ const VolunteerView = memo(function VolunteerView({
                                   ? 'bg-red-100 text-red-700'
                                   : 'bg-amber-100 text-amber-700'
                             }`}>
-                              {status === 'approved' ? 'Verified' : status === 'rejected' ? 'Rejected' : 'Pending'}
+                              {status === 'approved' ? 'Confirmed' : status === 'rejected' ? 'Rejected' : 'Pending'}
                             </span>
                             <ChevronRight className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? 'rotate-90' : ''}`} />
                           </div>
@@ -1786,7 +1786,7 @@ const VolunteerView = memo(function VolunteerView({
               </div>
               <div className="bg-emerald-50 rounded-xl p-3 text-center">
                 <p className="text-2xl font-bold text-emerald-700">{stats.verifiedHours}</p>
-                <p className="text-xs text-emerald-600 mt-0.5">Verified</p>
+                <p className="text-xs text-emerald-600 mt-0.5">Confirmed</p>
               </div>
             </div>
             {hoursByProject.length > 0 && (
@@ -1798,8 +1798,8 @@ const VolunteerView = memo(function VolunteerView({
                       <span className="text-sm font-medium text-foreground truncate flex-1 mr-2">{proj.name}</span>
                       <div className="text-right flex-shrink-0">
                         <span className="text-sm font-bold text-stone-800">{proj.hours}h</span>
-                        {proj.verified > 0 && (
-                          <span className="text-xs text-emerald-600 ml-1">({proj.verified}h ✓)</span>
+                        {proj.confirmed > 0 && (
+                          <span className="text-xs text-emerald-600 ml-1">({proj.confirmed}h ✓)</span>
                         )}
                       </div>
                     </div>
@@ -1834,7 +1834,7 @@ const VolunteerView = memo(function VolunteerView({
                 <p className="text-xs text-blue-600 mt-0.5">Confirmed Activities</p>
               </div>
             </div>
-            <p className="text-[11px] text-muted-foreground leading-snug">Partner-reported reach is not independently verified. It reflects figures reported by the partner organization and is provided as reporting context only.</p>
+            <p className="text-[11px] text-muted-foreground leading-snug">Partner-reported reach is not reviewed through a documented independent process. It reflects figures reported by the partner organization and is provided as reporting context only.</p>
             {allLogs.filter((l: any) => l.verificationStatus === 'approved' && (l.outcomeQuantity || 0) > 0).length > 0 ? (
               <>
                 <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Recent Confirmed Activities</p>

@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, ChevronLeft, LockKeyhole, ShieldCheck } from 
 import { Button } from "@/components/ui/button";
 import { MarketingLayout } from "@/components/marketing/marketing-layout";
 
-const BOUNDARY = "Synerxus provides structured evidence records for reporting, internal review, and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, certify SDG impact, independently verify all partner-reported reach figures, or establish causal attribution.";
+const BOUNDARY = "Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.";
 
 const SITUATIONS = [
   "I am preparing our ESG or sustainability report and need to organize the evidence behind specific claims",

@@ -484,7 +484,7 @@ export default function Organizations() {
                         <CardContent className="pt-6 text-center">
                           <Zap className="h-12 w-12 mx-auto mb-4 text-purple-600" />
                           <p className="text-4xl font-bold text-purple-600">{selectedOrg.stats.impactScore}</p>
-                          <p className="text-lg font-medium mt-2">SDG Impact Score</p>
+                          <p className="text-lg font-medium mt-2">SDG Context Score</p>
                         </CardContent>
                       </Card>
                     </TabsContent>
@@ -664,7 +664,7 @@ export default function Organizations() {
                       </div>
                       <div 
                         className="flex items-center gap-1 px-2 py-1 rounded-full cursor-pointer hover:bg-purple-100 dark:hover:bg-purple-900/30 transition-colors"
-                        title="Impact Score - based on projects, volunteers, hours, and people impacted"
+                        title="Contribution Score - based on projects, volunteers, hours, and people reached"
                       >
                         <Zap className="h-4 w-4 text-purple-600" />
                         <span className="text-sm font-bold text-purple-600">{org.stats.impactScore}</span>
@@ -863,7 +863,7 @@ export default function Organizations() {
                   </div>
                   <div
                     className="flex items-center gap-1 bg-purple-50 px-3 py-1 rounded-full"
-                    title="Impact Score"
+                    title="Contribution Score"
                   >
                     <Zap className="h-4 w-4 text-purple-600" />
                     <span className="text-sm font-bold text-purple-600">{selectedOrg.stats.impactScore}</span>
@@ -976,7 +976,7 @@ export default function Organizations() {
                     <CardContent className="pt-6 text-center">
                       <Zap className="h-12 w-12 mx-auto mb-4 text-purple-600" />
                       <p className="text-4xl font-bold text-purple-600">{selectedOrg.stats.impactScore}</p>
-                      <p className="text-lg font-medium mt-2">SDG Impact Score</p>
+                      <p className="text-lg font-medium mt-2">SDG Context Score</p>
                       <p className="text-sm text-gray-500 mt-1">
                         Based on projects, volunteers, hours contributed, and community impact
                       </p>

@@ -257,7 +257,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
 
   // Prepare time series chart data
   const impactOverTimeData = useMemo(() => {
-    const datasetLabel = currentUser?.userType === 'volunteer' ? 'People You Impacted' : 'People Impacted';
+    const datasetLabel = currentUser?.userType === 'volunteer' ? 'People You Impacted' : 'People Reached';
     
     // Use backend-computed monthlyImpactData for both volunteers and organizations
     if (dashboardData?.monthlyImpactData) {
@@ -331,7 +331,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
 
   // Prepare SDG radar chart data
   const sdgRadarData = useMemo(() => {
-    const datasetLabel = currentUser?.userType === 'volunteer' ? 'Your Impact Score' : 'Impact Score';
+    const datasetLabel = currentUser?.userType === 'volunteer' ? 'Your Contribution Score' : 'Contribution Score';
     
     // For organizations, use backend-computed impactBySDG if available
     if (currentUser?.userType === 'organization' && dashboardData?.impactBySDG) {
@@ -447,7 +447,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
     let details: any = { title: metricName, items: [] };
 
     switch (metricName) {
-      case "Total People Impacted":
+      case "Total People Reached":
         details.items = projectImpacts
           .filter((i: any) => {
             const metric = impactMetrics.find((m: any) => m.id === i.metricId);
@@ -556,7 +556,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
                 <p className="text-[8px] text-gray-500 leading-tight">Hours</p>
               </button>
               <button
-                onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
+                onClick={() => handleMetricClick("Total People Reached", aggregatedMetrics.totalPeople)}
                 className="bg-white border border-gray-200 rounded-lg p-2 text-center shadow-sm hover:shadow-md hover:border-blue-300 active:scale-95 transition-all"
               >
                 <Users className="h-4 w-4 text-blue-600 mx-auto mb-0.5" />
@@ -673,7 +673,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
               <p className="text-[8px] text-gray-500 leading-tight">Hours</p>
             </button>
             <button
-              onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
+              onClick={() => handleMetricClick("Total People Reached", aggregatedMetrics.totalPeople)}
               className="bg-white border border-gray-200 rounded-lg p-2 text-center shadow-sm hover:shadow-md hover:border-blue-300 active:scale-95 transition-all"
             >
               <Users className="h-4 w-4 text-blue-600 mx-auto mb-0.5" />
@@ -969,16 +969,16 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
             ))}
           </div>
           
-          {/* Impact Score Algorithm Card */}
+          {/* Contribution Score Algorithm Card */}
           {dashboardData?.impactScore !== undefined && (
             <Card className="border-2 border-primary/20">
               <CardHeader className="p-4 sm:p-6 pb-3">
                 <CardTitle className="text-lg sm:text-xl flex items-center gap-2">
-                  Impact Score Algorithm
+                  Contribution Score Algorithm
                   <span className="text-3xl font-bold text-primary ml-auto">{dashboardData.impactScore}/100</span>
                 </CardTitle>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
-                  Your impact score is calculated using a weighted algorithm combining multiple factors
+                  Your contribution score is calculated using a weighted algorithm combining multiple factors
                 </p>
               </CardHeader>
               <CardContent className="p-4 sm:p-6 pt-0">
@@ -995,7 +995,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
                   </div>
                   <div className="p-3 bg-red-50 dark:bg-red-900/20 rounded-lg">
                     <div className="flex items-center justify-between mb-2">
-                      <span className="text-xs font-semibold text-red-700 dark:text-red-300">People Impacted</span>
+                      <span className="text-xs font-semibold text-red-700 dark:text-red-300">People Reached</span>
                       <span className="text-xs font-bold text-red-700 dark:text-red-300">30%</span>
                     </div>
                     <div className="text-xl font-bold text-red-600 dark:text-red-400">
@@ -1036,7 +1036,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
                 </div>
                 <div className="mt-4 p-3 bg-gray-50 dark:bg-gray-800 rounded-lg">
                   <p className="text-xs text-gray-600 dark:text-gray-400 leading-relaxed">
-                    <strong>Formula:</strong> Impact Score = (Hours × 0.35) + (People Impacted × 0.30) + (Task Completion × 0.20) + (SDG Coverage × 0.10) + (Match Rate × 0.05)
+                    <strong>Formula:</strong> Contribution Score = (Hours × 0.35) + (People Reached × 0.30) + (Task Completion × 0.20) + (SDG Coverage × 0.10) + (Match Rate × 0.05)
                   </p>
                 </div>
               </CardContent>
@@ -1060,11 +1060,11 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
                 <Button
                   variant="outline"
                   className="bg-primary/10 border-primary/30 p-4 rounded-lg h-auto flex flex-col items-start hover:bg-primary/20 hover:border-primary/60 hover:shadow-lg hover:-translate-y-1 active:translate-y-0 transition-all duration-200 cursor-pointer"
-                  onClick={() => handleMetricClick("Total People Impacted", aggregatedMetrics.totalPeople)}
+                  onClick={() => handleMetricClick("Total People Reached", aggregatedMetrics.totalPeople)}
                   data-testid="metric-people-impacted"
                 >
                   <div className="text-xs sm:text-sm font-semibold text-primary dark:text-primary-400 mb-1">
-                    {currentUser?.userType === 'volunteer' ? 'People You Impacted' : 'Total People Impacted'}
+                    {currentUser?.userType === 'volunteer' ? 'People You Impacted' : 'Total People Reached'}
                   </div>
                   <div className="text-2xl sm:text-3xl font-bold text-primary mt-1">
                     {aggregatedMetrics.totalPeople.toLocaleString()}
@@ -1241,7 +1241,7 @@ export default function ImpactVisualization({ embedded = false }: ImpactVisualiz
                           borderWidth: 1,
                           callbacks: {
                             label: function(context: any) {
-                              return `Impact Score: ${context.parsed.r.toLocaleString()}`;
+                              return `Contribution Score: ${context.parsed.r.toLocaleString()}`;
                             }
                           }
                         }

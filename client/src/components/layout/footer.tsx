@@ -18,7 +18,7 @@ const FOOTER_LINKS = {
 } as const;
 
 const ASSURANCE_FOOTER_NOTE =
-  "Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.";
+  "Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.";
 
 export default function Footer() {
   const instanceId = useRef<string>(`footer-${++footerRegistry.counter}`);

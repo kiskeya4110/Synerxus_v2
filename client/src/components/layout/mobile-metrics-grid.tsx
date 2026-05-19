@@ -44,7 +44,7 @@ export default function MobileMetricsGrid({
       color: "#10b981",
       onClick: onAiuClick,
       testId: "mobile-metric-roi",
-      tooltip: "Lives impacted per volunteer hour"
+      tooltip: "People reached per volunteer hour"
     },
     {
       label: "Success Rate",

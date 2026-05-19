@@ -264,7 +264,7 @@ export default function ProjectDetail() {
   const [isAdjusting, setIsAdjusting] = useState(false);
   const [adjustmentValues, setAdjustmentValues] = useState({
     livesImpacted: 0,
-    verificationNotes: ''
+    reviewNotes: ''
   });
 
   const updateLivesImpactedMutation = useMutation({
@@ -273,10 +273,10 @@ export default function ProjectDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects", projectId] });
-      toast({ title: "Lives impacted updated", description: "The impact metric has been saved." });
+      toast({ title: "People reached updated", description: "The reach figure has been saved." });
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to update lives impacted", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to update people reached", variant: "destructive" });
     }
   });
 
@@ -293,18 +293,18 @@ export default function ProjectDetail() {
     }
   });
 
-  // Verify impact mutation (kept as noop to maintain hook count)
-  const verifyAiuMutation = useMutation({
+  // Confirm impact mutation (kept as noop to maintain hook count)
+  const confirmAiuMutation = useMutation({
     mutationFn: async ({ status }: { status: 'verified' | 'rejected' }) => {
       return Promise.resolve();
     },
     onSuccess: () => {},
   });
 
-  // Adjust and verify mutation (kept as noop to maintain hook count)
-  // Adjust and verify mutation (kept as noop to maintain hook count)
-  const adjustAndVerifyMutation = useMutation({
-    mutationFn: async ({ livesImpacted, verificationNotes }: { livesImpacted: number; verificationNotes: string }) => {
+  // Adjust and confirm mutation (kept as noop to maintain hook count)
+  // Adjust and confirm mutation (kept as noop to maintain hook count)
+  const adjustAndConfirmMutation = useMutation({
+    mutationFn: async ({ livesImpacted, reviewNotes }: { livesImpacted: number; reviewNotes: string }) => {
       return Promise.resolve();
     },
     onSuccess: () => {},
@@ -577,7 +577,7 @@ export default function ProjectDetail() {
               <CardContent className="p-3 text-center">
                 <Heart className="w-5 h-5 mx-auto text-amber-500 mb-1" />
                 <p className="text-lg font-bold text-amber-700">{livesImpacted.toLocaleString()}</p>
-                <p className="text-[10px] text-amber-600">People Impacted</p>
+                <p className="text-[10px] text-amber-600">People Reached</p>
               </CardContent>
             </Card>
           </div>
@@ -822,7 +822,7 @@ export default function ProjectDetail() {
                 </div>
                 <div className="flex-1">
                   <div className="text-2xl font-bold text-emerald-700 dark:text-emerald-300">{livesImpacted.toLocaleString()}</div>
-                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">People Impacted</div>
+                  <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80">People Reached</div>
                 </div>
                 <ChevronRight className="h-4 w-4 text-emerald-400" />
               </div>
@@ -1186,7 +1186,7 @@ export default function ProjectDetail() {
               </CardContent>
             </Card>
 
-            {/* Impact Metrics Card - Interactive */}
+            {/* Reach Records Card - Interactive */}
             <Card
               className="border-emerald-200 dark:border-emerald-800 cursor-pointer hover:shadow-lg transition-all"
               onClick={() => setActiveKpiModal('impact')}
@@ -1194,16 +1194,16 @@ export default function ProjectDetail() {
               <CardHeader className="pb-3">
                 <CardTitle className="flex items-center gap-2 text-lg">
                   <BarChart3 className="h-5 w-5 text-emerald-600" />
-                  Impact Metrics
+                  Reach Records
                   <ChevronRight className="h-4 w-4 text-emerald-400 ml-auto" />
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* People Impacted Display */}
+                {/* People Reached Display */}
                 <div className="p-4 bg-gradient-to-br from-emerald-50 to-teal-50 dark:from-emerald-900/20 dark:to-teal-900/20 rounded-xl border border-emerald-200 dark:border-emerald-800">
                   <div className="flex items-center gap-2 mb-2">
                     <Heart className="h-4 w-4 text-emerald-600" />
-                    <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">People Impacted</div>
+                    <div className="text-xs text-emerald-600 dark:text-emerald-400 uppercase tracking-wide font-semibold">People Reached</div>
                   </div>
                   <div className="text-4xl font-bold text-emerald-700 dark:text-emerald-300">{livesImpacted.toLocaleString()}</div>
                   <div className="text-xs text-emerald-600/80 dark:text-emerald-400/80 mt-2">
@@ -1211,11 +1211,11 @@ export default function ProjectDetail() {
                   </div>
                 </div>
 
-                {/* Lives Impacted - Enhanced */}
+                {/* People Reached - Enhanced */}
                 <div className="p-4 bg-gradient-to-br from-orange-50 to-amber-50 dark:from-orange-900/20 dark:to-amber-900/20 rounded-xl border border-orange-200 dark:border-orange-800">
                   <div className="flex items-center gap-2 mb-2">
                     <Heart className="h-4 w-4 text-orange-600" />
-                    <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide font-semibold">Lives Impacted</div>
+                    <div className="text-xs text-orange-600 dark:text-orange-400 uppercase tracking-wide font-semibold">People Reached</div>
                   </div>
                   <div className="text-4xl font-bold text-orange-700 dark:text-orange-300">{livesImpacted.toLocaleString()}</div>
                   {isOrganization && (
@@ -1225,7 +1225,7 @@ export default function ProjectDetail() {
                         value={project.livesTouched || 0}
                         onChange={(e) => updateLivesImpactedMutation.mutate(parseInt(e.target.value) || 0)}
                         className="w-full px-3 py-2 text-sm border border-orange-200 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
-                        placeholder="Update lives impacted"
+                        placeholder="Update people reached"
                         data-testid="input-lives-impacted"
                       />
                       <p className="text-xs text-orange-600/70 mt-1.5">Direct beneficiaries reported for this project</p>
@@ -1243,7 +1243,7 @@ export default function ProjectDetail() {
                   <div className="p-4 bg-purple-50 dark:bg-purple-900/20 rounded-xl border border-purple-200 dark:border-purple-800 text-center">
                     <Zap className="h-5 w-5 text-purple-600 mx-auto mb-1" />
                     <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">{totalImpact}</div>
-                    <div className="text-xs text-purple-600/80 dark:text-purple-400/80">Impact Records</div>
+                    <div className="text-xs text-purple-600/80 dark:text-purple-400/80">Reach Records</div>
                   </div>
                 </div>
 
@@ -1391,7 +1391,7 @@ export default function ProjectDetail() {
                 {activeKpiModal === 'tasks' && 'Task Progress'}
                 {activeKpiModal === 'engagement' && 'Engagement Score'}
                 {activeKpiModal === 'team' && 'Team Members'}
-                {activeKpiModal === 'impact' && 'Impact Metrics'}
+                {activeKpiModal === 'impact' && 'Reach Records'}
               </h2>
               <button onClick={() => setActiveKpiModal(null)} className="p-2 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full">
                 <X className="h-5 w-5" />
@@ -1634,11 +1634,11 @@ export default function ProjectDetail() {
                   <div className="grid grid-cols-2 gap-3">
                     <div className="p-4 bg-emerald-50 dark:bg-emerald-900/20 rounded-xl text-center">
                       <div className="text-3xl font-bold text-emerald-600">{livesImpacted.toLocaleString()}</div>
-                      <div className="text-xs text-emerald-600/80">People Impacted</div>
+                      <div className="text-xs text-emerald-600/80">People Reached</div>
                     </div>
                     <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl text-center">
                       <div className="text-3xl font-bold text-orange-600">{totalImpact}</div>
-                      <div className="text-xs text-orange-600/80">Impact Records</div>
+                      <div className="text-xs text-orange-600/80">Reach Records</div>
                     </div>
                   </div>
                   <div className="grid grid-cols-3 gap-3">
@@ -1650,7 +1650,7 @@ export default function ProjectDetail() {
                       <div className="text-2xl font-bold text-green-600">
                         {projectImpact.filter(i => i.verificationStatus === 'approved').length}
                       </div>
-                      <div className="text-xs text-green-600/80">Tracked Impacts</div>
+                      <div className="text-xs text-green-600/80">Tracked Records</div>
                     </div>
                     <div className="p-3 bg-amber-50 dark:bg-amber-900/20 rounded-lg text-center">
                       <div className="text-2xl font-bold text-amber-600">
@@ -1662,10 +1662,10 @@ export default function ProjectDetail() {
 
                   {/* Impact Explanation */}
                   <div className="p-3 bg-slate-50 dark:bg-slate-700 rounded-lg">
-                    <h4 className="font-semibold text-sm mb-2">How Impact is Measured</h4>
+                    <h4 className="font-semibold text-sm mb-2">How Reach Is Reported</h4>
                     <ul className="text-sm text-muted-foreground space-y-1">
-                      <li>• <strong>People Impacted:</strong> Direct beneficiaries reported and confirmed</li>
-                      <li>• <strong>Impact Records:</strong> Aggregate of all project impact submissions</li>
+                      <li>• <strong>People Reached:</strong> Direct beneficiaries reported and confirmed</li>
+                      <li>• <strong>Reach Records:</strong> Aggregate of all project reach submissions</li>
                       <li>• <strong>Hours:</strong> Total volunteer hours contributed</li>
                     </ul>
                   </div>

@@ -403,7 +403,7 @@ export default function TeamOverview() {
               />
               <PolarRadiusAxis />
               <Radar
-                name="Impact Score"
+                name="Contribution Score"
                 dataKey="score"
                 stroke="#8b5cf6"
                 fill="#8b5cf6"
@@ -426,7 +426,7 @@ export default function TeamOverview() {
                     <th className="text-right py-3 px-4">Volunteers</th>
                     <th className="text-right py-3 px-4">Hours</th>
                     <th className="text-right py-3 px-4">Projects</th>
-                    <th className="text-right py-3 px-4">Impact Score</th>
+                    <th className="text-right py-3 px-4">Contribution Score</th>
                   </tr>
                 </thead>
                 <tbody>

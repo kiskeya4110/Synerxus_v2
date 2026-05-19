@@ -35,7 +35,7 @@ export default function BoundaryIntegrityMatrix() {
           textTransform: "uppercase",
         }}
       >
-        Verification Boundary — Included vs. Excluded
+        Review Boundary — Included vs. Excluded
       </div>
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr" }}>

@@ -578,7 +578,7 @@ export default function LogActivity() {
                   placeholder="e.g. 30"
                   className="h-12 bg-slate-50 border-slate-200 text-slate-800"
                 />
-                <p className="text-xs text-slate-400">How many people were directly impacted by this activity? Used to calculate SDG impact metrics.</p>
+                <p className="text-xs text-slate-400">How many people were directly reached by this activity? Used for SDG reporting context.</p>
               </div>
 
               {/* 4. Date Selection */}
@@ -652,13 +652,13 @@ export default function LogActivity() {
                 ) : (
                   <>
                     <Save className="w-5 h-5 mr-2" />
-                    Submit for Verification
+                    Submit for Partner Review
                   </>
                 )}
               </Button>
 
               <p className="text-xs text-center text-slate-500">
-                Your outcome will be sent to the NGO for verification
+                Your activity record will be sent to the NGO for partner review
               </p>
             </form>
           </CardContent>

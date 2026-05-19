@@ -60,7 +60,7 @@ export function ImpactScoreGauge({
   showBreakdown = false,
   breakdown = [],
   variant = "volunteer",
-  title = "Impact Score",
+  title = "Contribution Score",
   subtitle,
 }: ImpactScoreGaugeProps) {
   const [showDialog, setShowDialog] = useState(false);
@@ -267,7 +267,7 @@ export function ImpactScoreGauge({
 
             <div className="space-y-4 mt-4">
               <p className="text-sm text-gray-500 dark:text-gray-400">
-                Your impact score is calculated based on the following factors:
+                Your contribution score is calculated based on the following factors:
               </p>
 
               {breakdown.map((item, index) => (

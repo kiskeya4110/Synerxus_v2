@@ -247,11 +247,11 @@ export default function CSRReportsExports() {
     setIsGenerating(template.id);
 
     try {
-      // Verified Evidence Summary always uses the authoritative server-side generator
+      // Evidence Summary uses the authoritative server-side generator
       if (
         template.id === "verified-evidence-summary" ||
         template.id === "impact-summary" ||
-        template.name === "Verified Evidence Summary"
+        template.name === "Evidence Summary"
       ) {
         const headers = await getAuthHeaders();
         const params = new URLSearchParams();
@@ -273,7 +273,8 @@ export default function CSRReportsExports() {
           printWindow.focus();
           printWindow.onload = () => printWindow.print();
         }
-        toast({ title: "Report Generated", description: `${template.name} has been generated from live data.` });
+        const displayName = template.name === "Evidence Summary" ? "Evidence Summary" : template.name;
+        toast({ title: "Report Generated", description: `${displayName} has been generated from live data.` });
         return;
       }
 
@@ -333,8 +334,8 @@ export default function CSRReportsExports() {
 
     const orgCategories = [
       { id: "all", label: "All Reports", icon: "📄" },
-      { id: "impact", label: "Impact", icon: "🌍" },
-      { id: "compliance", label: "Compliance", icon: "✅" },
+      { id: "impact", label: "Mapping Context", icon: "🌍" },
+      { id: "compliance", label: "Review Context", icon: "✅" },
       { id: "financial", label: "Financial", icon: "💰" },
     ];
 
@@ -504,7 +505,7 @@ export default function CSRReportsExports() {
                   onClick={() => {
                     const im = reportData?.impactMetrics || {};
                     const hdr = ["Metric","Value"];
-                    const rows = [["Direct Beneficiaries", String(im.directBeneficiaries || 0)], ["Indirect Beneficiaries", String(im.indirectBeneficiaries || 0)], ["Estimated Lives Touched", String(im.estimatedLivesTouched || 0)], ["Impact Per Hour", String(im.impactPerHour || 0)]];
+                    const rows = [["Direct Reach", String(im.directBeneficiaries || 0)], ["Indirect Reach", String(im.indirectBeneficiaries || 0)], ["Estimated People Reached", String(im.estimatedLivesTouched || 0)], ["Reach Per Hour", String(im.impactPerHour || 0)]];
                     downloadFile([hdr, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n"), "evidence_data.csv", "text/csv");
                     toast({ title: "Downloaded", description: "Evidence data exported." });
                   }}

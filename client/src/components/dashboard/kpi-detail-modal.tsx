@@ -734,7 +734,7 @@ export default function KPIDetailModal({
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-600">Impact Score</span>
+                <span className="text-sm text-slate-600">Contribution Score</span>
                 <span className="font-semibold text-cyan-600">{formatDecimal(totalAIU)}</span>
               </div>
             </div>
@@ -942,10 +942,10 @@ export default function KPIDetailModal({
       </TabsList>
 
       <TabsContent value="overview" className="space-y-4 mt-0">
-        {/* Impact Score Definition */}
+        {/* Contribution Score Definition */}
         <div className="bg-gradient-to-r from-cyan-50 to-blue-50 border border-cyan-200 rounded-lg p-3">
           <p className="text-sm text-slate-700">
-            <span className="font-semibold text-cyan-700">Impact Score</span> is a 0-100 measure of your tracked social contributions, based on hours contributed, people reached, tasks completed, and alignment with UN Sustainable Development Goals.
+            <span className="font-semibold text-cyan-700">Contribution Score</span> is a 0-100 measure of your tracked social contributions, based on hours contributed, people reached, tasks completed, and alignment with UN Sustainable Development Goals.
           </p>
         </div>
 
@@ -956,7 +956,7 @@ export default function KPIDetailModal({
                 <Zap className="h-5 w-5 text-cyan-600" />
               </div>
               <div>
-                <p className="text-xs text-cyan-600 font-medium">Total Impact Score</p>
+                <p className="text-xs text-cyan-600 font-medium">Total Contribution Score</p>
                 <p className="text-lg font-bold text-cyan-700">{formatDecimal(totalAIU)}</p>
               </div>
             </CardContent>
@@ -979,7 +979,7 @@ export default function KPIDetailModal({
         {/* AIU by SDG */}
         <Card className="border-slate-200">
           <CardContent className="p-4">
-            <p className="font-semibold text-slate-800 mb-3">Impact Score Distribution by SDG</p>
+            <p className="font-semibold text-slate-800 mb-3">Contribution Score Distribution by SDG</p>
             <div className="space-y-2">
               {sdgMetrics.slice(0, 5).map((metric, idx) => {
                 const sdgAIU = metric.totalHours > 0 ? (metric.totalHours / totalHours) * totalAIU : 0;
@@ -1004,9 +1004,9 @@ export default function KPIDetailModal({
       <TabsContent value="formula" className="space-y-4 mt-0">
         <Card className="border-blue-200 bg-blue-50/50">
           <CardContent className="p-4">
-            <p className="font-semibold text-blue-800 mb-3">Impact Score Formula</p>
+            <p className="font-semibold text-blue-800 mb-3">Contribution Score Formula</p>
             <p className="text-sm text-slate-600 mb-3">
-              Impact Score measures tracked contributions using a proprietary formula:
+              Contribution Score measures tracked contributions using a proprietary formula:
             </p>
             <div className="bg-white rounded-lg p-3 text-sm font-mono text-slate-700">
               Score = min(MaxScore, k × ln(1 + EffectiveScore)) × (1 + ConsistencyBonus)
@@ -1019,11 +1019,11 @@ export default function KPIDetailModal({
             <p className="font-semibold text-slate-800 mb-3">Components</p>
             <div className="space-y-2 text-sm">
               {[
-                { name: 'Lives Impacted', desc: 'Number of beneficiaries served' },
+                { name: 'People Reached', desc: 'Number of beneficiaries reported as reached' },
                 { name: 'Depth Multiplier', desc: 'Individual (1x), Shared (1.5x), Systems (2x)' },
                 { name: 'Role Weight', desc: 'Leadership (1.5-4x), Skilled (1.2-1.4x), General (1x)' },
                 { name: 'Hours Factor', desc: 'Logarithmic scaling of time invested' },
-                { name: 'Verification', desc: 'Verified (100%), Pending (70%), Self-reported (60%)' },
+                { name: 'Verification', desc: 'Confirmed (100%), Pending (70%), Self-reported (60%)' },
               ].map((item, idx) => (
                 <div key={idx} className="flex items-start gap-2">
                   <CheckCircle2 className="h-4 w-4 text-blue-500 mt-0.5 flex-shrink-0" />
@@ -1047,7 +1047,7 @@ export default function KPIDetailModal({
     projects: { title: 'Active Projects', icon: Briefcase, gradient: 'from-purple-500 to-violet-500', value: totalProjects.toString() },
     sdg: { title: 'SDG Goals', icon: Target, gradient: 'from-amber-500 to-orange-500', value: sdgMetrics.length.toString() },
     volunteers: { title: 'Employee Volunteers', icon: Users, gradient: 'from-cyan-500 to-blue-500', value: (totalVolunteers || totalEmployees).toString() },
-    aiu: { title: 'Impact Score', icon: Zap, gradient: 'from-cyan-500 to-blue-600', value: formatDecimal(totalAIU) },
+    aiu: { title: 'Contribution Score', icon: Zap, gradient: 'from-cyan-500 to-blue-600', value: formatDecimal(totalAIU) },
   };
 
   const config = headerConfig[kpiType];

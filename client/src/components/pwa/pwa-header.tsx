@@ -373,7 +373,7 @@ export default function PWAHeader({ showBackButton = false, onBack, onLogActivit
           </div>
           {/* Type label — 30% */}
           <div className="flex-shrink min-w-0 flex justify-center" style={{ width: '28%' }}>
-            <span className="text-[9px] sm:text-[10px] font-semibold text-stone-400 uppercase tracking-wide truncate">Impact Wallet</span>
+            <span className="text-[9px] sm:text-[10px] font-semibold text-stone-400 uppercase tracking-wide truncate">Evidence Wallet</span>
           </div>
           {/* Actions — 20% */}
           <div className="flex-shrink-0 flex justify-end items-center gap-1" style={{ width: '22%' }}>

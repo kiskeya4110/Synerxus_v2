@@ -16,7 +16,7 @@ const sections: TermsSection[] = [
     paragraphs: [
       "Synerxus provides structured evidence infrastructure for ESG, CSR, corporate volunteering, community investment, social value, and partner-delivered impact programs.",
       "The Services help organizations capture activity data, link activity to outputs, enable authorized partner confirmation, create structured evidence records, support framework alignment, and generate management reports for reporting and assurance preparation.",
-      "Synerxus is not a volunteer marketplace alone, ESG reporting certifier, accounting firm, law firm, registered assurance provider, or regulatory compliance body.",
+      "Synerxus is not a volunteer matching service, ESG reporting certifier, accounting firm, law firm, registered assurance provider, or regulatory compliance body.",
     ],
   },
   {
@@ -80,17 +80,17 @@ const sections: TermsSection[] = [
     title: "6. Evidence Records and Verification Boundaries",
     paragraphs: [
       "Synerxus uses the following evidence framework:",
-      "Synerxus verifies platform records and partner confirmations according to configured workflows. Synerxus does not independently verify all downstream outcomes, beneficiary-level exposure, long-term impact, environmental effects, or causal attribution unless expressly agreed in a separate written agreement.",
+      "Synerxus records platform activity and partner confirmations according to configured workflows. Synerxus does not review all downstream outcomes, beneficiary-level exposure, long-term impact, environmental effects, or causal attribution through a documented independent process unless expressly agreed in a separate written agreement.",
     ],
     list: [
       "Activity: Work performed, including volunteer time, funded activity, or program activity.",
       "Output: What was delivered or completed.",
       "Partner Confirmation: Confirmation by an authorized partner or verifier.",
-      "Verified Evidence Record: A structured record created after required confirmation steps are completed.",
+      "Evidence Record: A structured record created after required confirmation steps are completed.",
       "Partner-Reported Reach: Beneficiary, community, or program reach data reported by a partner according to its methodology.",
       "Derived / Mapped Alignment: Framework or SDG alignment generated from classification, methodology, or reporting rules.",
       "Contribution Evidence: Evidence connecting activity to partner-confirmed outputs.",
-      "Causal Proof: Formal evidence of causation, typically requiring rigorous evaluation methods outside the standard Synerxus workflow.",
+      "Causal Attribution: Formal evidence of causation, typically requiring rigorous evaluation methods outside the standard Synerxus workflow.",
     ],
   },
   {
@@ -152,14 +152,14 @@ const sections: TermsSection[] = [
     ],
     leadList: "Accordingly, you agree not to represent that Synerxus:",
     list: [
-      "provides causal impact evidence;",
-      "proves causality;",
+      "provides causal attribution evidence;",
+      "establishes causality;",
       "guarantees ESG performance;",
       "determines regulatory compliance;",
       "certifies framework alignment;",
       "provides formal assurance;",
       "has approved your public claims;",
-      "has independently verified beneficiary reach unless expressly stated.",
+      "has reviewed beneficiary reach through a documented independent process unless expressly stated.",
     ],
   },
   {

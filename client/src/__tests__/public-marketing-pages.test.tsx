@@ -8,6 +8,7 @@ import EvidenceLadder from "@/pages/evidence-ladder";
 import UseCasesPage from "@/pages/use-cases";
 import Insights from "@/pages/insights";
 import Terms from "@/pages/terms";
+import Integrations from "@/pages/integrations";
 
 vi.mock("@/hooks/use-auth", () => ({
   useAuth: () => ({ user: null, loading: false }),
@@ -42,6 +43,12 @@ const publicPages = [
     path: "/evidence-ladder",
     Component: EvidenceLadder,
     expectedText: "A maturity model for claim defensibility. Move from unsupported to review-ready.",
+  },
+  {
+    name: "integrations",
+    path: "/integrations",
+    Component: Integrations,
+    expectedText: "Connect evidence work to the systems your team already uses.",
   },
   {
     name: "use cases",
@@ -100,7 +107,7 @@ describe("public marketing pages", () => {
     expect(html).toContain("Source Documents");
     expect(html).toContain("Training Completion Record");
     expect(html).toContain("Mapping Context");
-    expect(html).toContain("Traceable to approved records. Built for evidence review.");
+    expect(html).toContain("Traceable to source records. Built for evidence review.");
     expect(html).not.toContain("LinkedIn Newsletter");
   });
 
@@ -109,7 +116,7 @@ describe("public marketing pages", () => {
 
     [
       "The Synerxus Platform",
-      "Our employee volunteer program contributed to community workforce development programs across 8 partner organizations in 2025.",
+      "Our employee volunteer program supported community workforce development activities across 8 partner organizations in 2025.",
       "Claim-to-Evidence Workspace",
       "Confirmation and Evidence Quality",
       "Mapping and Reporting Support",
@@ -136,5 +143,37 @@ describe("public marketing pages", () => {
     expect(homeHtml).not.toContain("LinkedIn Newsletter");
     expect(platformHtml).not.toContain("LinkedIn Newsletter");
     expect(resourcesHtml).toContain("The Verifiable");
+  });
+
+  it("shows issue numbers before Verifiable article titles", () => {
+    const html = renderPublicPage("/resources", Insights).replace(/&#x27;/g, "'");
+
+    [
+      "Issue #7: Why I'm Becoming More Careful With the Word Impact",
+      "Issue #6: When Distance Creates Doubt: What I've Seen Up Close",
+      "Issue #5: Nature Claims Without Context; Who Pays the Price?",
+      "Issue #4: California's Climate Rules: Ambitious Deadlines, Missing Infrastructure",
+      "Issue #3: Impact Is Becoming a Geopolitical Asset",
+      "Issue #2: Major Sustainability News This Week. Let's Apply the Verification Lens",
+      "Issue #1: The Verifiable: A Founder Story",
+    ].forEach((title) => {
+      expect(html).toContain(title);
+    });
+  });
+
+  it("shows on-site expandable Verifiable information articles", () => {
+    const html = renderPublicPage("/resources", Insights);
+
+    [
+      "On-site explainers",
+      "Information articles",
+      "What SDG Mapping Can and Cannot Do",
+      "Partner-Confirmed Is Not Independent Assurance",
+      "The Evidence Ladder: A Practical Guide",
+      "Why Claims Need Limitations",
+      "SDG mapping is a classification layer.",
+    ].forEach((text) => {
+      expect(html).toContain(text);
+    });
   });
 });

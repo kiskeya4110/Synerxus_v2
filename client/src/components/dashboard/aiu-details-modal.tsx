@@ -70,7 +70,7 @@ export default function AIUDetailsModal({
           <DialogHeader>
             <DialogTitle className="text-white flex items-center gap-2 text-xl">
               <TrendingUp className="h-6 w-6" />
-              Impact Score Details
+              Contribution Score Details
             </DialogTitle>
           </DialogHeader>
           <div className="mt-4 flex items-center justify-between">
@@ -132,7 +132,7 @@ export default function AIUDetailsModal({
                     <div>
                       <p className="font-semibold text-white text-sm">Confirmed Outcomes</p>
                       <p className="text-xs text-slate-400">
-                        {verificationRate}% of your activities are verified by organizations
+                        {verificationRate}% of your activities are confirmed by organizations
                       </p>
                     </div>
                   </div>
@@ -151,7 +151,7 @@ export default function AIUDetailsModal({
                     </div>
                     <div className="bg-amber-500/20 rounded-lg p-2 text-center border border-amber-500/30">
                       <p className="text-lg font-bold text-amber-400">{formatDecimal(pendingHours)}</p>
-                      <p className="text-[10px] text-amber-400">Pending Verification</p>
+                      <p className="text-[10px] text-amber-400">Pending Review</p>
                     </div>
                   </div>
                 )}
@@ -167,9 +167,9 @@ export default function AIUDetailsModal({
                   <Info className="h-4 w-4 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-white text-sm">What is Impact Score?</p>
+                  <p className="font-semibold text-white text-sm">What is Contribution Score?</p>
                   <p className="text-xs text-slate-400 mt-1">
-                    Impact Score is Synerxus's proprietary metric that measures your tracked contributions to social and environmental activities.
+                    Contribution Score is Synerxus's proprietary metric that measures your tracked contributions to social and environmental activities.
                     It supports structured recordkeeping for CSR/ESG reporting.
                   </p>
                 </div>
@@ -369,9 +369,9 @@ export default function AIUDetailsModal({
             </CardContent>
           </Card>
 
-          {/* Why Impact Score Matters - Compact Footer */}
+          {/* Why Contribution Score Matters - Compact Footer */}
           <div className="bg-gradient-to-r from-cyan-50 to-blue-50 rounded-lg p-3 border border-cyan-100">
-            <p className="text-xs font-semibold text-cyan-800 mb-1.5">Why Impact Score Matters</p>
+            <p className="text-xs font-semibold text-cyan-800 mb-1.5">Why Contribution Score Matters</p>
             <div className="flex flex-wrap gap-2 text-[10px]">
               <span className="bg-white px-2 py-0.5 rounded-full text-slate-600 border border-slate-200">
                 ✓ Auditable for CSR/ESG

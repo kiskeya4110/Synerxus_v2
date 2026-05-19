@@ -227,7 +227,7 @@ function VerificationQueue({
         <EmptyState
           icon={<CheckCircle2 className="h-6 w-6 text-success" />}
           title="All caught up!"
-          description="No pending verifications at the moment."
+          description="No pending reviews at the moment."
           size="sm"
         />
       ) : (
@@ -449,7 +449,7 @@ function InviteVolunteerModal({ organizationId, projects, onClose }: InviteVolun
   );
 }
 
-// SDG Impact Summary Component
+// SDG reporting context summary component
 interface SDGImpactProps {
   sdgData: Array<{ goal: number; hours: number; projects: number }>;
 }
@@ -467,7 +467,7 @@ function SDGImpactSummary({ sdgData }: SDGImpactProps) {
     return (
       <EmptyState
         title="No SDG data"
-        description="SDG impact will appear when projects log activities."
+        description="SDG reporting context will appear when projects log activities."
         size="sm"
       />
     );
@@ -631,7 +631,7 @@ const OrganizationView = memo(function OrganizationView({
     gcTime: 5 * 60_000,
   });
 
-  // Fetch pending verifications
+  // Fetch pending reviews
   const { data: pendingData, isLoading: isLoadingPending, refetch: refetchPending } = useQuery({
     queryKey: ["/api/pending-approvals", organizationId],
     queryFn: async () => {
@@ -844,7 +844,7 @@ const OrganizationView = memo(function OrganizationView({
     setVisibleCount(20);
   };
 
-  // Pending verification count per project (for project cards)
+  // Pending review count per project (for project cards)
   const pendingCountByProject = useMemo(() => {
     const map: Record<string, number> = {};
     for (const item of pendingVerifications) {
@@ -1399,7 +1399,7 @@ const OrganizationView = memo(function OrganizationView({
                 >
                   <h2 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
                     <Shield className="h-4 w-4 text-amber-600" />
-                    Pending Verification
+                    Pending Review
                   </h2>
                   <div className="flex items-center gap-2">
                     {stats.pendingVerifications > 0 && (
@@ -1442,7 +1442,7 @@ const OrganizationView = memo(function OrganizationView({
                     <div className="px-4 py-8 text-center">
                       <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2" />
                       <p className="text-sm font-medium text-gray-900">All caught up!</p>
-                      <p className="text-xs text-gray-500 mt-1">No pending verifications</p>
+                      <p className="text-xs text-gray-500 mt-1">No pending reviews</p>
                     </div>
                   )}
                 </div>
@@ -1589,7 +1589,7 @@ const OrganizationView = memo(function OrganizationView({
                 </div>
               </div>
 
-              {/* Pending Verification Queue */}
+              {/* Pending Review Queue */}
               {pendingVerifications.length > 0 && (
                 <div className="bg-white rounded-xl border border-amber-200 shadow-sm">
                   <div className="px-4 py-3 border-b border-amber-100 flex items-center justify-between bg-amber-50 rounded-t-xl">
@@ -1865,7 +1865,7 @@ const OrganizationView = memo(function OrganizationView({
                 >
                   <ChevronLeft className="h-4 w-4 text-gray-600" />
                 </button>
-                <h2 className="text-lg font-semibold text-stone-800">Verified Evidence Summary</h2>
+                <h2 className="text-lg font-semibold text-stone-800">Evidence Summary</h2>
               </div>
 
               {/* Full-screen in-app report viewer */}
@@ -1880,7 +1880,7 @@ const OrganizationView = memo(function OrganizationView({
                       <ChevronLeft className="h-4 w-4" />
                       Close
                     </button>
-                    <span className="text-sm font-semibold text-gray-900">Verified Evidence Summary</span>
+                    <span className="text-sm font-semibold text-gray-900">Evidence Summary</span>
                     <div className="flex items-center gap-2">
                       <button
                         onClick={downloadReport}
@@ -1902,7 +1902,7 @@ const OrganizationView = memo(function OrganizationView({
                     srcDoc={reportContent.sourceHtml}
                     className="flex-1 w-full"
                     style={{ border: "none", display: "block" }}
-                    title="Verified Evidence Summary"
+                    title="Evidence Summary"
                     sandbox="allow-same-origin"
                   />
                 </div>
@@ -1913,7 +1913,7 @@ const OrganizationView = memo(function OrganizationView({
                 <div className="w-14 h-14 rounded-2xl bg-[#0A1F44]/10 flex items-center justify-center mx-auto mb-3">
                   <FileText className="h-7 w-7 text-[#0A1F44]" />
                 </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Evidence Summary</h3>
                 <p className="text-[10px] font-medium text-[#ffcc33] mb-2 uppercase tracking-wide">
                   ESG / CSR Reporting and Assurance Support
                 </p>
@@ -1950,7 +1950,7 @@ const OrganizationView = memo(function OrganizationView({
                 </button>
               )}
               <p className="mt-3 text-[10px] text-gray-400 leading-snug text-center">
-                  Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+                  Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.
               </p>
               </div>
 
@@ -2013,13 +2013,13 @@ const OrganizationView = memo(function OrganizationView({
           icon={<FolderOpen className="h-5 w-5 text-primary" />}
         />
         <MetricCard
-          label="Pending Verification"
+          label="Pending Review"
           value={stats.pendingVerifications}
           accentColor="accent"
           icon={<AlertCircle className="h-5 w-5 text-amber-500" />}
         />
         <MetricCard
-          label="Verified Evidence Records"
+          label="Evidence Records"
           value={stats.verifiedCount || 0}
           accentColor="success"
           icon={<CheckCircle2 className="h-5 w-5 text-success" />}
@@ -2043,7 +2043,7 @@ const OrganizationView = memo(function OrganizationView({
               <ChevronLeft className="h-4 w-4" />
               Close
             </button>
-            <span className="text-sm font-semibold text-gray-900">Verified Evidence Summary</span>
+            <span className="text-sm font-semibold text-gray-900">Evidence Summary</span>
             <div className="flex items-center gap-2">
               <button
                 onClick={downloadReport}
@@ -2065,7 +2065,7 @@ const OrganizationView = memo(function OrganizationView({
             srcDoc={reportContent.sourceHtml}
             className="flex-1 w-full"
             style={{ border: "none", display: "block" }}
-            title="Verified Evidence Summary"
+            title="Evidence Summary"
             sandbox="allow-same-origin"
           />
         </div>
@@ -2254,14 +2254,14 @@ const OrganizationView = memo(function OrganizationView({
           </Card>
         </div>
 
-        {/* Right Column: Pending Verification + Framework Alignment + Reports */}
+        {/* Right Column: Pending Review + Framework Alignment + Reports */}
         <div className="space-y-6">
-          {/* Pending Verification Queue */}
+          {/* Pending Review Queue */}
           <Card className="border-amber-200">
             <CardHeader className="flex flex-row items-center justify-between bg-amber-50 rounded-t-lg">
               <CardTitle className="flex items-center gap-2 text-amber-800">
                 <Shield className="h-5 w-5 text-amber-600" />
-                Pending Verification
+                Pending Review
                 {pendingVerifications.length > 0 && (
                   <span className="text-xs font-medium text-amber-600 bg-amber-100 px-2 py-0.5 rounded-full ml-2">
                     {pendingVerifications.length} pending
@@ -2382,13 +2382,13 @@ const OrganizationView = memo(function OrganizationView({
             </CardContent>
           </Card>
 
-          {/* Verified Evidence Summary — Report Generator */}
+          {/* Evidence Summary — Report Generator */}
           <Card>
             <CardContent className="pt-6 pb-6 text-center">
               <div className="w-12 h-12 rounded-xl bg-[#0A1F44]/10 flex items-center justify-center mx-auto mb-3">
                 <FileText className="h-6 w-6 text-[#0A1F44]" />
               </div>
-                <h3 className="text-base font-semibold text-gray-900 mb-1">Verified Evidence Summary</h3>
+                <h3 className="text-base font-semibold text-gray-900 mb-1">Evidence Summary</h3>
               <p className="text-xs font-medium text-[#ffcc33] mb-3 uppercase tracking-wide">
                 Prepared for ESG / CSR Reporting and Assurance Support
               </p>
@@ -2419,7 +2419,7 @@ const OrganizationView = memo(function OrganizationView({
                 </Button>
               )}
               <p className="mt-3 text-[10px] text-muted-foreground max-w-xs mx-auto leading-snug">
-                Synerxus provides structured evidence records for reporting and assurance preparation. Synerxus does not provide formal assurance opinions, guarantee regulatory compliance, or establish causal attribution.
+                Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.
               </p>
             </CardContent>
           </Card>
@@ -2439,7 +2439,7 @@ const OrganizationView = memo(function OrganizationView({
         {projects.length === 0 ? (
           <EmptyState
             title="No projects yet"
-            description="Create your first project to begin capturing verified evidence records."
+            description="Create your first project to begin capturing evidence records."
             action={{
               label: "Create Project",
               onClick: () => navigate("/post-core-opportunity"),

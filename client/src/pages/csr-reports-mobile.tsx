@@ -62,7 +62,7 @@ export default function CsrReportsMobile({
     const orgCategories = [
       { id: "all",        label: "All Reports", icon: "📄" },
       { id: "impact",     label: "Impact",      icon: "🌍" },
-      { id: "compliance", label: "Compliance",  icon: "✅" },
+      { id: "compliance", label: "Review Context",  icon: "✅" },
       { id: "financial",  label: "Financial",   icon: "💰" },
     ];
     const orgFilteredTemplates =
@@ -259,7 +259,7 @@ export default function CsrReportsMobile({
                     const rows = [
                       ["Direct Beneficiaries",   String(im.directBeneficiaries   || 0)],
                       ["Indirect Beneficiaries", String(im.indirectBeneficiaries || 0)],
-                      ["Estimated Lives Touched", String(im.estimatedLivesTouched || 0)],
+                      ["Estimated People Reached", String(im.estimatedLivesTouched || 0)],
                       ["Impact Per Hour",         String(im.impactPerHour         || 0)],
                     ];
                     downloadFile(

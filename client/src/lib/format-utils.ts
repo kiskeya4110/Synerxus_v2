@@ -348,7 +348,7 @@ export function formatAIUFull(value: number | undefined | null): string {
 }
 
 /**
- * Format Impact Score (Shadow Mode alternative for AIU)
+ * Format Contribution Score (Shadow Mode alternative for AIU)
  * Used when AIU display is disabled but we need to show a generic impact metric
  * @example formatImpactScore(1.23456) => "1.23"
  */

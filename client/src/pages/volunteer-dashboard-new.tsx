@@ -178,7 +178,7 @@ const IMPACT_SECTORS = [
         { value: "funds_raised", label: "Funds Raised", unit: "USD" },
       ]},
       { value: "general_outreach", label: "General Outreach", metrics: [
-        { value: "lives_impacted", label: "Lives Impacted", unit: "lives" },
+        { value: "people_reached", label: "People Reached", unit: "people" },
         { value: "households_served", label: "Households Served", unit: "households" },
         { value: "animals_rescued", label: "Animals Rescued", unit: "animals" },
       ]},
@@ -243,12 +243,12 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
       });
       if (!response.ok) {
         const errorBody = await response.json().catch(() => ({}));
-        throw new Error(errorBody.message || "Failed to log impact");
+        throw new Error(errorBody.message || "Failed to log activity");
       }
       return response.json();
     },
     onSuccess: () => {
-      toast({ title: "Impact Logged!", description: "Your contribution has been submitted for verification." });
+      toast({ title: "Activity logged", description: "Your contribution has been submitted for partner review." });
       queryClient.invalidateQueries({ queryKey: ["/api/logs"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/summary"] });
       setFormData({ projectId: "", hours: "", sector: "", activity: "", outcome: "", outcomeValue: "", description: "", sdgs: [] });
@@ -256,7 +256,7 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
       onSuccess?.();
     },
     onError: () => {
-      toast({ title: "Error", description: "Failed to log impact. Please try again.", variant: "destructive" });
+      toast({ title: "Error", description: "Failed to log activity. Please try again.", variant: "destructive" });
     },
   });
 
@@ -524,7 +524,7 @@ function ImpactLogForm({ userId, projects, onSuccess }: ImpactLogFormProps) {
 }
 
 // ============================================================================
-// Impact Score Card Component
+// Contribution summary card component
 // ============================================================================
 interface ImpactScoreCardProps {
   score: number;
@@ -908,9 +908,9 @@ export default function VolunteerDashboardNew() {
     );
   }
 
-  // Mobile PWA View - Simple Impact Wallet per redesign spec
+  // Mobile PWA View - Simple Evidence Wallet per redesign spec
   if (isMobile === true) {
-    // Calculate simple metrics for Impact Wallet - prefer server-computed values
+    // Calculate simple metrics for Evidence Wallet - prefer server-computed values
     const totalOutcomes = recentLogs.reduce((sum: number, log: any) => sum + (log.outcomeValue || 0), 0);
     const skillsUsed = stats.skillsCount;
     const sdgsContributed = stats.sdgsAddressed || new Set(projects.flatMap((p: any) => p.sdgGoals || [])).size;
@@ -926,7 +926,7 @@ export default function VolunteerDashboardNew() {
             </div>
             {/* Type label — 30% */}
             <div className="flex-shrink-0 flex justify-center" style={{ width: '30%' }}>
-              <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Impact Wallet</span>
+              <span className="text-[11px] font-semibold text-stone-400 uppercase tracking-widest">Evidence Wallet</span>
             </div>
             {/* Menu — 20% */}
             <div className="flex-shrink-0 flex justify-end" style={{ width: '20%' }}>
@@ -980,7 +980,7 @@ export default function VolunteerDashboardNew() {
               {/* Menu Items */}
               <div className="flex-1 min-h-0 overflow-y-auto py-1.5">
                 {[
-                  { icon: BarChart3, label: "Impact Wallet", action: () => { setMenuOpen(false); setMobileTab('wallet'); } },
+                  { icon: BarChart3, label: "Evidence Wallet", action: () => { setMenuOpen(false); setMobileTab('wallet'); } },
                   { icon: Target, label: "My Projects", action: () => { setMenuOpen(false); setMobileTab('projects'); } },
                   { icon: Plus, label: "Log Activity", action: () => { setMenuOpen(false); setShowLogModal(true); } },
                   { icon: Briefcase, label: "My Work", action: () => { setMenuOpen(false); window.scrollTo(0, 0); navigate('/my-work'); } },
@@ -1106,7 +1106,7 @@ export default function VolunteerDashboardNew() {
                     <div className="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
                       <BarChart3 className="w-4 h-4 text-amber-600" />
                     </div>
-                    <span className="text-sm font-medium text-stone-800">Impact Wallet</span>
+                    <span className="text-sm font-medium text-stone-800">Evidence Wallet</span>
                     <span className="text-[10px] text-stone-500">View contribution history</span>
                   </button>
                   <button
@@ -1150,7 +1150,7 @@ export default function VolunteerDashboardNew() {
                             log.status === 'rejected' ? 'bg-red-100 text-red-700' :
                             'bg-amber-100 text-amber-700'
                           }`}>
-                            {log.status === 'approved' ? 'Verified' : log.status === 'rejected' ? 'Rejected' : 'Pending'}
+                            {log.status === 'approved' ? 'Confirmed' : log.status === 'rejected' ? 'Rejected' : 'Pending'}
                           </span>
                         </div>
                         {(log.outcomeType || log.outcomeValue) && (
@@ -1225,13 +1225,13 @@ export default function VolunteerDashboardNew() {
                 </div>
               </div>
 
-              {/* Pending Verification Notice */}
+              {/* Pending review notice */}
               {stats.pendingVerifications > 0 && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-3">
                   <div className="flex items-center gap-2">
                     <AlertCircle className="h-4 w-4 text-amber-600" />
                     <span className="text-sm font-medium text-amber-700">
-                      {stats.pendingVerifications} log{stats.pendingVerifications > 1 ? 's' : ''} pending verification
+                      {stats.pendingVerifications} log{stats.pendingVerifications > 1 ? 's' : ''} pending partner review
                     </span>
                   </div>
                 </div>
@@ -1239,7 +1239,7 @@ export default function VolunteerDashboardNew() {
 
               {/* Wallet Description */}
               <p className="text-[11px] text-stone-500 text-center px-2 leading-snug">
-                Your Impact Wallet shows your confirmed volunteer activity, contribution history, and SDG reporting context. It does not establish causal impact.
+                Your Evidence Wallet shows your confirmed volunteer activity, contribution history, and SDG reporting context. It does not establish causal attribution.
               </p>
 
               {/* Recent Logs */}
@@ -1269,7 +1269,7 @@ export default function VolunteerDashboardNew() {
                           log.status === 'rejected' ? 'bg-red-100 text-red-700' :
                           'bg-amber-100 text-amber-700'
                         }`}>
-                          {log.status === 'approved' ? 'Verified' : log.status === 'rejected' ? 'Rejected' : 'Pending'}
+                          {log.status === 'approved' ? 'Confirmed' : log.status === 'rejected' ? 'Rejected' : 'Pending'}
                         </span>
                       </div>
                       {(log.outcomeType || log.outcomeValue) && (
@@ -1552,7 +1552,7 @@ export default function VolunteerDashboardNew() {
             <DialogHeader>
               <DialogTitle>Log Activity</DialogTitle>
               <DialogDescription>
-                Record your hours and output details for partner verification.
+                Record your hours and output details for partner review.
               </DialogDescription>
             </DialogHeader>
             <ImpactLogForm
@@ -1576,7 +1576,7 @@ export default function VolunteerDashboardNew() {
         {/* Page Header */}
         <PageHeader
           title={`Welcome back, ${activeUser.displayName?.split(" ")[0] || "Volunteer"}`}
-          description="Log activity, track verification status, and view your contribution record."
+          description="Log activity, track review status, and view your contribution record."
           actions={
             <Button variant="accent" size="lg" onClick={() => setShowLogModal(true)}>
               <Plus className="h-5 w-5 mr-2" />
@@ -1619,7 +1619,7 @@ export default function VolunteerDashboardNew() {
 
         {/* Main Dashboard Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Left Column - Impact Score & Streak */}
+          {/* Left Column - Contribution summary and streak */}
           <div className="space-y-6">
             <ImpactScoreCard
               score={stats.verifiedActivities}
@@ -1650,7 +1650,7 @@ export default function VolunteerDashboardNew() {
                   </div>
                 </div>
                 <p className="text-[10px] text-muted-foreground mt-4 leading-snug border-t border-border pt-3">
-                  Your wallet shows confirmed activity and reporting context. It does not establish causal impact.
+                  Your wallet shows confirmed activity and reporting context. It does not establish causal attribution.
                 </p>
               </CardContent>
             </Card>
@@ -1735,7 +1735,7 @@ export default function VolunteerDashboardNew() {
           <DialogHeader>
             <DialogTitle>Log Activity</DialogTitle>
             <DialogDescription>
-              Record your volunteer hours and output details for partner verification.
+              Record your volunteer hours and output details for partner review.
             </DialogDescription>
           </DialogHeader>
           <ImpactLogForm

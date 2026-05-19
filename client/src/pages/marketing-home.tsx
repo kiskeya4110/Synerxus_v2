@@ -451,13 +451,65 @@ function HeroEvidenceVisual() {
   const activeScreen = screenContent[activeTab];
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl">
-      <div className="bg-[#061A36] px-5 py-4 text-sm font-extrabold uppercase tracking-[0.12em] text-white">
+    <div className="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-xl sm:rounded-2xl sm:shadow-2xl">
+      <div className="bg-[#061A36] px-4 py-3 text-xs font-extrabold uppercase tracking-[0.12em] text-white sm:px-5 sm:py-4 sm:text-sm">
         CORPORATE ESG REPORTING WORKFLOW
       </div>
 
-      <div className="relative overflow-hidden bg-[#f5f7fb] px-5 pb-5 pt-7">
-        <div className="relative mx-auto max-w-[610px]">
+      <div className="relative overflow-hidden bg-[#f5f7fb] px-3 pb-4 pt-4 sm:px-5 sm:pb-5 sm:pt-7">
+        <div className="sm:hidden">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-slate-500">Evidence workspace</p>
+                <h2 className="mt-1 text-base font-extrabold leading-tight text-[#0A1F44]">{activeTabConfig.title}</h2>
+              </div>
+              <div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-[#fff9eb]">
+                <ActiveTabIcon className="h-5 w-5 text-[#c88914]" />
+              </div>
+            </div>
+
+            <div className="mt-4 rounded-md border border-slate-200 bg-slate-50 px-3 py-3">
+              <div className="flex items-center justify-between gap-3">
+                <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-500">Current record</p>
+                <span className="shrink-0 rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-extrabold text-emerald-700">
+                  {activeScreen.status}
+                </span>
+              </div>
+              <p className="mt-2 text-sm font-extrabold leading-snug text-[#0A1F44]">{activeScreen.claim}</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeScreen.chips.map((label) => (
+                  <span key={label} className="rounded bg-white px-2.5 py-1 text-[11px] font-bold text-slate-600 shadow-sm">
+                    {shouldAnimateMetricText(label) ? <AnimatedMetricValue value={label} /> : label}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 grid gap-2">
+              {[
+                [activeScreen.leftTitle, activeScreen.leftBody, FileText],
+                [activeScreen.centerTitle, activeScreen.centerBody, ActiveTabIcon],
+                [activeScreen.rightTitle, activeScreen.rightBody, ShieldCheck],
+              ].map(([title, body, Icon]) => {
+                const StepIcon = Icon as LucideIcon;
+                return (
+                  <div key={String(title)} className="flex gap-3 rounded-md border border-slate-200 bg-white p-3">
+                    <div className="grid h-8 w-8 shrink-0 place-items-center rounded-md bg-[#fff9eb]">
+                      <StepIcon className="h-4 w-4 text-[#0A1F44]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-xs font-extrabold text-[#0A1F44]">{String(title)}</p>
+                      <p className="mt-0.5 text-xs leading-relaxed text-slate-600">{String(body)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        <div className="relative mx-auto hidden max-w-[610px] sm:block">
           <div className="mx-auto w-[88%] rounded-t-[1.4rem] border-[10px] border-[#07101f] bg-[#07101f] shadow-2xl">
             <div className="relative aspect-[16/10] overflow-hidden rounded-md bg-white">
               <div className="absolute inset-y-0 left-0 w-11 bg-[#09213f]" />
@@ -543,7 +595,7 @@ function HeroEvidenceVisual() {
           <div className="mx-auto h-2 w-[78%] rounded-full bg-black/15 blur-sm" />
         </div>
 
-        <div role="tablist" aria-label="Linked ESG evidence records" className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+        <div role="tablist" aria-label="Linked ESG evidence records" className="mt-4 grid grid-cols-6 gap-2 lg:grid-cols-5">
           {heroEvidenceTabs.map(({ id, title, meta, icon: Icon }) => {
             const isActive = activeTab === id;
             return (
@@ -559,21 +611,21 @@ function HeroEvidenceVisual() {
                 }}
                 animate={isActive ? { y: [0, -7, 0], scale: [1, 1.03, 1] } : { y: 0, scale: 1 }}
                 transition={isActive ? { duration: 0.55, ease: "easeOut" } : { duration: 0.2 }}
-                className={`group rounded-lg border p-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
+                className={`group col-span-2 min-w-0 rounded-md border p-2 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 [&:nth-child(4)]:col-start-2 sm:rounded-lg sm:p-3 lg:col-span-1 lg:[&:nth-child(4)]:col-start-auto ${
                   isActive
                     ? "border-[#c88914] bg-white shadow-lg"
                     : "border-slate-200 bg-white/90 hover:-translate-y-0.5 hover:border-[#0A1F44]/30 hover:shadow-md"
                 }`}
               >
-                <Icon className={`mx-auto h-8 w-8 ${isActive ? "text-[#0A1F44]" : "text-slate-500 group-hover:text-[#0A1F44]"}`} />
-                <p className="mt-2 text-center text-[11px] font-extrabold leading-tight text-[#0A1F44]">{title}</p>
-                <p className="mt-1 text-[10px] font-semibold text-slate-500">{meta}</p>
+                <Icon className={`mx-auto h-6 w-6 sm:h-8 sm:w-8 ${isActive ? "text-[#0A1F44]" : "text-slate-500 group-hover:text-[#0A1F44]"}`} />
+                <p className="mt-2 text-center text-[10px] font-extrabold leading-tight text-[#0A1F44] sm:text-[11px]">{title}</p>
+                <p className="mt-1 truncate text-center text-[9px] font-semibold text-slate-500 sm:text-left sm:text-[10px]">{meta}</p>
               </motion.button>
             );
           })}
         </div>
 
-        <div className="mt-4 flex items-center justify-center gap-2 px-3 py-1 text-xs font-semibold text-[#0A1F44]">
+        <div className="mt-4 flex items-center justify-center gap-2 px-2 py-1 text-center text-xs font-semibold leading-snug text-[#0A1F44]">
           <ShieldCheck className="h-4 w-4 shrink-0 text-emerald-600" />
           Traceable to source records. Built for evidence review.
         </div>
@@ -592,24 +644,24 @@ export default function MarketingHome() {
   return (
     <MarketingLayout>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 py-10 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:py-14">
+      <section id="hero" className="border-b border-slate-200 bg-white">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-7 sm:py-10 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-8 lg:py-14">
           <div>
-            <h1 className="mt-4 max-w-2xl text-4xl font-extrabold leading-[1.04] tracking-tight text-[#0A1F44] md:text-5xl">
+            <h1 className="max-w-2xl text-3xl font-extrabold leading-[1.08] tracking-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
               ESG evidence your team can trace, review, and report.
             </h1>
-            <p className="mt-5 max-w-xl text-lg leading-relaxed text-[#0A1F44]/80">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-[#0A1F44]/80 sm:mt-5 sm:text-lg">
               Synerxus helps ESG teams organize activity records, confirmation status, source support, and evidence summaries before they appear in reporting or disclosure workflows.
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+            <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-row">
+              <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
                 <Link href="/assessment">Request Readiness Assessment</Link>
               </Button>
-              <Button asChild variant="outline" className="border-[#0A1F44] text-[#0A1F44]">
+              <Button asChild variant="outline" className="w-full border-[#0A1F44] text-[#0A1F44] sm:w-auto">
                 <Link href="/solutions">For ESG Teams</Link>
               </Button>
             </div>
-            <div className="mt-8 flex gap-4 rounded-md border border-[#c88914]/30 bg-[#fff9eb] p-4 text-sm leading-relaxed text-[#0A1F44]">
+            <div className="mt-6 flex gap-3 rounded-md border border-[#c88914]/30 bg-[#fff9eb] p-3 text-sm leading-relaxed text-[#0A1F44] sm:mt-8 sm:gap-4 sm:p-4">
               <Info className="mt-0.5 h-5 w-5 shrink-0 text-[#c88914]" />
               <p>
                 Dashboard figures reflect organization-approved activity records and evidence summaries. Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.
@@ -622,9 +674,9 @@ export default function MarketingHome() {
       </section>
 
       {/* ── Entry Points ────────────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-8">
-        <div className="mx-auto grid max-w-7xl gap-5 px-4 md:grid-cols-2 md:px-8">
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
+      <section className="border-b border-slate-200 bg-white py-6 sm:py-8">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 md:grid-cols-2 md:px-8">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-5 sm:p-6">
             <h2 className="text-xl font-extrabold text-[#0A1F44]">For Organizations</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
               Define project metrics, record activities, confirm partner-submitted records, and generate evidence summaries for funders and corporate partners.
@@ -633,7 +685,7 @@ export default function MarketingHome() {
               For organizations <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="rounded-lg border border-slate-200 bg-slate-50 p-6">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-5 sm:p-6">
             <h2 className="text-xl font-extrabold text-[#0A1F44]">For Corporations</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
               Review contribution records, confirmation status, source support, and evidence trails across partner programs and reporting workflows.
@@ -646,13 +698,13 @@ export default function MarketingHome() {
       </section>
 
       {/* ── Evidence Categories ──────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-8">
+      <section className="border-b border-slate-200 bg-white py-6 sm:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-center text-2xl font-extrabold text-[#0A1F44]">
+          <h2 className="text-center text-xl font-extrabold leading-tight text-[#0A1F44] sm:text-2xl">
             ESG reporting often treats all evidence as equal. Synerxus does not.
           </h2>
           <p className="mt-1 text-center text-sm text-slate-400">Click any category to learn more.</p>
-          <div className="mt-6 grid gap-4 md:grid-cols-5">
+          <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 md:grid-cols-5 md:gap-4">
             {evidenceCategories.map((cat, index) => {
               const CategoryIcon = cat.icon;
               const isSelected = selectedCategory === index;
@@ -662,7 +714,7 @@ export default function MarketingHome() {
                   key={cat.title}
                   type="button"
                   onClick={() => setSelectedCategory((prev) => (prev === index ? null : index))}
-                  className={`rounded-md border bg-white p-6 text-center shadow-sm transition-all duration-200 ${
+                  className={`group rounded-md border bg-white p-4 text-center shadow-sm transition-all duration-200 sm:p-5 md:p-6 ${
                     isSelected
                       ? "border-[#0A1F44] shadow-md ring-2 ring-[#0A1F44]/20"
                       : isDimmed
@@ -734,15 +786,15 @@ export default function MarketingHome() {
       </section>
 
       {/* ── Frameworks ───────────────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-8">
+      <section className="border-b border-slate-200 bg-white py-6 sm:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-center text-2xl font-extrabold text-[#0A1F44]">
+          <h2 className="text-center text-xl font-extrabold leading-tight text-[#0A1F44] sm:text-2xl">
             Organize evidence across reporting, mapping, and review contexts.
           </h2>
           <p className="mx-auto mt-2 max-w-4xl text-center text-sm leading-relaxed text-slate-600">
             Synerxus helps teams connect claim-level evidence to the reporting, disclosure, SDG mapping, and assurance-preparation contexts they use — while keeping confirmation status, source support, assumptions, and limitations visible.
           </p>
-          <div className="mt-6 grid gap-5 md:grid-cols-4">
+          <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 md:grid-cols-4 md:gap-5">
             {frameworkCards.map((card, index) => {
               const CardIcon = card.icon;
               const isActive = activeFrameworkCard === index;
@@ -787,15 +839,15 @@ export default function MarketingHome() {
       </section>
 
       {/* ── Evidence Flow Diagram ────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-8">
+      <section className="border-b border-slate-200 bg-white py-6 sm:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-center text-sm font-extrabold uppercase tracking-[0.18em] text-[#0A1F44]">
               Bottom-up evidence flow
             </h2>
             <p className="mt-1 text-center text-xs text-slate-400">Click any step to learn more.</p>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-5">
+            <div className="mt-5 grid gap-5 sm:mt-6 sm:grid-cols-2 md:grid-cols-5">
               {evidenceFlow.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = activeFlowStep === index;
@@ -850,12 +902,12 @@ export default function MarketingHome() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-white pb-10 pt-8">
+      <section className="bg-white pb-8 pt-6 sm:pb-10 sm:pt-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-6 rounded-xl bg-[#061A36] p-8 text-white md:grid-cols-[auto_1fr_auto] md:items-center">
+          <div className="grid gap-5 rounded-lg bg-[#061A36] p-5 text-white sm:p-8 md:grid-cols-[auto_1fr_auto] md:items-center">
             <ShieldCheck className="hidden h-16 w-16 shrink-0 text-[#c88914] md:block" />
             <div>
-              <h2 className="text-3xl font-extrabold text-white">Find out how defensible your claims are.</h2>
+              <h2 className="text-2xl font-extrabold leading-tight text-white sm:text-3xl">Find out how defensible your claims are.</h2>
               <p className="mt-2 max-w-2xl text-white/80">
                 Get a clear view of your evidence maturity, source-support gaps, confirmation status, and reporting limitations before claims appear in reports or review workflows.
               </p>
@@ -866,7 +918,7 @@ export default function MarketingHome() {
                 See how it works <ArrowRight className="h-3.5 w-3.5" /> Platform
               </Link>
             </div>
-            <Button asChild size="lg" className="bg-[#c88914] text-white hover:bg-[#a9720f] active:bg-[#8a5f0a]">
+            <Button asChild size="lg" className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] active:bg-[#8a5f0a] sm:w-auto">
               <Link href="/assessment">
                 Request Readiness Assessment <ArrowRight className="h-4 w-4" />
               </Link>

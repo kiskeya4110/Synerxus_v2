@@ -286,13 +286,13 @@ const sections: TermsSection[] = [
 export default function Terms() {
   return (
     <MarketingLayout>
-      <div className="mx-auto max-w-4xl p-6">
+      <div className="mx-auto max-w-4xl p-3 sm:p-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Terms of Service</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Terms of Service</CardTitle>
             <p className="text-sm text-muted-foreground">Last updated: May 4, 2026</p>
           </CardHeader>
-          <CardContent className="prose max-w-none">
+          <CardContent className="prose max-w-none text-sm sm:text-base">
             <p>
               These Terms of Service ("Terms") govern your access to and use of Synerxus websites, dashboards, reports,
               verification workflows, evidence records, APIs, and related services (collectively, the "Services").
@@ -300,8 +300,8 @@ export default function Terms() {
             <p>By accessing or using the Services, you agree to these Terms. If you do not agree, do not use the Services.</p>
 
             {sections.map((section) => (
-              <section key={section.title} className="mb-8">
-                <h2 className="mb-3 text-xl font-semibold">{section.title}</h2>
+              <section key={section.title} className="mb-6 sm:mb-8">
+                <h2 className="mb-3 text-lg font-semibold sm:text-xl">{section.title}</h2>
                 {section.paragraphs?.map((paragraph) => (
                   <p key={paragraph}>{paragraph}</p>
                 ))}
@@ -317,7 +317,7 @@ export default function Terms() {
             ))}
 
             <section className="mb-6">
-              <h2 className="mb-3 text-xl font-semibold">27. Contact</h2>
+              <h2 className="mb-3 text-lg font-semibold sm:text-xl">27. Contact</h2>
               <p>If you have questions about these Terms, contact:</p>
               <p>
                 Synerxus

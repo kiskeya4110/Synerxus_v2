@@ -3,7 +3,6 @@ import { Link, useLocation } from "wouter";
 import { ChevronDown, Facebook, Linkedin, LayoutDashboard, Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { label: "Platform", href: "/platform" },
@@ -51,8 +50,6 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   const [solutionsOpen, setSolutionsOpen] = useState(false);
   const [location, navigate] = useLocation();
   const isLanding = location === "/landing" || location === "/";
-  const { dbUser, loading: authLoading } = useAuth();
-  const isLoggedIn = !authLoading && !!dbUser;
 
   const handleLandingSectionClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -142,21 +139,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
           </nav>
 
           <div className="hidden items-center gap-2 lg:flex">
-            {isLoggedIn ? (
-              <Button asChild className="bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
-                <Link href="/dashboard">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Access Dashboard
-                </Link>
-              </Button>
-            ) : (
-              <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
-                <Link href="/login">
-                  <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Access Dashboard
-                </Link>
-              </Button>
-            )}
+            <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
+              <Link href="/login">
+                <LayoutDashboard className="mr-2 h-4 w-4" />
+                Access Dashboard
+              </Link>
+            </Button>
           </div>
 
           <button
@@ -195,21 +183,12 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                   {item.label}
                 </Link>
               ))}
-              {isLoggedIn ? (
-                <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
-                  <Link href="/dashboard" onClick={() => setMobileOpen(false)}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Access Dashboard
-                  </Link>
-                </Button>
-              ) : (
-                <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
-                  <Link href="/login" onClick={() => setMobileOpen(false)}>
-                    <LayoutDashboard className="mr-2 h-4 w-4" />
-                    Access Dashboard
-                  </Link>
-                </Button>
-              )}
+              <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
+                <Link href="/login" onClick={() => setMobileOpen(false)}>
+                  <LayoutDashboard className="mr-2 h-4 w-4" />
+                  Access Dashboard
+                </Link>
+              </Button>
             </div>
           </div>
         )}
@@ -218,7 +197,26 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
       <main>{children}</main>
 
       <footer className="border-t border-[#0A1F44]/15 bg-[#061A36] text-white">
-        <div className="mx-auto max-w-7xl px-4 py-3 md:px-8 md:py-5">
+        <div className="mx-auto max-w-7xl px-4 py-3 md:hidden">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+            <p className="text-[11px] font-semibold text-white/75">
+              © 2026 Synerxus
+            </p>
+            <div className="flex items-center gap-3">
+              <Link href="/privacy" className="text-[11px] font-semibold text-white/75 hover:text-white">
+                Privacy
+              </Link>
+              <Link href="/terms" className="text-[11px] font-semibold text-white/75 hover:text-white">
+                Terms
+              </Link>
+              <a href="mailto:hello@synerxus.com" className="text-[11px] font-semibold text-white/75 hover:text-white">
+                Contact
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <div className="mx-auto hidden max-w-7xl px-4 py-3 md:block md:px-8 md:py-5">
           <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
             <div className="max-w-md">
               <Logo size="sm" clickable={false} theme="dark" />

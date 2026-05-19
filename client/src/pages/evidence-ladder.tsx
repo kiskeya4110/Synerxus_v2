@@ -391,7 +391,7 @@ function EvidenceLadderVisual() {
                   borderLeftColor: selected ? lvl.badgeColor : lvl.badgeColor + "45",
                 }}
               >
-                <div className="flex items-start justify-between gap-4">
+                <div className="grid gap-3 sm:flex sm:items-start sm:justify-between sm:gap-4">
                   <div className="flex min-w-0 items-start gap-3">
                     <div
                       className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border-2 bg-white text-lg font-extrabold text-[#0A1F44] sm:h-11 sm:w-11 sm:text-xl"
@@ -404,7 +404,7 @@ function EvidenceLadderVisual() {
                       <p className="mt-1 text-[11px] leading-snug text-slate-700 sm:text-[12px]">{lvl.meaning}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-wrap gap-2 sm:flex-col sm:items-end">
                     <span className={`rounded-full px-2.5 py-1 text-[10px] font-bold uppercase ${lvl.riskClass} bg-slate-50 sm:px-3 sm:text-[11px]`}>
                       {lvl.risk}
                     </span>
@@ -475,14 +475,14 @@ function EvidenceLadderVisual() {
 export default function EvidenceLadderPage() {
   return (
     <MarketingLayout>
-      <section className="bg-white py-10 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.48fr] lg:items-start">
+      <section className="bg-white py-7 md:py-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[1fr_0.48fr] lg:items-start lg:gap-10">
           <div>
-            <h1 className="text-4xl font-extrabold leading-tight text-[#0A1F44] sm:text-5xl md:text-5xl">The Evidence Ladder</h1>
-            <p className="mt-4 max-w-2xl text-lg leading-relaxed text-slate-600 sm:mt-5 sm:text-xl md:text-2xl">A maturity model for claim defensibility. Move from unsupported to review-ready.</p>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-[#0A1F44] sm:mt-6 sm:text-lg">The Evidence Ladder helps you strengthen claims over time by building better evidence, context, and confirmations so you are ready when it matters.</p>
+            <h1 className="text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-5xl md:text-5xl">The Evidence Ladder</h1>
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-slate-600 sm:mt-5 sm:text-xl md:text-2xl">A maturity model for claim defensibility. Move from unsupported to review-ready.</p>
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-[#0A1F44] sm:mt-6 sm:text-lg">The Evidence Ladder helps you strengthen claims over time by building better evidence, context, and confirmations so you are ready when it matters.</p>
             <div className="mt-6 flex flex-col gap-3 sm:mt-7">
-              <Button asChild className="w-fit bg-[#c88914] text-white hover:bg-[#a9720f]">
+              <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-fit">
                 <Link href="/assessment">Request Assessment</Link>
               </Button>
               <Link
@@ -501,17 +501,17 @@ export default function EvidenceLadderPage() {
         </div>
       </section>
 
-      <section className="bg-white pb-10">
+      <section className="bg-white pb-7 sm:pb-10">
         <EvidenceLadderVisual />
       </section>
 
-      <section className="bg-white pb-10">
+      <section className="bg-white pb-7 sm:pb-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm md:grid-cols-5">
+          <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm sm:grid-cols-2 md:grid-cols-5">
             {benefits.map((b) => {
               const Icon = b.icon;
               return (
-                <div key={b.title} className="border-b border-slate-200 p-6 text-center md:border-b-0 md:border-r md:last:border-r-0">
+                <div key={b.title} className="border-b border-slate-200 p-4 text-center sm:p-6 md:border-b-0 md:border-r md:last:border-r-0">
                   <Icon className="mx-auto h-10 w-10 text-[#0A1F44]" />
                   <h3 className="mt-3 text-sm font-extrabold text-[#0A1F44]">{b.title}</h3>
                   <p className="mt-2 text-xs leading-relaxed text-slate-600">{b.body}</p>
@@ -522,9 +522,9 @@ export default function EvidenceLadderPage() {
         </div>
       </section>
 
-      <section className="bg-white pb-12">
+      <section className="bg-white pb-8 sm:pb-12">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-4 rounded-lg bg-[#f8efe0] p-5 sm:grid-cols-[auto_1fr] sm:p-8">
+          <div className="grid gap-4 rounded-lg bg-[#f8efe0] p-4 sm:grid-cols-[auto_1fr] sm:p-8">
             <ShieldCheck className="h-12 w-12 shrink-0 text-[#0A1F44] sm:h-16 sm:w-16" />
             <div><h2 className="text-lg font-extrabold text-[#0A1F44] sm:text-xl">The Evidence Ladder shows claim-defensibility maturity.</h2><p className="mt-2 text-base leading-relaxed text-[#0A1F44] sm:text-lg">Synerxus supports evidence organization, reporting preparation, and assurance preparation. Synerxus does not provide formal assurance, legal advice, compliance guarantees, SDG impact certification, or causal attribution.</p></div>
           </div>

@@ -49,7 +49,26 @@ export default function Footer() {
       className="mt-auto border-t border-[#ffcc33]/20 bg-gradient-to-r from-[#fffdf7] via-[#fffaf0] to-[#ffcc33]/55"
       data-footer-id={instanceId.current}
     >
-      <div className="mx-auto max-w-7xl px-4 py-4 md:px-10 md:py-5">
+      <div className="mx-auto max-w-7xl px-4 py-3 md:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          <p className="text-[11px] font-semibold text-slate-700">
+            © {currentYear} Synerxus
+          </p>
+          <div className="flex items-center gap-3">
+            {FOOTER_LINKS.primary.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="text-[11px] font-semibold text-slate-700 transition-colors hover:text-[#0A1F44]"
+              >
+                {link.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-auto hidden max-w-7xl px-4 py-4 md:block md:px-10 md:py-5">
         <div className="grid gap-3 md:grid-cols-[1fr_auto] md:items-start">
           <div className="max-w-md space-y-2">
             <Logo size="sm" variant="full" clickable={false} />

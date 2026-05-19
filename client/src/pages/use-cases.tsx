@@ -203,27 +203,27 @@ export default function UseCasesPage() {
   return (
     <MarketingLayout>
       {/* ── Header ───────────────────────────────────────────────────────── */}
-      <section className="bg-white py-10 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.7fr] lg:items-start">
+      <section className="bg-white py-7 md:py-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[1fr_0.7fr] lg:items-start lg:gap-10">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Solutions</p>
-            <h1 className="mt-4 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
               Built for claims that need defensible evidence.
             </h1>
-            <p className="mt-4 max-w-2xl text-xl font-semibold leading-tight text-[#0A1F44] sm:text-2xl">
+            <p className="mt-3 max-w-2xl text-lg font-semibold leading-tight text-[#0A1F44] sm:mt-4 sm:text-2xl">
               Different programs. Different stakeholders. One evidence structure.
             </p>
             <div className="mt-4 h-1 w-24 bg-[#c88914]" />
-            <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-700 sm:mt-6 sm:text-lg">
               Synerxus helps teams connect claims to evidence, confirmation, source support, mapping context, limitations, and reviewable summaries across ESG, CSR, and social-impact workflows.
             </p>
-            <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-              <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-7 sm:flex-row">
+              <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
                 <Link href="/assessment">
                   Request Evidence Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
                 </Link>
               </Button>
-              <Button asChild variant="outline" className="border-[#0A1F44] text-[#0A1F44]">
+              <Button asChild variant="outline" className="w-full border-[#0A1F44] text-[#0A1F44] sm:w-auto">
                 <Link href="/platform">See the Platform</Link>
               </Button>
             </div>
@@ -302,7 +302,7 @@ export default function UseCasesPage() {
       <section className="bg-white pb-4">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <p className="mb-4 text-center text-sm text-slate-400">Click any card to learn more.</p>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:gap-6">
             {useCases.map((item, index) => {
               const Icon = item.icon;
               const isSelected = selectedCase === index;
@@ -318,9 +318,9 @@ export default function UseCasesPage() {
                   aria-label={`${isSelected ? "Collapse" : "Expand"} ${item.title} use case`}
                   onClick={() => handleCaseSelect(index)}
                   onKeyDown={(event) => handleCaseKeyDown(event, index)}
-                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-white p-5 text-left shadow-md outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
+                  className={`group relative flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-white p-4 text-left shadow-md outline-none transition-all duration-200 focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 sm:p-5 ${
                     isSelected
-                      ? "min-h-[560px] border-[#0A1F44] shadow-xl ring-2 ring-[#c88914]/30 md:min-h-[640px]"
+                      ? "min-h-[520px] border-[#0A1F44] shadow-xl ring-2 ring-[#c88914]/30 md:min-h-[640px]"
                       : isDimmed
                       ? "min-h-[300px] border-slate-200 bg-slate-50 opacity-70 hover:opacity-95 md:h-[360px]"
                       : "min-h-[300px] border-slate-200 hover:-translate-y-0.5 hover:border-[#0A1F44]/35 hover:shadow-xl md:h-[360px]"
@@ -343,7 +343,7 @@ export default function UseCasesPage() {
                     >
                       <Icon className="h-6 w-6" />
                     </span>
-                    <h2 className={`text-lg font-extrabold leading-tight text-[#0A1F44] ${item.featured ? "pr-24" : ""}`}>
+                    <h2 className={`text-base font-extrabold leading-tight text-[#0A1F44] sm:text-lg ${item.featured ? "pr-20 sm:pr-24" : ""}`}>
                       {index + 1}. {item.title}
                     </h2>
                   </div>
@@ -450,15 +450,15 @@ export default function UseCasesPage() {
       </section>
 
       {/* ── Evidence Flow Diagram ────────────────────────────────────────── */}
-      <section className="bg-white pb-12 pt-8">
+      <section className="bg-white pb-8 pt-6 sm:pb-12 sm:pt-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-center text-sm font-extrabold uppercase tracking-[0.18em] text-[#0A1F44]">
               One evidence structure across use cases.
             </h2>
             <p className="mt-1 text-center text-xs text-slate-400">Click any step to learn more.</p>
 
-            <div className="mt-6 grid gap-5 md:grid-cols-6">
+            <div className="mt-5 grid gap-5 sm:mt-6 sm:grid-cols-2 md:grid-cols-6">
               {flow.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = activeStep === index;
@@ -514,20 +514,20 @@ export default function UseCasesPage() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-[#061A36] py-10 text-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:grid-cols-[1fr_auto_auto] md:items-center md:px-8">
+      <section className="bg-[#061A36] py-7 text-white sm:py-10">
+        <div className="mx-auto grid max-w-7xl gap-5 px-4 md:grid-cols-[1fr_auto_auto] md:items-center md:px-8">
           <div>
             <p className="text-sm font-extrabold uppercase text-[#ffcc33]">Ready to strengthen your evidence?</p>
-            <h2 className="mt-3 text-3xl font-extrabold text-white">
+            <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white sm:text-3xl">
               Start with a focused review of your claims, evidence gaps, source support, confirmation status, and limitations.
             </h2>
           </div>
-          <Button asChild className="border-2 border-white/60 bg-white/10 text-white hover:bg-white hover:text-[#061A36]">
+          <Button asChild className="w-full border-2 border-white/60 bg-white/10 text-white hover:bg-white hover:text-[#061A36] sm:w-auto">
             <Link href="/platform">
               See the Platform <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>
           </Button>
-          <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+          <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
             <Link href="/assessment">
               Request Evidence Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
             </Link>

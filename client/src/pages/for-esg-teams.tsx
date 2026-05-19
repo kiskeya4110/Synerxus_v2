@@ -239,16 +239,16 @@ export default function ForEsgTeamsPage() {
 
   return (
     <MarketingLayout>
-      <section className="border-b border-slate-200 bg-white py-12 md:py-16">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-16">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-8">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
               For ESG Teams
             </p>
-            <h1 className="mt-4 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
               Your employees' confirmed contribution records for community programs — traceable to every organization-approved record.
             </h1>
-            <p className="mt-6 max-w-3xl text-lg leading-relaxed text-slate-700">
+            <p className="mt-4 max-w-3xl text-base leading-relaxed text-slate-700 sm:mt-6 sm:text-lg">
               Synerxus gives ESG teams a dashboard of organization-approved activity records, with the traceability needed to support community investment and employee engagement reporting.
             </p>
           </div>
@@ -256,19 +256,19 @@ export default function ForEsgTeamsPage() {
             <img
               src={communityProgramImage}
               alt="Community program team reviewing field records"
-              className="h-[280px] w-full object-cover sm:h-[340px] lg:h-[400px]"
+              className="h-[220px] w-full object-cover sm:h-[340px] lg:h-[400px]"
             />
           </div>
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-5xl px-4 md:px-8">
-          <div className="rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-6 shadow-sm">
-            <h2 className="text-2xl font-extrabold text-[#0A1F44]">
+          <div className="rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-4 shadow-sm sm:p-6">
+            <h2 className="text-xl font-extrabold leading-tight text-[#0A1F44] sm:text-2xl">
               How Synerxus is different from self-reported ESG data:
             </h2>
-            <div className="mt-4 space-y-4 text-base leading-relaxed text-[#0A1F44]">
+            <div className="mt-4 space-y-3 text-sm leading-relaxed text-[#0A1F44] sm:space-y-4 sm:text-base">
               <p>
                 Most corporate community investment claims are made at the top and supported retroactively. The numbers come from internal estimates or partner narrative reports assembled after the fact.
               </p>
@@ -283,23 +283,23 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-slate-50 py-10">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-2">
-          <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-extrabold text-[#0A1F44]">The week before your assurance review.</h2>
+      <section className="border-b border-slate-200 bg-slate-50 py-7 sm:py-10">
+        <div className="mx-auto grid max-w-7xl gap-4 px-4 md:px-8 lg:grid-cols-2 lg:gap-6">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="text-xl font-extrabold leading-tight text-[#0A1F44] sm:text-2xl">The week before your assurance review.</h2>
             <Timeline items={beforeTimeline} accent="amber" />
           </div>
-          <div className="rounded-lg border border-emerald-200 bg-white p-6 shadow-sm">
-            <h2 className="text-2xl font-extrabold text-[#0A1F44]">With Synerxus.</h2>
+          <div className="rounded-lg border border-emerald-200 bg-white p-4 shadow-sm sm:p-6">
+            <h2 className="text-xl font-extrabold leading-tight text-[#0A1F44] sm:text-2xl">With Synerxus.</h2>
             <Timeline items={afterTimeline} accent="emerald" />
           </div>
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-3xl font-extrabold text-[#0A1F44]">What Synerxus does for ESG teams</h2>
-          <div className="mt-6 grid gap-5 md:grid-cols-3">
+          <h2 className="text-2xl font-extrabold leading-tight text-[#0A1F44] sm:text-3xl">What Synerxus does for ESG teams</h2>
+          <div className="mt-5 grid gap-4 sm:mt-6 md:grid-cols-3 md:gap-5">
             {features.map((feature, index) => {
               const isActive = activeFeature === index;
               return (
@@ -308,7 +308,7 @@ export default function ForEsgTeamsPage() {
                 type="button"
                 onClick={() => setActiveFeature(index)}
                 aria-pressed={isActive}
-                className={`rounded-lg border p-6 text-left shadow-sm transition-all duration-200 ${
+                className={`rounded-lg border p-4 text-left shadow-sm transition-all duration-200 sm:p-6 ${
                   isActive
                     ? "border-[#0A1F44] bg-white shadow-lg ring-2 ring-[#c88914]/30"
                     : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-[#0A1F44]/35 hover:shadow-md"
@@ -332,13 +332,13 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-slate-50 py-10">
+      <section className="border-b border-slate-200 bg-slate-50 py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-3xl font-extrabold text-[#0A1F44]">What the corporate dashboard shows</h2>
+          <h2 className="text-2xl font-extrabold leading-tight text-[#0A1F44] sm:text-3xl">What the corporate dashboard shows</h2>
           <p className="mt-2 max-w-3xl text-sm leading-relaxed text-slate-600">
             Select a dashboard view to see the supporting records and evidence state behind the ESG figure.
           </p>
-          <div className="mt-6 grid gap-6 lg:grid-cols-[320px_1fr]">
+          <div className="mt-5 grid gap-4 sm:mt-6 lg:grid-cols-[320px_1fr] lg:gap-6">
             <div className="grid gap-2">
               {dashboardElements.map(({ title, icon: Icon }, index) => {
                 const isActive = activeDashboardElement === index;
@@ -348,7 +348,7 @@ export default function ForEsgTeamsPage() {
                     type="button"
                     onClick={() => setActiveDashboardElement(index)}
                     aria-pressed={isActive}
-                    className={`flex items-center gap-3 rounded-lg border p-4 text-left transition-all duration-200 ${
+                    className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all duration-200 sm:p-4 ${
                       isActive
                         ? "border-[#0A1F44] bg-[#0A1F44] text-white shadow-lg"
                         : "border-slate-200 bg-white text-[#0A1F44] hover:border-[#c88914]/60 hover:shadow-md"
@@ -362,7 +362,7 @@ export default function ForEsgTeamsPage() {
                 );
               })}
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
               <div className="flex items-center gap-3">
                 <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#0A1F44] text-[#ffcc33]">
                   <ActiveDashboardIcon className="h-5 w-5" />
@@ -382,10 +382,10 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
-            <h2 className="text-3xl font-extrabold text-[#0A1F44]">What your dashboard does not allow you to do:</h2>
+            <h2 className="text-2xl font-extrabold leading-tight text-[#0A1F44] sm:text-3xl">What your dashboard does not allow you to do:</h2>
             <p className="mt-4 text-base leading-relaxed text-slate-700">
               The evidence in your dashboard was generated and confirmed independently of your organization. That independence is what makes it defensible.
             </p>
@@ -401,10 +401,10 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-3xl font-extrabold text-[#0A1F44]">Evidence categories for ESG disclosure</h2>
-          <div className="mt-6 grid gap-4 md:grid-cols-2 lg:grid-cols-5">
+          <h2 className="text-2xl font-extrabold leading-tight text-[#0A1F44] sm:text-3xl">Evidence categories for ESG disclosure</h2>
+          <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5 lg:gap-4">
             {evidenceCategories.map(({ title, body, detail, tier, icon: Icon }, index) => {
               const isActive = activeEvidenceCategory === index;
               return (
@@ -413,7 +413,7 @@ export default function ForEsgTeamsPage() {
                 type="button"
                 onClick={() => setActiveEvidenceCategory(index)}
                 aria-pressed={isActive}
-                className={`rounded-lg border p-5 text-left shadow-sm transition-all duration-200 ${
+                className={`rounded-lg border p-4 text-left shadow-sm transition-all duration-200 sm:p-5 ${
                   isActive
                     ? "border-[#0A1F44] bg-white shadow-lg ring-2 ring-[#c88914]/30"
                     : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-[#0A1F44]/35 hover:shadow-md"
@@ -435,10 +435,10 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-5xl px-4 md:px-8">
-          <div className="rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-6">
-            <div className="flex gap-4">
+          <div className="rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-4 sm:p-6">
+            <div className="flex gap-3 sm:gap-4">
               <ShieldAlert className="mt-1 h-8 w-8 shrink-0 text-[#c88914]" />
               <div>
                 <h2 className="text-xl font-extrabold text-[#0A1F44]">Limitation statement</h2>
@@ -454,17 +454,17 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-slate-50 py-10">
+      <section className="border-b border-slate-200 bg-slate-50 py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <h2 className="text-3xl font-extrabold text-[#0A1F44]">How ESG teams get started</h2>
-          <div className="mt-6 grid gap-5 md:grid-cols-3">
+          <h2 className="text-2xl font-extrabold leading-tight text-[#0A1F44] sm:text-3xl">How ESG teams get started</h2>
+          <div className="mt-5 grid gap-4 sm:mt-6 md:grid-cols-3 md:gap-5">
             {startSteps.map((step, index) => (
               <button
                 key={step.title}
                 type="button"
                 onClick={() => setActiveStartStep(index)}
                 aria-pressed={activeStartStep === index}
-                className={`rounded-lg border p-6 text-left shadow-sm transition-all duration-200 ${
+                className={`rounded-lg border p-4 text-left shadow-sm transition-all duration-200 sm:p-6 ${
                   activeStartStep === index
                     ? "border-[#0A1F44] bg-white shadow-lg ring-2 ring-[#c88914]/30"
                     : "border-slate-200 bg-white hover:-translate-y-0.5 hover:border-[#0A1F44]/35 hover:shadow-md"
@@ -488,9 +488,9 @@ export default function ForEsgTeamsPage() {
         </div>
       </section>
 
-      <section className="bg-white py-12">
+      <section className="bg-white py-7 sm:py-12">
         <div className="mx-auto max-w-3xl px-4 text-center md:px-8">
-          <Button asChild size="lg" className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+          <Button asChild size="lg" className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
             <Link href="/request-assessment">
               Request Evidence Readiness Assessment <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

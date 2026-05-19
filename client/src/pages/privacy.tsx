@@ -4,18 +4,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 export default function Privacy() {
   return (
     <Layout>
-      <div className="max-w-4xl mx-auto p-6">
+      <div className="max-w-4xl mx-auto p-3 sm:p-6">
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Privacy Policy</CardTitle>
+            <CardTitle className="text-xl sm:text-2xl">Privacy Policy</CardTitle>
           </CardHeader>
-          <CardContent className="prose max-w-none">
+          <CardContent className="prose max-w-none text-sm sm:text-base">
             <p className="text-muted-foreground mb-6">
               Last updated: {new Date().toLocaleDateString()}
             </p>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">1. Information We Collect</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">1. Information We Collect</h2>
               <p>We collect information you provide directly to us, including:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li>Account information (name, email, password)</li>
@@ -26,7 +26,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">2. How We Use Your Information</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">2. How We Use Your Information</h2>
               <p>We use the information we collect to:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li>Provide and improve our services</li>
@@ -38,7 +38,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">3. Information Sharing</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">3. Information Sharing</h2>
               <p>
                 We do not sell your personal information. We may share your information with:
               </p>
@@ -51,7 +51,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">4. Data Security</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">4. Data Security</h2>
               <p>
                 We implement appropriate security measures to protect your personal information against
                 unauthorized access, alteration, disclosure, or destruction. However, no method of
@@ -60,7 +60,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">5. Your Rights</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">5. Your Rights</h2>
               <p>You have the right to:</p>
               <ul className="list-disc pl-6 mt-2 space-y-1">
                 <li>Access and update your personal information</li>
@@ -71,7 +71,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">6. Cookies</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">6. Cookies</h2>
               <p>
                 We use cookies and similar technologies to provide functionality, analyze usage,
                 and personalize your experience. You can control cookie settings through your browser.
@@ -79,7 +79,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">7. Children's Privacy</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">7. Children's Privacy</h2>
               <p>
                 Our service is not intended for children under 13. We do not knowingly collect
                 personal information from children under 13. If you believe we have collected
@@ -88,7 +88,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">8. Changes to This Policy</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">8. Changes to This Policy</h2>
               <p>
                 We may update this Privacy Policy from time to time. We will notify you of any
                 changes by posting the new policy on this page and updating the "Last updated" date.
@@ -96,7 +96,7 @@ export default function Privacy() {
             </section>
 
             <section className="mb-6">
-              <h2 className="text-xl font-semibold mb-3">9. Contact Us</h2>
+              <h2 className="text-lg font-semibold mb-3 sm:text-xl">9. Contact Us</h2>
               <p>
                 If you have questions about this Privacy Policy, please contact us at{" "}
                 <a href="mailto:hello@synerxus.com" className="text-primary-600 hover:underline">

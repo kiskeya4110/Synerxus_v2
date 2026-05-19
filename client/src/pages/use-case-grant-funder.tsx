@@ -63,7 +63,7 @@ export default function UseCaseGrantFunderPage() {
   return (
     <MarketingLayout>
       {/* ── Page header ──────────────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-10 md:py-14">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-14">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <Link
             href="/use-cases"
@@ -72,33 +72,33 @@ export default function UseCaseGrantFunderPage() {
             <ArrowLeft className="h-3.5 w-3.5" /> Use Cases
           </Link>
 
-          <div className="mt-6 grid gap-10 lg:grid-cols-[1fr_0.55fr] lg:items-start">
+          <div className="mt-5 grid gap-6 lg:grid-cols-[1fr_0.55fr] lg:items-start lg:gap-10">
             <div>
               <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
                 Use Case 5
               </p>
-              <h1 className="mt-3 text-4xl font-extrabold leading-tight text-[#0A1F44] md:text-5xl">
+              <h1 className="mt-3 text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
                 Grant / Funder Reporting
               </h1>
               <div className="mt-4 h-1 w-24 bg-[#c88914]" />
-              <p className="mt-6 max-w-2xl text-lg leading-relaxed text-slate-700">
+              <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-700 sm:mt-6 sm:text-lg">
                 Funders require evidence that grant-funded activities were delivered as reported. Synerxus structures each claim with source artifacts, partner confirmation, and exception logs — so completion statements are backed by reviewable documentation before the report is submitted.
               </p>
-              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
-                <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+              <div className="mt-6 flex flex-col gap-3 sm:mt-7 sm:flex-row">
+                <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
                   <Link href="/request-assessment">
                     Request Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild variant="outline" className="border-[#0A1F44] text-[#0A1F44]">
+                <Button asChild variant="outline" className="w-full border-[#0A1F44] text-[#0A1F44] sm:w-auto">
                   <Link href="/use-cases">Back to Use Cases</Link>
                 </Button>
               </div>
             </div>
 
             {/* ── Claim record card ──────────────────────────────────────── */}
-            <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-2xl">
-              <div className="rounded-md border border-slate-200 p-5">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xl sm:p-5 sm:shadow-2xl">
+              <div className="rounded-md border border-slate-200 p-4 sm:p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div>
                     <p className="text-xs font-bold text-slate-500">Claim</p>
@@ -148,12 +148,12 @@ export default function UseCaseGrantFunderPage() {
       </section>
 
       {/* ── Section 2: The problem this solves ───────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="text-2xl font-extrabold text-[#0A1F44]">The problem this solves</h2>
-          <div className="mt-6 grid gap-6 md:grid-cols-2">
+          <div className="mt-5 grid gap-4 sm:mt-6 md:grid-cols-2 md:gap-6">
             {/* Left — today */}
-            <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 sm:p-6">
               <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-red-700">
                 What grant reporting looks like today
               </p>
@@ -170,7 +170,7 @@ export default function UseCaseGrantFunderPage() {
             </div>
 
             {/* Right — Synerxus */}
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-6">
+            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-4 sm:p-6">
               <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-emerald-700">
                 What Synerxus produces
               </p>
@@ -188,17 +188,17 @@ export default function UseCaseGrantFunderPage() {
       </section>
 
       {/* ── Section 3: Evidence package components ───────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <h2 className="text-2xl font-extrabold text-[#0A1F44]">Evidence package components</h2>
           <p className="mt-2 text-sm text-slate-500">
             Six components make up a complete grant evidence packet.
           </p>
-          <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-3 lg:gap-4">
             {evidenceComponents.map(({ n, title, body, icon: Icon }) => (
               <div
                 key={title}
-                className="flex gap-4 rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                className="flex gap-3 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:gap-4 sm:p-5"
               >
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-[#0A1F44]/15 bg-[#f0f3f8]">
                   <Icon className="h-5 w-5 text-[#0A1F44]" />
@@ -217,9 +217,9 @@ export default function UseCaseGrantFunderPage() {
       </section>
 
       {/* ── Section 4: Limitation / Caution ─────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="flex gap-5 rounded-lg border border-[#c88914]/50 bg-[#fff9eb] p-6">
+          <div className="flex gap-3 rounded-lg border border-[#c88914]/50 bg-[#fff9eb] p-4 sm:gap-5 sm:p-6">
             <ShieldAlert className="h-10 w-10 shrink-0 text-[#c88914]" />
             <div>
               <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
@@ -234,7 +234,7 @@ export default function UseCaseGrantFunderPage() {
       </section>
 
       {/* ── Section 5: Relevance to innovation ecosystems ────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-10">
+      <section className="border-b border-slate-200 bg-white py-7 sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.4fr_1fr] lg:items-start">
             <div>
@@ -253,23 +253,23 @@ export default function UseCaseGrantFunderPage() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-[#061A36] py-10 text-white">
+      <section className="bg-[#061A36] py-7 text-white sm:py-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-6 md:grid-cols-[1fr_auto_auto] md:items-center">
+          <div className="grid gap-5 md:grid-cols-[1fr_auto_auto] md:items-center">
             <div>
               <p className="text-sm font-extrabold uppercase text-[#ffcc33]">
                 Ready to structure your grant evidence?
               </p>
-              <h2 className="mt-3 text-2xl font-extrabold text-white">
+              <h2 className="mt-3 text-2xl font-extrabold leading-tight text-white">
                 Get a clear view of your evidence maturity before your next funder review.
               </h2>
             </div>
-            <Button asChild variant="outline" className="border-white/60 bg-white/10 text-white hover:bg-white hover:text-[#061A36]">
+            <Button asChild variant="outline" className="w-full border-white/60 bg-white/10 text-white hover:bg-white hover:text-[#061A36] sm:w-auto">
               <Link href="/use-cases">
                 <ArrowLeft className="mr-1.5 h-4 w-4" /> Back to Use Cases
               </Link>
             </Button>
-            <Button asChild className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+            <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
               <Link href="/request-assessment">
                 Request Readiness Assessment <ArrowRight className="ml-1.5 h-4 w-4" />
               </Link>

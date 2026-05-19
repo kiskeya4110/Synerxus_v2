@@ -294,7 +294,7 @@ export default function ProjectDetailPWA() {
       )}
 
       {/* Hero Image Section - slightly reduced for volunteer/CSR to account for context header */}
-      <div className="relative w-full h-64 flex items-center justify-center overflow-hidden">
+      <div className="relative w-full h-52 flex items-center justify-center overflow-hidden sm:h-64">
         {project.coverImage ? (
           <>
             <div
@@ -338,7 +338,7 @@ export default function ProjectDetailPWA() {
             </div>
 
             {/* Two Column Layout */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {/* Left: Description with SDG */}
               <div className="space-y-2">
                 <h3 className="font-semibold text-slate-900 text-sm">Description</h3>
@@ -387,7 +387,7 @@ export default function ProjectDetailPWA() {
             {/* Expected Tasks */}
             <div className="border-t pt-3">
               <h3 className="font-semibold text-slate-900 mb-2">Expected Tasks</h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {/* Time Commitment */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-700">Time Commitment & Location</p>
@@ -556,7 +556,7 @@ export default function ProjectDetailPWA() {
       {/* Task Log Modal */}
       {showTaskModal && selectedTask && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[60] px-4">
-          <div className="bg-white rounded-xl max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl">
+          <div className="bg-white rounded-lg max-w-md w-full max-h-[80vh] overflow-y-auto shadow-xl sm:rounded-xl">
             {/* Modal Header */}
             <div className="sticky top-0 bg-white border-b border-slate-200 p-4 flex items-center justify-between rounded-t-xl">
               <div>

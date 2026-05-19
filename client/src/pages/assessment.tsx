@@ -315,7 +315,7 @@ export default function AssessmentPage() {
   if (status === "success") {
     return (
       <MarketingLayout>
-        <section className="bg-white py-20">
+        <section className="bg-white py-12 sm:py-20">
           <div className="mx-auto max-w-xl px-4 text-center">
             <CheckCircle2 className="mx-auto h-16 w-16 text-emerald-600" />
             <h1 className="mt-6 text-3xl font-extrabold text-[#0A1F44]">Assessment request received.</h1>
@@ -328,10 +328,10 @@ export default function AssessmentPage() {
 
   return (
     <MarketingLayout>
-      <section className="border-b border-slate-200 bg-white py-10 md:py-12">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-12">
         <div className="mx-auto max-w-4xl px-4 md:px-8">
-          <h1 className="font-serif text-4xl font-bold text-[#0A1F44] md:text-5xl">Evidence Readiness Assessment</h1>
-          <p className="mt-4 text-xl font-semibold text-[#0A1F44]">Tell us about your claim and evidence needs.</p>
+          <h1 className="font-serif text-3xl font-bold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">Evidence Readiness Assessment</h1>
+          <p className="mt-3 text-lg font-semibold text-[#0A1F44] sm:mt-4 sm:text-xl">Tell us about your claim and evidence needs.</p>
           <p className="mt-3 max-w-3xl text-base leading-relaxed text-slate-700">
             We will help identify evidence strengths, source-support gaps, confirmation status, reporting limitations, and next steps.
           </p>
@@ -341,19 +341,19 @@ export default function AssessmentPage() {
         </div>
       </section>
 
-      <section className="bg-white py-8 md:py-10">
+      <section className="bg-white py-6 md:py-10">
         <div className="mx-auto max-w-4xl px-4 md:px-8">
           <form onSubmit={submit} className="space-y-3">
             {sections.map((section, index) => {
               const isOpen = openSection === index;
               const complete = Boolean(sectionComplete[index]);
               return (
-                <div key={section} className="rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div key={section} className="rounded-lg border border-slate-200 bg-white shadow-sm sm:rounded-xl">
                   <button
                     type="button"
                     onClick={() => setOpenSection(isOpen ? -1 : index)}
                     aria-expanded={isOpen}
-                    className="flex w-full items-center justify-between gap-4 rounded-xl px-5 py-4 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2"
+                    className="flex w-full items-center justify-between gap-3 rounded-lg px-4 py-3 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 sm:rounded-xl sm:px-5 sm:py-4"
                   >
                     <div>
                       <p className="text-sm font-extrabold text-[#0A1F44]">{section}</p>
@@ -365,7 +365,7 @@ export default function AssessmentPage() {
                   </button>
 
                   {isOpen && (
-                    <div className="border-t border-slate-100 px-5 py-5">
+                    <div className="border-t border-slate-100 px-4 py-4 sm:px-5 sm:py-5">
                       {index === 0 && (
                         <div className="grid gap-4 sm:grid-cols-2">
                           <div>
@@ -465,11 +465,11 @@ export default function AssessmentPage() {
 
             {status === "error" && <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">The request could not be sent. Please try again.</p>}
 
-            <div className="flex flex-col items-start justify-between gap-3 rounded-xl border border-slate-200 bg-slate-50 p-5 sm:flex-row sm:items-center">
+            <div className="flex flex-col items-start justify-between gap-3 rounded-lg border border-slate-200 bg-slate-50 p-4 sm:flex-row sm:items-center sm:rounded-xl sm:p-5">
               <p className="flex items-center gap-1.5 text-xs text-slate-500">
                 <LockKeyhole className="h-3 w-3" /> Required fields and boundary acknowledgment must be complete before submission.
               </p>
-              <Button type="submit" loading={status === "loading"} className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+              <Button type="submit" loading={status === "loading"} className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
                 <ShieldCheck className="h-4 w-4" /> Request Evidence Readiness Assessment
               </Button>
             </div>

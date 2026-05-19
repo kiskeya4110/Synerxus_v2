@@ -156,7 +156,7 @@ export default function OpportunityDetailPWA() {
       {/* Main scrollable content */}
       <div className="flex-1 overflow-y-auto overflow-x-hidden pb-20 w-full max-w-full">
         {/* Hero Image Section */}
-      <div className="relative w-full h-64 bg-gradient-to-br from-purple-400 via-pink-400 to-rose-400 flex items-center justify-center overflow-hidden">
+      <div className="relative w-full h-52 bg-gradient-to-br from-purple-400 via-pink-400 to-rose-400 flex items-center justify-center overflow-hidden sm:h-64">
         <div className="absolute inset-0 bg-black/10" />
         <Briefcase className="h-20 w-20 text-white opacity-20" />
       </div>
@@ -187,7 +187,7 @@ export default function OpportunityDetailPWA() {
             </div>
 
             {/* Two Column Layout */}
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid gap-3 sm:grid-cols-2">
               {/* Left: Description with SDG */}
               <div className="space-y-2">
                 <h3 className="font-semibold text-slate-900 text-sm">Description</h3>
@@ -261,7 +261,7 @@ export default function OpportunityDetailPWA() {
             {/* Expected Tasks */}
             <div className="border-t pt-3">
               <h3 className="font-semibold text-slate-900 mb-2">Expected Tasks</h3>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid gap-2 sm:grid-cols-2">
                 {/* Time Commitment */}
                 <div className="space-y-2">
                   <p className="text-xs font-semibold text-slate-700">Time Commitment & Location</p>

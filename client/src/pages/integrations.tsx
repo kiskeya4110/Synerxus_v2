@@ -241,7 +241,7 @@ function SectionHeader({
 
 function PipelinePreview() {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-5 shadow-xl">
+    <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-xl sm:p-5 sm:rounded-xl">
       <div className="flex items-center gap-3 border-b border-slate-200 pb-4">
         <span className="flex h-10 w-10 items-center justify-center rounded-md bg-[#0A1F44] text-[#ffcc33]">
           <Layers3 className="h-5 w-5" />
@@ -251,13 +251,13 @@ function PipelinePreview() {
           <p className="text-lg font-extrabold text-[#0A1F44]">Evidence layer, not system replacement</p>
         </div>
       </div>
-      <div className="mt-5 grid gap-3">
+      <div className="mt-5 grid gap-3 overflow-hidden">
         {[
           ["Input", "Records, source files, confirmations"],
           ["Structure", "Claims, evidence packets, exceptions"],
           ["Output", "Reviewable summaries and exports"],
         ].map(([label, value], index) => (
-          <div key={label} className="grid grid-cols-[88px_1fr] items-center gap-3">
+          <div key={label} className="grid gap-2 sm:grid-cols-[88px_1fr] sm:items-center sm:gap-3">
             <span className="rounded-md bg-slate-100 px-3 py-2 text-xs font-extrabold text-[#0A1F44]">{label}</span>
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-slate-200" />
@@ -303,19 +303,19 @@ function CapabilityGroup({
 export default function IntegrationsPage() {
   return (
     <MarketingLayout>
-      <section className="border-b border-slate-200 bg-white py-10 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-8 px-4 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-8">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">
               Integrations and data flow
             </p>
-            <h1 className="mt-4 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
+            <h1 className="mt-3 max-w-3xl text-3xl font-extrabold leading-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
               Connect evidence work to the systems your team already uses.
             </h1>
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-slate-700">
+            <p className="mt-4 max-w-2xl text-base leading-relaxed text-slate-700 sm:mt-5 sm:text-lg">
               Synerxus sits between raw activity records and external ESG reporting workflows. It helps teams organize claim-level evidence before information moves into reports, board materials, funder updates, or assurance review.
             </p>
-            <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-3">
               {statusSummary.map((item) => (
                 <div key={item.label} className="rounded-lg border border-slate-200 bg-slate-50 p-4">
                   <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#c88914]">{item.label}</p>
@@ -328,14 +328,14 @@ export default function IntegrationsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-slate-50 py-10 md:py-12">
+      <section className="border-b border-slate-200 bg-slate-50 py-7 md:py-12">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Operating model"
             title="Where Synerxus sits"
             body="The platform is designed to improve traceability around evidence, confirmation, exceptions, and limitations without forcing a full replacement of reporting or document workflows."
           />
-          <div className="mt-6 grid gap-4 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
+          <div className="mt-5 grid gap-4 sm:mt-6 lg:grid-cols-[1fr_auto_1fr_auto_1fr] lg:items-stretch">
             {flowBoxes.map((box, index) => (
               <div key={box.title} className="contents">
                 <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm">
@@ -364,21 +364,21 @@ export default function IntegrationsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10 md:py-12">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-12">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Inputs and outputs"
             title="How evidence moves through Synerxus"
             body="Current capabilities support direct evidence work today, while higher-volume import and export workflows are being built deliberately around traceability and validation."
           />
-          <div className="mt-8 grid gap-8 lg:grid-cols-2">
+          <div className="mt-5 grid gap-6 sm:mt-8 lg:grid-cols-2 lg:gap-8">
             <CapabilityGroup title="Evidence in" icon={Upload} items={inputMethods} />
             <CapabilityGroup title="Evidence out" icon={FileDown} items={outputMethods} />
           </div>
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-slate-50 py-10 md:py-12">
+      <section className="border-b border-slate-200 bg-slate-50 py-7 md:py-12">
         <div className="mx-auto max-w-6xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Native integrations"
@@ -386,7 +386,7 @@ export default function IntegrationsPage() {
             body="The honest answer depends on what you mean by connect. Synerxus can support reporting workflows today through exported evidence outputs and manual references; native platform-to-platform integrations are roadmap work."
           />
           <div className="mt-6 grid gap-5 md:grid-cols-2">
-            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <StatusBadge status="AVAILABLE NOW" />
               <h3 className="mt-4 flex items-center gap-2 text-xl font-extrabold text-[#0A1F44]">
                 <PlugZap className="h-5 w-5 text-[#c88914]" />
@@ -396,7 +396,7 @@ export default function IntegrationsPage() {
                 Synerxus currently operates as a standalone evidence workspace. Evidence summaries and exports can be referenced in reporting tools your team uses, including office documents, shared workspaces, or custom platforms, through file export and manual reference.
               </p>
             </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-6 shadow-sm">
+            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
               <StatusBadge status="ON ROADMAP" />
               <h3 className="mt-4 flex items-center gap-2 text-xl font-extrabold text-[#0A1F44]">
                 <GitBranch className="h-5 w-5 text-[#c88914]" />
@@ -413,14 +413,14 @@ export default function IntegrationsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-white py-10 md:py-12">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-12">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <SectionHeader
             eyebrow="Security and procurement"
             title="Your data in Synerxus"
             body="This page states the current build plainly so IT, legal, and procurement teams can evaluate fit early."
           />
-          <div className="mt-6 grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <div className="mt-5 grid gap-3 sm:mt-6 md:grid-cols-2 xl:grid-cols-3 xl:gap-4">
             {securityItems.map((item) => (
               <CapabilityCard key={item.title} item={item} />
             ))}
@@ -428,13 +428,13 @@ export default function IntegrationsPage() {
         </div>
       </section>
 
-      <section className="border-b border-slate-200 bg-slate-50 py-10 md:py-12">
+      <section className="border-b border-slate-200 bg-slate-50 py-7 md:py-12">
         <div className="mx-auto grid max-w-6xl gap-6 px-4 md:px-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-start">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Fit check</p>
             <h2 className="mt-3 text-2xl font-extrabold text-[#0A1F44]">What to confirm during assessment</h2>
           </div>
-          <div className="rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-6">
+          <div className="rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-4 sm:p-6">
             <div className="grid gap-4 sm:grid-cols-3">
               {integrationPrinciples.map((item) => (
                 <div key={item} className="flex gap-3">
@@ -450,9 +450,9 @@ export default function IntegrationsPage() {
         </div>
       </section>
 
-      <section className="bg-white py-12">
+      <section className="bg-white py-7 sm:py-12">
         <div className="mx-auto max-w-3xl px-4 text-center md:px-8">
-          <Button asChild size="lg" className="bg-[#c88914] text-white hover:bg-[#a9720f]">
+          <Button asChild size="lg" className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
             <Link href="/assessment">
               Request Evidence Readiness Assessment <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

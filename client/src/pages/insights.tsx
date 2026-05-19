@@ -138,17 +138,17 @@ export default function ResourcesPage() {
 
   return (
     <MarketingLayout>
-      <section className="bg-white py-10 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
+      <section className="bg-white py-7 md:py-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[1fr_0.9fr] lg:items-center lg:gap-10">
           <div>
             <p className="text-sm text-slate-500"><Link href="/" className="hover:text-[#0A1F44] transition-colors">Home</Link> &gt; Resources &gt; The Verifiable</p>
-            <h1 className="mt-16 font-serif text-4xl font-bold leading-tight text-[#0A1F44] sm:text-5xl md:text-6xl">The Verifiable</h1>
+            <h1 className="mt-8 font-serif text-3xl font-bold leading-tight text-[#0A1F44] sm:mt-16 sm:text-5xl md:text-6xl">The Verifiable</h1>
             <div className="mt-5 h-1 w-20 bg-[#c88914]" />
-            <h2 className="mt-7 max-w-2xl font-serif text-2xl leading-tight text-[#0A1F44] sm:text-3xl md:text-4xl">Explore the evidence behind ESG and social-impact claims.</h2>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-slate-700">
+            <h2 className="mt-5 max-w-2xl font-serif text-2xl leading-tight text-[#0A1F44] sm:mt-7 sm:text-3xl md:text-4xl">Explore the evidence behind ESG and social-impact claims.</h2>
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-slate-700 sm:mt-6 sm:text-lg">
               A newsletter about claim defensibility, partner confirmation, source support, SDG mapping boundaries, assurance preparation, and the discipline required before claims appear in reports.
             </p>
-            <div className="mt-8 overflow-hidden rounded-2xl shadow-2xl lg:hidden">
+            <div className="mt-6 overflow-hidden rounded-lg shadow-xl sm:mt-8 sm:rounded-2xl sm:shadow-2xl lg:hidden">
               <img
                 src={VERIFIABLE_HERO_IMAGE}
                 alt="Hand-drawn evidence-thinking diagram on a notebook"
@@ -169,12 +169,12 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="bg-white pb-10">
+      <section className="bg-white pb-7 sm:pb-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-lg bg-[#f8f6f2] p-8">
+          <div className="rounded-lg bg-[#f8f6f2] p-4 sm:p-8">
             <div className="grid gap-6 md:grid-cols-[0.44fr_0.56fr] md:items-start">
               <div>
-                <h2 className="font-serif text-3xl text-[#0A1F44]">Evidence first. Always.</h2>
+                <h2 className="font-serif text-2xl text-[#0A1F44] sm:text-3xl">Evidence first. Always.</h2>
                 <div className="mt-3 h-0.5 w-14 bg-[#c88914]" />
                 <p className="mt-5 text-sm leading-relaxed text-slate-700">
                   Credible ESG and social-impact reporting starts before the report is written. It starts with the claim: what is being said, what evidence supports it, who confirmed it, what source records exist, and what the claim does not prove.
@@ -245,20 +245,20 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="bg-white pb-10">
+      <section className="bg-white pb-7 sm:pb-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="flex items-end justify-between">
             <div>
-              <h2 className="font-serif text-3xl text-[#0A1F44]">LinkedIn Newsletter Issues</h2>
+              <h2 className="font-serif text-2xl text-[#0A1F44] sm:text-3xl">LinkedIn Newsletter Issues</h2>
               <div className="mt-3 h-0.5 w-14 bg-[#c88914]" />
             </div>
             <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer" className="hidden items-center gap-2 text-sm font-bold text-[#c88914] transition-colors hover:text-[#a9720f] md:flex">
               Read The Verifiable on LinkedIn <ArrowRight className="h-4 w-4" />
             </a>
           </div>
-          <div className="mt-6 grid gap-5 sm:grid-cols-2 lg:grid-cols-5">
+          <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
             {articles.map((article) => (
-              <article key={article.title} className="group flex min-h-[260px] flex-col rounded-md border border-slate-200 bg-white p-5 shadow-md transition-all hover:-translate-y-0.5 hover:border-[#0A1F44]/25 hover:shadow-lg">
+              <article key={article.title} className="group flex min-h-[220px] flex-col rounded-md border border-slate-200 bg-white p-4 shadow-md transition-all hover:-translate-y-0.5 hover:border-[#0A1F44]/25 hover:shadow-lg sm:min-h-[260px] sm:p-5">
                 <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer" className="flex h-full flex-col">
                   <p className="text-xs font-extrabold uppercase tracking-wide text-[#c88914]">{article.category}</p>
                   <h3 className="mt-4 font-serif text-lg leading-tight text-[#0A1F44]">{`Issue #${article.issue}: ${article.title}`}</h3>
@@ -273,11 +273,11 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="bg-white pb-10">
+      <section className="bg-white pb-7 sm:pb-10">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-6 max-w-3xl">
             <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#c88914]">On-site explainers</p>
-            <h2 className="mt-3 font-serif text-3xl text-[#0A1F44]">Information articles</h2>
+            <h2 className="mt-3 font-serif text-2xl text-[#0A1F44] sm:text-3xl">Information articles</h2>
             <p className="mt-3 text-sm leading-relaxed text-slate-700">
               These short explainers stay on the Synerxus site and expand in place so readers can understand the evidence concepts behind the newsletter.
             </p>
@@ -291,7 +291,7 @@ export default function ResourcesPage() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setActiveInfoArticle((current) => (current === index ? null : index))}
-                    className="flex w-full items-start justify-between gap-4 p-5 text-left"
+                    className="flex w-full items-start justify-between gap-4 p-4 text-left sm:p-5"
                   >
                     <div>
                       <p className="text-xs font-extrabold uppercase tracking-wide text-[#c88914]">Information article</p>
@@ -316,12 +316,12 @@ export default function ResourcesPage() {
         </div>
       </section>
 
-      <section className="bg-white pb-12">
+      <section className="bg-white pb-8 sm:pb-12">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-6 rounded-lg bg-[#f8f6f2] p-8 md:grid-cols-[auto_1fr_auto] md:items-center">
+          <div className="grid gap-5 rounded-lg bg-[#f8f6f2] p-4 sm:p-8 md:grid-cols-[auto_1fr_auto] md:items-center">
             <span className="flex h-20 w-20 items-center justify-center rounded-full bg-[#061A36] text-[#c88914]"><BookOpen className="h-10 w-10" /></span>
-            <div><h2 className="font-serif text-3xl text-[#0A1F44]">Explore articles, guides, and insights.</h2><p className="mt-2 text-slate-700">Practical perspectives for making ESG and social-impact claims clearer, bounded, and more reviewable.</p></div>
-            <Button asChild className="bg-[#061A36] text-white hover:bg-[#102b5a]">
+            <div><h2 className="font-serif text-2xl text-[#0A1F44] sm:text-3xl">Explore articles, guides, and insights.</h2><p className="mt-2 text-slate-700">Practical perspectives for making ESG and social-impact claims clearer, bounded, and more reviewable.</p></div>
+            <Button asChild className="w-full bg-[#061A36] text-white hover:bg-[#102b5a] sm:w-auto">
               <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer">
                 Read The Verifiable on LinkedIn <ArrowRight className="h-4 w-4" />
               </a>

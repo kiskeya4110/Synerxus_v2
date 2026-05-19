@@ -58,34 +58,36 @@ function PreviewPanel({ type }: { type: string }) {
   if (type === "quality") {
     return (
       <div className="grid gap-3 lg:grid-cols-[1fr_160px]">
-        <div className="rounded-md border border-slate-200 bg-white p-4">
+        <div className="overflow-x-auto rounded-md border border-slate-200 bg-white p-4">
           <p className="text-xs font-extrabold text-[#0A1F44]">Partner confirmation table</p>
-          <div className="mt-3 grid grid-cols-4 gap-2 border-b border-slate-100 pb-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">
-            <span>Record</span>
-            <span>Status</span>
-            <span>Confidence</span>
-            <span>Alignment</span>
+          <div className="min-w-[520px]">
+            <div className="mt-3 grid grid-cols-4 gap-2 border-b border-slate-100 pb-2 text-[10px] font-extrabold uppercase tracking-wide text-slate-400">
+              <span>Record</span>
+              <span>Status</span>
+              <span>Confidence</span>
+              <span>Alignment</span>
+            </div>
+            {qualityRows.map((row) => {
+              const isPending = row.status === "Pending";
+              return (
+                <div
+                  key={row.id}
+                  className={`mt-2 grid grid-cols-4 gap-2 rounded px-2 py-1.5 text-[11px] ${
+                    isPending ? "bg-slate-100 text-slate-400" : "text-slate-600"
+                  }`}
+                >
+                  <span className="truncate">{row.id}</span>
+                  <span className={isPending ? "font-semibold text-amber-500" : "font-semibold text-emerald-700"}>
+                    {row.status}
+                  </span>
+                  <span>{row.confidence}</span>
+                  <span className={`font-bold ${isPending ? "text-amber-600" : "text-emerald-700"}`}>
+                    {row.alignment}
+                  </span>
+                </div>
+              );
+            })}
           </div>
-          {qualityRows.map((row) => {
-            const isPending = row.status === "Pending";
-            return (
-              <div
-                key={row.id}
-                className={`mt-2 grid grid-cols-4 gap-2 rounded px-2 py-1.5 text-[11px] ${
-                  isPending ? "bg-slate-100 text-slate-400" : "text-slate-600"
-                }`}
-              >
-                <span className="truncate">{row.id}</span>
-                <span className={isPending ? "font-semibold text-amber-500" : "font-semibold text-emerald-700"}>
-                  {row.status}
-                </span>
-                <span>{row.confidence}</span>
-                <span className={`font-bold ${isPending ? "text-amber-600" : "text-emerald-700"}`}>
-                  {row.alignment}
-                </span>
-              </div>
-            );
-          })}
           <p className="mt-3 rounded-md bg-[#fff9eb] px-3 py-2 text-[11px] leading-relaxed text-[#0A1F44]">
             Confidence tiers reflect evidence completeness, source support, and confirmation status. They are not assurance opinions.
           </p>
@@ -143,7 +145,7 @@ function PreviewPanel({ type }: { type: string }) {
           </div>
         </div>
         <div className="rounded-md border border-slate-200 bg-white p-4 lg:col-span-2">
-          <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
+          <Button asChild className="w-full bg-[#0A1F44] text-white hover:bg-[#102b5a] sm:w-auto">
             <Link href="/assessment">
               <Download className="mr-2 h-4 w-4" /> Prepare review package
             </Link>
@@ -193,14 +195,14 @@ export default function PlatformPage() {
   return (
     <MarketingLayout>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
-      <section className="border-b border-slate-200 bg-white py-10 md:py-14">
-        <div className="mx-auto grid max-w-7xl gap-10 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
+      <section className="border-b border-slate-200 bg-white py-7 md:py-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[0.9fr_1.1fr] lg:items-center lg:gap-10">
           <div>
             <p className="text-sm font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Platform</p>
-            <h1 className="mt-4 max-w-xl font-serif text-4xl font-bold leading-tight text-[#0A1F44] sm:text-5xl md:text-6xl">
+            <h1 className="mt-3 max-w-xl font-serif text-3xl font-bold leading-tight text-[#0A1F44] sm:text-5xl md:text-6xl">
               The Synerxus Platform
             </h1>
-            <p className="mt-6 max-w-xl text-lg leading-relaxed text-[#0A1F44]">
+            <p className="mt-4 max-w-xl text-base leading-relaxed text-[#0A1F44] sm:mt-6 sm:text-lg">
               Synerxus helps teams connect reportable claims and records to evidence, confirmation, mapping context, status, exceptions, and limitations so each supported statement is easier to explain and review.
             </p>
           </div>
@@ -227,7 +229,7 @@ export default function PlatformPage() {
       </section>
 
       {/* ── Steps ────────────────────────────────────────────────────────── */}
-      <section id="platform-steps" className="bg-white py-9">
+      <section id="platform-steps" className="bg-white py-6 sm:py-9">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
           <div className="mb-6 grid gap-3 sm:grid-cols-3">
             {areas.map((a, i) => {
@@ -239,7 +241,7 @@ export default function PlatformPage() {
                   type="button"
                   onClick={() => setActiveArea(i)}
                   aria-pressed={isActive}
-                  className={`flex items-center gap-3 rounded-xl border p-4 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 ${
+                  className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 sm:rounded-xl sm:p-4 ${
                     isActive
                       ? "border-[#0A1F44] bg-[#0A1F44] shadow-md"
                       : "border-slate-200 bg-white hover:border-[#0A1F44]/40 hover:shadow-sm"
@@ -275,17 +277,17 @@ export default function PlatformPage() {
             })}
           </div>
 
-          <article className="grid gap-6 rounded-xl border border-slate-200 bg-white p-6 shadow-sm lg:grid-cols-[0.48fr_0.52fr] lg:items-center">
+          <article className="grid gap-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:grid-cols-[0.48fr_0.52fr] lg:items-center">
             <div className="grid gap-4 sm:grid-cols-[80px_1fr]">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#061A36] text-3xl font-extrabold text-white">
                 {activeArea + 1}
               </span>
               <div>
-                <div className="flex items-center gap-4">
+                <div className="flex items-start gap-3 sm:items-center sm:gap-4">
                   <span className="flex h-16 w-16 items-center justify-center rounded-full bg-slate-100">
                     <Icon className="h-9 w-9 text-[#0A1F44]" />
                   </span>
-                  <h2 className="text-2xl font-extrabold text-[#0A1F44]">{area.title}</h2>
+                  <h2 className="text-xl font-extrabold leading-tight text-[#0A1F44] sm:text-2xl">{area.title}</h2>
                 </div>
                 <p className="mt-4 text-base leading-relaxed text-slate-700">{area.copy}</p>
                 <div className="mt-5 grid gap-3 sm:grid-cols-2">
@@ -303,7 +305,7 @@ export default function PlatformPage() {
                     </div>
                   ))}
                 </div>
-                <div className="mt-5 flex flex-wrap gap-4">
+                <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:gap-4">
                   <Link
                     href="/assessment"
                     className="inline-flex items-center gap-2 text-sm font-bold text-[#c88914] transition-colors hover:text-[#a9720f]"
@@ -321,7 +323,7 @@ export default function PlatformPage() {
                 </div>
               </div>
             </div>
-            <div className="rounded-lg bg-slate-50 p-4">
+            <div className="rounded-lg bg-slate-50 p-3 sm:p-4">
               <PreviewPanel type={area.panel} />
             </div>
           </article>
@@ -329,9 +331,9 @@ export default function PlatformPage() {
       </section>
 
       {/* ── Platform Boundaries ──────────────────────────────────────────── */}
-      <section className="bg-white pb-8">
+      <section className="bg-white pb-6 sm:pb-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="flex gap-5 rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-6">
+          <div className="flex gap-3 rounded-lg border border-[#c88914]/60 bg-[#fff9eb] p-4 sm:gap-5 sm:p-6">
             <ShieldCheck className="h-12 w-12 shrink-0 text-[#c88914]" />
             <div>
               <h2 className="text-xl font-extrabold text-[#0A1F44]">Platform Boundaries</h2>
@@ -344,9 +346,9 @@ export default function PlatformPage() {
       </section>
 
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
-      <section className="bg-[#061A36] py-10 text-white">
+      <section className="bg-[#061A36] py-7 text-white sm:py-10">
         <div className="mx-auto max-w-7xl px-4 text-center md:px-8">
-          <Button asChild size="lg" className="bg-[#c88914] text-white hover:bg-[#a9720f] active:bg-[#8a5f0a]">
+          <Button asChild size="lg" className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] active:bg-[#8a5f0a] sm:w-auto">
             <Link href="/assessment">
               Request Readiness Assessment <ArrowRight className="ml-2 h-4 w-4" />
             </Link>

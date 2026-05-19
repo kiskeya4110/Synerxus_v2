@@ -46,11 +46,16 @@ export async function setupVite(app: Express, server: Server) {
     appType: "custom",
   });
 
-  // Pre-compile the entry point in the background so the first browser request
-  // hits a warm cache instead of waiting for cold compilation.
-  vite.warmupRequest('/src/main.tsx').catch((err) => {
-    logger.warn('[Vite] Warmup failed:', err?.message ?? err);
-  });
+  // Pre-compile the entry point synchronously before the server opens its port.
+  // This ensures Replit's preview never hits a cold-compile delay: by the time
+  // waitForPort fires and the webview opens, all modules are already cached.
+  logger.info('[Vite] Pre-compiling entry point (this takes a few seconds)...');
+  try {
+    await vite.warmupRequest('/src/main.tsx');
+    logger.info('[Vite] Entry point pre-compiled — server is ready');
+  } catch (err: any) {
+    logger.warn('[Vite] Warmup failed (non-fatal):', err?.message ?? err);
+  }
 
   // Serve a self-clearing no-op service worker in dev so any previously
   // registered production SW (from a prior deployment on this origin) is

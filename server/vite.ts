@@ -52,6 +52,25 @@ export async function setupVite(app: Express, server: Server) {
     logger.warn('[Vite] Warmup failed:', err?.message ?? err);
   });
 
+  // Serve a self-clearing no-op service worker in dev so any previously
+  // registered production SW (from a prior deployment on this origin) is
+  // immediately replaced and its caches are wiped. Without this, an active
+  // SW can intercept the first navigation request before the dev server is
+  // ready and fall back to stale cache, producing a blank page.
+  app.get('/service-worker.js', (_req, res) => {
+    res.set({
+      'Content-Type': 'application/javascript; charset=utf-8',
+      'Cache-Control': 'no-store',
+      'Service-Worker-Allowed': '/',
+    });
+    res.send(
+      'self.addEventListener("install",()=>self.skipWaiting());' +
+      'self.addEventListener("activate",(e)=>{' +
+        'e.waitUntil(caches.keys().then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).then(()=>self.clients.claim()));' +
+      '});'
+    );
+  });
+
   app.use(vite.middlewares);
   app.use("*", async (req, res, next) => {
     const url = req.originalUrl;

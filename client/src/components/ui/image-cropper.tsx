@@ -45,7 +45,6 @@ export function ImageCropper({
   // Track when canvas becomes available
   useEffect(() => {
     if (isOpen && canvasRef.current) {
-      console.log("[ImageCropper] Canvas is ready");
       setCanvasReady(true);
     } else {
       setCanvasReady(false);
@@ -62,11 +61,8 @@ export function ImageCropper({
   // Load image
   useEffect(() => {
     if (!imageSrc || !isOpen) {
-      console.log("[ImageCropper] Not loading - imageSrc:", !!imageSrc, "isOpen:", isOpen);
       return;
     }
-
-    console.log("[ImageCropper] Loading image:", imageSrc.substring(0, 50) + "...");
 
     // Reset state before loading new image
     setImageLoaded(false);
@@ -86,7 +82,6 @@ export function ImageCropper({
     }
 
     img.onload = () => {
-      console.log("[ImageCropper] Image loaded successfully:", img.width, "x", img.height);
       imageRef.current = img;
       setImageLoaded(true);
       setImageError(null);
@@ -108,7 +103,6 @@ export function ImageCropper({
 
     // Cleanup function
     return () => {
-      console.log("[ImageCropper] Cleanup - removing image ref");
       img.onload = null;
       img.onerror = null;
     };
@@ -208,7 +202,6 @@ export function ImageCropper({
   // Redraw when state changes
   useEffect(() => {
     if (imageLoaded && canvasRef.current) {
-      console.log("[ImageCropper] Drawing canvas...");
       // Use requestAnimationFrame to ensure canvas is ready
       requestAnimationFrame(() => {
         drawCanvas();
@@ -222,7 +215,6 @@ export function ImageCropper({
       // Give Dialog animation time to complete before checking canvas
       const timer = setTimeout(() => {
         if (canvasRef.current && imageRef.current) {
-          console.log("[ImageCropper] Delayed redraw after dialog animation");
           drawCanvas();
         }
       }, 100);
@@ -277,14 +269,10 @@ export function ImageCropper({
 
   // Generate cropped image
   const handleCrop = useCallback(() => {
-    console.log("[ImageCropper] handleCrop called");
     const img = imageRef.current;
     if (!img) {
-      console.error("[ImageCropper] No image reference!");
       return;
     }
-
-    console.log("[ImageCropper] Creating crop canvas, img size:", img.width, "x", img.height);
 
     // Create output canvas
     const outputCanvas = document.createElement("canvas");
@@ -296,7 +284,6 @@ export function ImageCropper({
     const ctx = outputCanvas.getContext("2d");
 
     if (!ctx) {
-      console.error("[ImageCropper] Failed to get canvas context!");
       return;
     }
 
@@ -334,16 +321,11 @@ export function ImageCropper({
 
     // Convert to blob - use PNG for round crops to preserve transparency
     const mimeType = cropShape === "round" ? "image/png" : "image/jpeg";
-    console.log("[ImageCropper] Converting canvas to blob, mimeType:", mimeType);
-
     outputCanvas.toBlob(
       (blob) => {
         if (blob) {
-          console.log("[ImageCropper] Blob created, size:", blob.size, "type:", blob.type);
           onCropComplete(blob);
           handleClose();
-        } else {
-          console.error("[ImageCropper] Failed to create blob!");
         }
       },
       mimeType,
@@ -371,10 +353,6 @@ export function ImageCropper({
     setPosition({ x: 0, y: 0 });
   };
 
-  // Debug log when dialog state changes
-  useEffect(() => {
-    console.log("[ImageCropper] Dialog state - isOpen:", isOpen, "imageSrc length:", imageSrc?.length, "imageLoaded:", imageLoaded);
-  }, [isOpen, imageSrc, imageLoaded]);
 
   return (
     <Dialog open={isOpen} onOpenChange={handleClose}>

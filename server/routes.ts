@@ -8806,7 +8806,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       }
 
       // Generate invitation link - directs to login page with register tab
-      const baseUrl = process.env.APP_URL || 'https://synerxus.replit.dev';
+      const baseUrl = process.env.APP_URL || process.env.APP_ORIGIN;
       const invitationLink = `${baseUrl}/login?tab=register&type=${role || 'volunteer'}`;
 
       // Send the invitation email
@@ -8882,7 +8882,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
       projectName: req.query.project as string || "Solar Village Initiative",
       message: req.query.message as string || "We are excited to invite you to join our team and make a difference in communities around the world!",
       recipientEmail: req.query.email as string || "volunteer@example.com",
-      invitationLink: `${process.env.APP_URL || 'https://synerxus.replit.dev'}/login?tab=register&type=volunteer`
+      invitationLink: `${process.env.APP_URL || process.env.APP_ORIGIN}/login?tab=register&type=volunteer`
     };
 
     const roleDisplay = sampleData.role === 'volunteer' ? 'Volunteer' :
@@ -8924,7 +8924,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
           </div>
           <div class="container">
             <div class="header">
-              <img src="${process.env.APP_URL || 'https://synerxus.replit.dev'}/assets/Synerxus_Logo_1765433966690-ByVLaIEd.png" alt="Synerxus" style="height: 50px; margin-bottom: 15px;" onerror="this.style.display='none'" />
+              <img src="${process.env.APP_URL || process.env.APP_ORIGIN}/assets/Synerxus_Logo_1765433966690-ByVLaIEd.png" alt="Synerxus" style="height: 50px; margin-bottom: 15px;" onerror="this.style.display='none'" />
               <h1>You're Invited!</h1>
               <p style="font-size: 14px; opacity: 0.9; margin-top: 8px;">Connect. Manage. Impact Globally.</p>
             </div>
@@ -8979,7 +8979,7 @@ CRITICAL: If you reference "Students Educated: 35" or any metric, it must ONLY a
               <p style="margin: 0 0 10px 0;"><strong>Synerxus</strong> - Connect. Manage. Impact Globally.</p>
               <p style="margin: 0;">This invitation was sent to ${sampleData.recipientEmail}</p>
               <p style="margin: 10px 0 0 0;">
-                <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}">Visit Synerxus</a> |
+                <a href="${process.env.APP_URL || process.env.APP_ORIGIN}">Visit Synerxus</a> |
                 <a href="mailto:hello@synerxus.com">Contact Support</a>
               </p>
             </div>

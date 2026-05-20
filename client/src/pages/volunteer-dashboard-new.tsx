@@ -802,7 +802,6 @@ export default function VolunteerDashboardNew() {
     if (dbUser?.id) {
       const storedId = localStorage.getItem("currentUserId");
       if (storedId !== String(dbUser.id)) {
-        console.log("[VolunteerDashboard] Syncing localStorage userId:", storedId, "->", dbUser.id);
         localStorage.setItem("currentUserId", String(dbUser.id));
       }
     }

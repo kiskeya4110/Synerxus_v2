@@ -937,7 +937,7 @@ miscRouter.post("/invitations/send", authMiddleware, sensitiveRateLimiter, async
     } else {
       // New user or non-volunteer - send invitation email
       const project = projectId ? await storage.getProject(parseInt(projectId)) : null;
-      const appUrl = process.env.APP_URL || 'https://synerxus.replit.dev';
+      const appUrl = process.env.APP_URL || process.env.APP_ORIGIN;
 
       try {
         const emailResult = await sendInvitationEmail({

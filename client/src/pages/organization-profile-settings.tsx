@@ -384,7 +384,6 @@ export default function OrganizationProfileSettings() {
           orgData?.logo ||
           "";
         if (logoToUse) {
-          console.log("[OrgSettings] Setting logo from sources:", logoToUse);
           setLogoUrl(logoToUse);
         }
       } else if (hasOrgProfile) {
@@ -409,7 +408,6 @@ export default function OrganizationProfileSettings() {
           orgData?.logo ||
           "";
         if (logoToUse) {
-          console.log("[OrgSettings] Setting logo from org profile:", logoToUse);
           setLogoUrl(logoToUse);
         }
       } else if (currentUser?.email) {

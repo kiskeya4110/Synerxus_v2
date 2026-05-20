@@ -37,7 +37,6 @@ export function ProfilePictureUpload({
   const displayUrl = previewUrl || currentPhotoUrl || '';
 
   const handleButtonClick = useCallback(() => {
-    console.log('[Upload] Button clicked, userId:', userId);
     if (!userId) {
       setErrorMessage('Please wait for the page to load completely.');
       setStatus('error');
@@ -62,12 +61,9 @@ export function ProfilePictureUpload({
     }
 
     if (!file) {
-      console.log('[Upload] No file selected');
       setStatus('idle');
       return;
     }
-
-    console.log('[Upload] File selected:', file.name, file.type, file.size);
 
     // Validate file type
     const validTypes = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
@@ -113,12 +109,7 @@ export function ProfilePictureUpload({
     setErrorMessage('');
 
     try {
-      console.log('[Upload] Starting upload for user:', userId, 'type:', userType);
-
-      // Upload the file
       const result = await uploadProfilePhoto(file, userId, userType);
-
-      console.log('[Upload] Upload result:', result);
 
       if (result?.url) {
         // Clean up old preview
@@ -139,8 +130,6 @@ export function ProfilePictureUpload({
 
         // Reset to idle after showing success
         setTimeout(() => setStatus('idle'), 2000);
-
-        console.log('[Upload] Success! URL:', result.url);
       } else {
         throw new Error('Upload completed but no URL was returned');
       }

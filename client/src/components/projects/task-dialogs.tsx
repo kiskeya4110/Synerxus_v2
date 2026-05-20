@@ -79,8 +79,7 @@ export function CreateTaskDialog({ projectId }: CreateTaskDialogProps) {
       });
       return response.json();
     },
-    onSuccess: (savedTask) => {
-      console.log("Task created successfully:", savedTask);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Success",
@@ -344,8 +343,7 @@ export function EditTaskDialog({ task }: EditTaskDialogProps) {
       });
       return response.json();
     },
-    onSuccess: (updatedTask) => {
-      console.log("Task updated successfully:", updatedTask);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/tasks"] });
       toast({
         title: "Success",
@@ -563,7 +561,6 @@ export function DeleteTaskDialog({ task }: DeleteTaskDialogProps) {
       return { success: true };
     },
     onSuccess: () => {
-      console.log("Task deleted successfully:", task.id);
       // Use predicate-based invalidation to match all related queries
       queryClient.invalidateQueries({ predicate: (query) => 
         String(query.queryKey[0]).includes('/api/tasks') ||

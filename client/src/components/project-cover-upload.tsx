@@ -102,7 +102,6 @@ export function ProjectCoverUpload({
       setIsUploading(true);
 
       // Upload new cover first (before deleting old one)
-      console.log("[ProjectCoverUpload] Uploading cover for project:", projectId);
       const uploadPromise = uploadProjectCover(file, projectId);
       const timeoutPromise = new Promise((_, reject) =>
         setTimeout(() => reject(new Error("Upload timeout. Please try again.")), 30000)
@@ -117,11 +116,9 @@ export function ProjectCoverUpload({
       // Upload succeeded - now safe to delete old cover
       if (oldStoragePath) {
         try {
-          console.log("[ProjectCoverUpload] Deleting old cover:", oldStoragePath);
           await deleteFile(oldStoragePath);
         } catch (delErr) {
           // Non-critical: old file cleanup failed, but new upload succeeded
-          console.warn("[ProjectCoverUpload] Could not delete old cover:", delErr);
         }
       }
 

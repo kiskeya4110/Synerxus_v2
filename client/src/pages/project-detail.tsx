@@ -225,9 +225,6 @@ export default function ProjectDetail() {
         return;
       } catch (err: any) {
         // User cancelled or share failed - fall through to clipboard
-        if (err.name !== 'AbortError') {
-          console.log('Share failed, falling back to clipboard');
-        }
       }
     }
 

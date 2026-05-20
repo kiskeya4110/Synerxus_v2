@@ -177,13 +177,10 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
   const { toast } = useToast();
 
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    console.log("[CreateProject] Image upload triggered");
     const file = event.target.files?.[0];
     if (!file) {
-      console.log("[CreateProject] No file selected");
       return;
     }
-    console.log("[CreateProject] File selected:", file.name, file.size, file.type);
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -231,8 +228,8 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
       if (path) {
         try {
           await deleteFile(path);
-        } catch (err) {
-          console.warn("Could not delete old image:", err);
+        } catch {
+          // non-critical
         }
       }
       setCoverImageUrl("");
@@ -340,14 +337,10 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
         };
       }
 
-      console.log("Creating project with payload:", JSON.stringify(payload, null, 2));
       const response = await apiRequest("POST", "/api/projects", payload);
-      const result = await response.json();
-      console.log("Project creation response:", result);
-      return result;
+      return response.json();
     },
-    onSuccess: (savedProject) => {
-      console.log("Project saved successfully:", savedProject);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Success",
@@ -368,15 +361,8 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
   });
 
   const onSubmit = (data: ProjectFormValues) => {
-    console.log("Form submitted with data:", data);
     createMutation.mutate(data);
   };
-
-  // Debug: Log form errors when they change
-  const formErrors = form.formState.errors;
-  if (Object.keys(formErrors).length > 0) {
-    console.log("Form validation errors:", formErrors);
-  }
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
@@ -1109,7 +1095,6 @@ export function CreateProjectDialog({ organizationId, defaultOpen = false, onOpe
                 type="submit"
                 disabled={createMutation.isPending}
                 data-testid="button-submit-project"
-                onClick={() => console.log("Submit button clicked, form valid:", form.formState.isValid, "errors:", form.formState.errors)}
               >
                 {createMutation.isPending ? "Creating..." : "Create Project"}
               </Button>
@@ -1160,9 +1145,7 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
       if (!orgId) {
         throw new Error("Organization ID is missing for this project");
       }
-      console.log("[EditProject] Uploading cover for org:", orgId);
       const result = await uploadProjectCover(file, orgId);
-      console.log("[EditProject] Upload result:", result);
       setCoverImageUrl(result.url);
       toast({
         title: "Image uploaded",
@@ -1186,8 +1169,8 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
       if (path) {
         try {
           await deleteFile(path);
-        } catch (err) {
-          console.warn("Could not delete old image:", err);
+        } catch {
+          // non-critical
         }
       }
       setCoverImageUrl("");
@@ -1259,8 +1242,7 @@ export function EditProjectDialog({ project }: EditProjectDialogProps) {
       const response = await apiRequest("PATCH", `/api/projects/${project.id}`, payload);
       return response.json();
     },
-    onSuccess: (savedProject) => {
-      console.log("Project updated successfully:", savedProject);
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/projects"] });
       toast({
         title: "Success",
@@ -1493,15 +1475,10 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
 
   const deleteMutation = useMutation({
     mutationFn: async () => {
-      console.log("[DeleteProject] Starting delete for project:", project.id);
       const response = await apiRequest("DELETE", `/api/projects/${project.id}`);
-      console.log("[DeleteProject] Response status:", response.status);
-      const data = await response.json();
-      console.log("[DeleteProject] Response data:", data);
-      return data;
+      return response.json();
     },
-    onSuccess: (data) => {
-      console.log("[DeleteProject] Success:", data);
+    onSuccess: () => {
       // Use predicate-based invalidation to match all related queries
       queryClient.invalidateQueries({ predicate: (query) =>
         String(query.queryKey[0]).includes('/api/projects') ||
@@ -1528,7 +1505,6 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
   });
 
   const handleOpenChange = (newOpen: boolean) => {
-    console.log("[DeleteProject] Dialog open state changing:", newOpen);
     setOpen(newOpen);
   };
 
@@ -1541,7 +1517,6 @@ export function DeleteProjectDialog({ project }: DeleteProjectDialogProps) {
           data-testid={`button-delete-project-${project.id}`}
           onClick={(e) => {
             e.stopPropagation();
-            console.log("[DeleteProject] Trash button clicked for project:", project.id);
           }}
         >
           <Trash2 className="h-4 w-4 text-red-600" />

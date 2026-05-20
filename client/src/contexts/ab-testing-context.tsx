@@ -237,8 +237,6 @@ export function ABTestingProvider({ children }: { children: ReactNode }) {
       };
     });
 
-    // Also log to console for debugging
-    console.log(`[A/B Test] ${experimentId} - ${eventType}`, metadata || '');
   }, []);
 
   // Get metrics for an experiment

@@ -163,8 +163,6 @@ export default function CorporatePartnerProfileSettings() {
       const headers = await getAuthHeaders();
       const response = await fetch(`/api/users/me`, { headers, credentials: "include" });
       if (!response.ok) {
-        // Demo mode: return fallback user data when API fails
-        console.log("[CSRProfileSettings] Using demo mode - API user fetch failed");
         return {
           id: parseInt(id) || 1,
           displayName: 'Demo Corporate Partner',

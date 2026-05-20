@@ -316,7 +316,7 @@ function generateEmailTemplate(digest: WeeklyDigestData): string {
           ` : ''}
 
           <div style="text-align: center;">
-            <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}/impact-report" class="button">View Your Full Impact Report</a>
+            <a href="${process.env.APP_URL || process.env.APP_ORIGIN}/impact-report" class="button">View Your Full Impact Report</a>
           </div>
 
           <div style="background: #f0f9ff; padding: 15px; border-radius: 6px; margin: 20px 0; border-left: 4px solid #0284c7;">
@@ -328,7 +328,7 @@ function generateEmailTemplate(digest: WeeklyDigestData): string {
           <div class="footer">
             <p style="margin: 0 0 10px 0;">Synerxus - Connect. Manage. Impact Globally.</p>
             <p style="margin: 0;">This email was sent because you have email digests enabled in your account settings.</p>
-            <p style="margin: 10px 0 0 0;"><a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}/volunteer-profile-settings" style="color: #3b82f6; text-decoration: none;">Manage Notification Settings</a></p>
+            <p style="margin: 10px 0 0 0;"><a href="${process.env.APP_URL || process.env.APP_ORIGIN}/volunteer-profile-settings" style="color: #3b82f6; text-decoration: none;">Manage Notification Settings</a></p>
           </div>
         </div>
       </body>
@@ -352,7 +352,7 @@ async function sendWeeklyDigest(userId: number): Promise<boolean> {
       to: digestData.email,
       subject: `📊 Your Weekly Impact Summary - ${digestData.totalHours}h Contributed${digestData.weeklyStreak && digestData.weeklyStreak > 1 ? ` (${digestData.weeklyStreak}🔥)` : ''}`,
       html: htmlContent,
-      text: `Hi ${digestData.displayName},\n\nHere's your weekly impact summary:\n- ${digestData.totalHours} hours contributed\n- ${digestData.tasksCompleted} tasks completed\n- ${digestData.impactMetrics.length} impact metrics logged\n- Impact Score: ${digestData.impactScore}/100\n\nView your full report: ${process.env.APP_URL || 'https://synerxus.replit.dev'}/impact-report`,
+      text: `Hi ${digestData.displayName},\n\nHere's your weekly impact summary:\n- ${digestData.totalHours} hours contributed\n- ${digestData.tasksCompleted} tasks completed\n- ${digestData.impactMetrics.length} impact metrics logged\n- Impact Score: ${digestData.impactScore}/100\n\nView your full report: ${process.env.APP_URL || process.env.APP_ORIGIN}/impact-report`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -447,7 +447,7 @@ function generateOrganizationEmailTemplate(digest: any): string {
           ` : ''}
 
           <div style="text-align: center;">
-            <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}/organization-impact-report" class="button">View Full Organization Report</a>
+            <a href="${process.env.APP_URL || process.env.APP_ORIGIN}/organization-impact-report" class="button">View Full Organization Report</a>
           </div>
 
           <div class="footer">
@@ -635,7 +635,7 @@ function generateApprovalNotificationTemplate(data: ApprovalNotificationData): s
           `}
 
           <div style="text-align: center;">
-            <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}/volunteer-dashboard" class="button">View Your Dashboard</a>
+            <a href="${process.env.APP_URL || process.env.APP_ORIGIN}/volunteer-dashboard" class="button">View Your Dashboard</a>
           </div>
 
           <div class="footer">
@@ -661,7 +661,7 @@ async function sendApprovalNotification(data: ApprovalNotificationData): Promise
       to: data.recipientEmail,
       subject: `${statusIcon} ${itemType} ${statusText} - ${data.projectName}`,
       html: htmlContent,
-      text: `Hi ${data.recipientName},\n\nYour ${data.itemType === 'hours' ? 'volunteer hours' : 'impact report'} for "${data.projectName}" has been ${data.status}.\n\n${data.itemType === 'hours' ? `Hours: ${data.details.hours || 0}` : `Impact: ${data.details.impactValue || 0} ${data.details.metricName || ''}`}\n\nView your dashboard: ${process.env.APP_URL || 'https://synerxus.replit.dev'}/volunteer-dashboard`,
+      text: `Hi ${data.recipientName},\n\nYour ${data.itemType === 'hours' ? 'volunteer hours' : 'impact report'} for "${data.projectName}" has been ${data.status}.\n\n${data.itemType === 'hours' ? `Hours: ${data.details.hours || 0}` : `Impact: ${data.details.impactValue || 0} ${data.details.metricName || ''}`}\n\nView your dashboard: ${process.env.APP_URL || process.env.APP_ORIGIN}/volunteer-dashboard`,
     };
 
     await transporter.sendMail(mailOptions);
@@ -794,7 +794,7 @@ function generateInvitationEmailTemplate(data: InvitationEmailData): string {
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.APP_URL || 'https://synerxus.replit.dev'}/assets/Synerxus_Logo_1765433966690-ByVLaIEd.png" alt="Synerxus" style="height: 50px; margin-bottom: 15px;" />
+            <img src="${process.env.APP_URL || process.env.APP_ORIGIN}/assets/Synerxus_Logo_1765433966690-ByVLaIEd.png" alt="Synerxus" style="height: 50px; margin-bottom: 15px;" />
             <h1>You're Invited!</h1>
             <p style="font-size: 14px; opacity: 0.9; margin-top: 8px;">Connect. Manage. Impact Globally.</p>
           </div>
@@ -856,7 +856,7 @@ function generateInvitationEmailTemplate(data: InvitationEmailData): string {
             <p style="margin: 0 0 10px 0;"><strong>Synerxus</strong> - Connect. Manage. Impact Globally.</p>
             <p style="margin: 0;">This invitation was sent to ${data.recipientEmail}</p>
             <p style="margin: 10px 0 0 0;">
-              <a href="${process.env.APP_URL || 'https://synerxus.replit.dev'}">Visit Synerxus</a> |
+              <a href="${process.env.APP_URL || process.env.APP_ORIGIN}">Visit Synerxus</a> |
               <a href="mailto:hello@synerxus.com">Contact Support</a>
             </p>
           </div>

@@ -56,9 +56,6 @@ export function useOfflineSync(userId?: number) {
         // downlink < 0.2 Mbps or effectiveType 'slow-2g' is "weak"
         // This ensures standard behavior for strong signals
         isWeak = connection.downlink < 0.2 || ['slow-2g'].includes(connection.effectiveType);
-        if (isWeak) {
-          console.log('[OfflineSync] Connection detected as weak (Low Bandwidth Mode)');
-        }
       }
       
       setState(prev => ({ 
@@ -166,11 +163,9 @@ export function useOfflineSync(userId?: number) {
 
     try {
       const queue = await getSyncQueue();
-      console.log(`[OfflineSync] Starting sync of ${queue.length} items`);
 
       for (const item of queue) {
         if (item.retryCount >= 5) {
-          console.log(`[OfflineSync] Skipping item ${item.id} - too many retries`);
           continue;
         }
 
@@ -185,7 +180,6 @@ export function useOfflineSync(userId?: number) {
 
           await removeSyncedItem(item.id, item.type);
           synced++;
-          console.log(`[OfflineSync] Successfully synced ${item.type}:`, item.id);
         } catch (err: any) {
           failed++;
           await updateSyncStatus(item.id, item.type, 'failed', err.message);
@@ -241,7 +235,6 @@ export function useOfflineSync(userId?: number) {
         await cacheData('tasks', tasks);
       }
 
-      console.log('[OfflineSync] Cached projects and tasks for offline use');
     } catch (err) {
       console.error('[OfflineSync] Failed to cache data:', err);
     }
@@ -258,7 +251,6 @@ export function useOfflineSync(userId?: number) {
 
   useEffect(() => {
     const handleOnline = () => {
-      console.log('[OfflineSync] Connection restored');
       setState(prev => ({ ...prev, isOnline: true }));
       
       toast({
@@ -270,7 +262,6 @@ export function useOfflineSync(userId?: number) {
     };
 
     const handleOffline = () => {
-      console.log('[OfflineSync] Connection lost');
       setState(prev => ({ ...prev, isOnline: false }));
       
       toast({

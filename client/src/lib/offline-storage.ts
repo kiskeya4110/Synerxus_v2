@@ -132,7 +132,6 @@ export async function saveActivityOffline(activity: Omit<PendingActivity, 'id' |
     };
 
     transaction.oncomplete = () => {
-      console.log('[OfflineStorage] Activity saved offline:', pendingActivity.id);
       resolve(pendingActivity);
     };
 
@@ -173,7 +172,6 @@ export async function saveImpactOffline(impact: Omit<PendingImpact, 'id' | 'crea
     };
 
     transaction.oncomplete = () => {
-      console.log('[OfflineStorage] Impact saved offline:', pendingImpact.id);
       resolve(pendingImpact);
     };
 
@@ -327,7 +325,6 @@ export async function removeSyncedItem(id: string, type: 'activity' | 'impact'):
     syncStore.delete(id);
 
     transaction.oncomplete = () => {
-      console.log('[OfflineStorage] Removed synced item:', id);
       resolve();
     };
     transaction.onerror = () => reject(transaction.error);
@@ -377,7 +374,6 @@ export async function clearAllPendingData(): Promise<void> {
     transaction.objectStore(STORES.syncQueue).clear();
 
     transaction.oncomplete = () => {
-      console.log('[OfflineStorage] Cleared all pending data');
       resolve();
     };
     transaction.onerror = () => reject(transaction.error);

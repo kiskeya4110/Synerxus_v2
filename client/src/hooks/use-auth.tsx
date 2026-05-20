@@ -200,7 +200,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isDemoSession = sessionType === "demo";
 
         if (isUidMismatch || isDemoSession) {
-          console.log("[Auth] Stale/wrong Firebase session detected — clearing Firebase.", { storedFirebaseUid, incomingUid: firebaseUser.uid, sessionType });
           ignoreNextNullAuthRef.current = true;
           try { await firebaseSignOut(auth); } catch (_) { ignoreNextNullAuthRef.current = false; }
           await restoreDemoUser();
@@ -261,7 +260,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signInWithEmail = async (email: string, password: string) => {
-    console.log("[Auth] signInWithEmail called for:", email);
 
     // Helper to add timeout to promises
     const withTimeout = <T,>(promise: Promise<T>, ms: number, errorMsg: string): Promise<T> => {
@@ -272,13 +270,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     try {
-      console.log("[Auth] Calling Firebase signInWithEmailAndPassword...");
       const result = await withTimeout(
         signInWithEmailAndPassword(auth, email, password),
         10000,
         "Firebase authentication timed out"
       );
-      console.log("[Auth] Firebase sign-in successful:", result.user.uid);
 
       // Sync with backend to get user data
       const syncResult = await syncWithBackend(result.user);
@@ -315,11 +311,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         error?.message?.includes("timed out");
 
       if (shouldFallbackToDemo) {
-        console.log("[Auth] Firebase auth failed, trying backend lookup. Error:", errorCode || error?.message);
-
         try {
           // Try to find user by email in backend using firebase-sync with isLoginAttempt flag
-          console.log("[Auth] Attempting backend login for:", email);
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
 
@@ -350,7 +343,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               localStorage.setItem("sessionType", "demo");
               localStorage.setItem("sessionFirebaseUid", "demo_no_firebase");
               // JWT cookie is set httpOnly by the server — no localStorage storage needed.
-              console.log("[Auth] Demo login successful for existing user:", user.email);
 
               return {
                 uid: user.firebaseUid || `demo_${user.id}`,
@@ -399,16 +391,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signUp = async (email: string, password: string, userType?: string, displayName?: string) => {
-    console.log("[Auth] signUp called for:", email, "userType:", userType);
     try {
-      console.log("[Auth] Calling Firebase createUserWithEmailAndPassword...");
       const result = await createUserWithEmailAndPassword(auth, email, password);
-      console.log("[Auth] Firebase user created:", result.user.uid);
 
       // Sync with backend to create the user record
-      console.log("[Auth] Syncing with backend...");
       const syncResult = await syncWithBackend(result.user, userType, displayName);
-      console.log("[Auth] Backend sync result:", syncResult);
 
       if (!syncResult) {
         toast({
@@ -427,7 +414,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (errorCode === "auth/invalid-api-key" || errorCode === "auth/configuration-not-found" ||
           errorCode === "auth/operation-not-allowed" || errorCode === "auth/admin-restricted-operation" ||
           error?.message?.includes("demo-key") || error?.message?.includes("invalid-api-key")) {
-        console.log("[Auth] Firebase auth not available, using demo mode signup. Error:", errorCode);
 
         // Create user directly in backend without Firebase
         const demoUid = `demo_${Date.now()}_${Math.random().toString(36).substring(7)}`;

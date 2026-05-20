@@ -18,7 +18,6 @@ async function getAuthToken(): Promise<string | null> {
       const token = await user.getIdToken(true);
       return token;
     } else {
-      console.log('[Upload] No current user, waiting for auth state...');
       // If no current user, wait briefly for auth state to initialize
       // This handles race conditions where upload is triggered before auth state is ready
       return new Promise((resolve) => {
@@ -30,13 +29,11 @@ async function getAuthToken(): Promise<string | null> {
               resolve(null);
             });
           } else {
-            console.log('[Upload] No user after auth state change');
             resolve(null);
           }
         });
         // Timeout after 3 seconds (increased from 2)
         setTimeout(() => {
-          console.log('[Upload] Auth token timeout - no user authenticated');
           resolve(null);
         }, 3000);
       });
@@ -87,8 +84,6 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
   }
 
   try {
-    console.log('[Upload] Starting upload for file:', file.name, 'size:', file.size, 'type:', file.type);
-
     // Get Firebase ID token for secure authentication
     let token = await getAuthToken();
     if (!token) {
@@ -108,24 +103,16 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
 
     // If we get a 401, try once more with a fresh token
     if (response.status === 401) {
-      console.log('[Upload] Got 401, trying to refresh token and retry...');
-
-      // Force a fresh token by signing out and back in, or just get a fresh one
       const user = auth.currentUser;
       if (user) {
         try {
-          // Force token refresh
           token = await user.getIdToken(true);
-
           response = await performUpload(token);
-          console.log('[Upload] Retry response status:', response.status);
         } catch (refreshError) {
           console.error('[Upload] Failed to refresh token:', refreshError);
         }
       }
     }
-
-    console.log('[Upload] Response status:', response.status);
 
     if (!response.ok) {
       let errorMessage = `Upload failed: ${response.statusText}`;
@@ -153,8 +140,6 @@ export async function uploadFile(file: File, path: string, imageType?: string): 
     }
 
     const result = await response.json();
-    console.log('[Upload] Upload successful:', result.url);
-
     return {
       url: result.url,
       path: result.path,
@@ -177,9 +162,6 @@ export async function uploadProfilePhoto(
   userId: string,
   userType: 'volunteer' | 'organization' | 'corporate-partner'
 ): Promise<UploadResult> {
-  console.log('[uploadProfilePhoto] Called with userId:', userId, 'userType:', userType);
-  console.log('[uploadProfilePhoto] File:', file.name, file.type, file.size);
-
   // Validate userId
   if (!userId || userId === '') {
     throw new Error('User ID is required for upload');
@@ -202,13 +184,7 @@ export async function uploadProfilePhoto(
   const sanitizedUserId = userId.replace(/[^a-zA-Z0-9-_]/g, '_');
   const filename = `${sanitizedUserId}-${timestamp}.${fileExtension}`;
   const path = `profile-photos/${userType}/${filename}`;
-
-  console.log('[uploadProfilePhoto] Generated path:', path);
-
-  const result = await uploadFile(file, path, 'profile');
-  console.log('[uploadProfilePhoto] Upload result:', result);
-
-  return result;
+  return uploadFile(file, path, 'profile');
 }
 
 /**

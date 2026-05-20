@@ -320,9 +320,9 @@ export function securityHeaders(
   const cspDirectives = [
     "default-src 'self'",
     // Scripts: In dev, allow inline scripts for Vite HMR; in prod, only trusted sources
-    isDev 
-      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://replit.com https://apis.google.com"
-      : "script-src 'self' https://cdnjs.cloudflare.com https://replit.com https://apis.google.com",
+    isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://apis.google.com"
+      : "script-src 'self' https://cdnjs.cloudflare.com https://apis.google.com",
     // Styles: unsafe-inline needed for CSS-in-JS (React/Emotion/styled-components)
     "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
     // Images: Allow data URIs for inline images and any HTTPS source

@@ -231,11 +231,12 @@ function Timeline({ items, accent }: { items: TimelineItem[]; accent: "amber" | 
 }
 
 export default function ForEsgTeamsPage() {
-  const [activeFeature, setActiveFeature] = useState(0);
-  const [activeDashboardElement, setActiveDashboardElement] = useState(0);
-  const [activeEvidenceCategory, setActiveEvidenceCategory] = useState(0);
-  const [activeStartStep, setActiveStartStep] = useState(0);
-  const ActiveDashboardIcon = dashboardElements[activeDashboardElement].icon;
+  const [activeFeature, setActiveFeature] = useState<number | null>(null);
+  const [activeDashboardElement, setActiveDashboardElement] = useState<number | null>(0);
+  const [activeEvidenceCategory, setActiveEvidenceCategory] = useState<number | null>(null);
+  const [activeStartStep, setActiveStartStep] = useState<number | null>(null);
+  const dashIdx = activeDashboardElement ?? 0;
+  const ActiveDashboardIcon = dashboardElements[dashIdx].icon;
 
   return (
     <MarketingLayout>
@@ -306,7 +307,7 @@ export default function ForEsgTeamsPage() {
               <button
                 key={feature.title}
                 type="button"
-                onClick={() => setActiveFeature(index)}
+                onClick={() => setActiveFeature((prev) => (prev === index ? null : index))}
                 aria-pressed={isActive}
                 className={`rounded-lg border p-4 text-left shadow-sm transition-all duration-200 sm:p-6 ${
                   isActive
@@ -346,7 +347,7 @@ export default function ForEsgTeamsPage() {
                   <button
                     key={title}
                     type="button"
-                    onClick={() => setActiveDashboardElement(index)}
+                    onClick={() => setActiveDashboardElement((prev) => (prev === index ? null : index))}
                     aria-pressed={isActive}
                     className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all duration-200 sm:p-4 ${
                       isActive
@@ -363,17 +364,23 @@ export default function ForEsgTeamsPage() {
               })}
             </div>
             <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
-              <div className="flex items-center gap-3">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#0A1F44] text-[#ffcc33]">
-                  <ActiveDashboardIcon className="h-5 w-5" />
-                </span>
-                <div>
-                  <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Active dashboard view</p>
-                  <h3 className="text-xl font-extrabold text-[#0A1F44]">{dashboardElements[activeDashboardElement].title}</h3>
-                </div>
-              </div>
-              <p className="mt-3 text-sm leading-relaxed text-slate-700">{dashboardElements[activeDashboardElement].body}</p>
-              <div className="mt-5 rounded-lg bg-slate-50 p-3">{dashboardElements[activeDashboardElement].render}</div>
+              {activeDashboardElement !== null ? (
+                <>
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-[#0A1F44] text-[#ffcc33]">
+                      <ActiveDashboardIcon className="h-5 w-5" />
+                    </span>
+                    <div>
+                      <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#c88914]">Active dashboard view</p>
+                      <h3 className="text-xl font-extrabold text-[#0A1F44]">{dashboardElements[dashIdx].title}</h3>
+                    </div>
+                  </div>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-700">{dashboardElements[dashIdx].body}</p>
+                  <div className="mt-5 rounded-lg bg-slate-50 p-3">{dashboardElements[dashIdx].render}</div>
+                </>
+              ) : (
+                <p className="py-8 text-center text-sm text-slate-400">Select a view to see the supporting records.</p>
+              )}
             </div>
           </div>
           <p className="mx-auto mt-5 max-w-3xl text-center text-sm font-semibold leading-relaxed text-slate-600">
@@ -411,7 +418,7 @@ export default function ForEsgTeamsPage() {
               <button
                 key={title}
                 type="button"
-                onClick={() => setActiveEvidenceCategory(index)}
+                onClick={() => setActiveEvidenceCategory((prev) => (prev === index ? null : index))}
                 aria-pressed={isActive}
                 className={`rounded-lg border p-4 text-left shadow-sm transition-all duration-200 sm:p-5 ${
                   isActive
@@ -462,7 +469,7 @@ export default function ForEsgTeamsPage() {
               <button
                 key={step.title}
                 type="button"
-                onClick={() => setActiveStartStep(index)}
+                onClick={() => setActiveStartStep((prev) => (prev === index ? null : index))}
                 aria-pressed={activeStartStep === index}
                 className={`rounded-lg border p-4 text-left shadow-sm transition-all duration-200 sm:p-6 ${
                   activeStartStep === index

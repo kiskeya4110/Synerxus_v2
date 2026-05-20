@@ -596,15 +596,22 @@ app.use((req, res, next) => {
       // port in .replit). Start a second HTTP server on 3000 using the same
       // Express app so the preview loads regardless of which port is opened.
       if (process.env.NODE_ENV === 'development' && port !== 3000) {
-        const devAliasServer = http.createServer(app);
-        devAliasServer.listen(3000, '0.0.0.0', () => {
-          logger.info('[Server] Dev alias listening on port 3000 (Replit preview)');
-        });
-        devAliasServer.on('error', (err: NodeJS.ErrnoException) => {
-          if (err.code !== 'EADDRINUSE') {
-            logger.warn('[Server] Dev alias port 3000 error:', err.message);
-          }
-        });
+        const startDevAlias = (attemptsLeft: number) => {
+          const devAliasServer = http.createServer(app);
+          devAliasServer.listen(3000, '0.0.0.0', () => {
+            logger.info('[Server] Dev alias listening on port 3000 (Replit preview)');
+          });
+          devAliasServer.on('error', (err: NodeJS.ErrnoException) => {
+            devAliasServer.close();
+            if (err.code === 'EADDRINUSE' && attemptsLeft > 0) {
+              // Previous server still releasing the port — retry after a short delay
+              setTimeout(() => startDevAlias(attemptsLeft - 1), 1500);
+            } else if (err.code !== 'EADDRINUSE') {
+              logger.warn('[Server] Dev alias port 3000 error:', err.message);
+            }
+          });
+        };
+        startDevAlias(5);
       }
     };
     

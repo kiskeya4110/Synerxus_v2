@@ -50,46 +50,76 @@ const processStages: ProcessStage[] = [
 
 const articles = [
   {
+    issue: 8,
+    category: "COMMUNITY EVIDENCE",
+    title: "When ESG Evidence Misses the Communities Closest to the Work",
+    description: "How ESG claims often miss frontline communities — and why keeping partner records, field notes, and community documentation connected to sustainability claims matters.",
+    href: "https://www.linkedin.com/pulse/issue-8-when-esg-evidence-misses-communities-closest-honorat-zwekc",
+    headerGradient: "from-emerald-800 to-emerald-600",
+    headerImage: "/optimized/verifiable-issue-8.webp",
+  },
+  {
     issue: 7,
     category: "IMPACT LANGUAGE",
     title: "Why I'm Becoming More Careful With the Word Impact",
     description: "A closer look at when impact language clarifies the claim, and when it starts to overstate what the evidence can support.",
+    href: "https://www.linkedin.com/pulse/why-im-becoming-more-careful-word-impact-alc%C3%A9nat-honorat-bdswf",
+    headerGradient: "from-orange-700 to-orange-500",
+    headerImage: "/optimized/verifiable-issue-7.webp",
   },
   {
     issue: 6,
     category: "PROXIMITY AND TRUST",
     title: "When Distance Creates Doubt: What I've Seen Up Close",
     description: "Why distance between reporters, partners, and affected communities changes the evidence burden behind sustainability claims.",
+    href: "https://www.linkedin.com/pulse/issue-6-when-distance-creates-doubt-what-ive-seen-up-honorat-1xsrc",
+    headerGradient: "from-amber-700 to-amber-500",
+    headerImage: "/optimized/verifiable-issue-6.webp",
   },
   {
     issue: 5,
     category: "NATURE CLAIMS",
     title: "Nature Claims Without Context; Who Pays the Price?",
     description: "How nature-positive language can lose credibility when claims are separated from local context, costs, and accountability.",
+    href: "https://www.linkedin.com/pulse/nature-claims-without-context-who-pays-price-alc%C3%A9nat-honorat-ppurc",
+    headerGradient: "from-green-800 to-green-600",
+    headerImage: "/optimized/verifiable-issue-5.webp",
   },
   {
     issue: 4,
     category: "CLIMATE DISCLOSURE",
     title: "California's Climate Rules: Ambitious Deadlines, Missing Infrastructure",
     description: "A verification lens on climate disclosure timelines, reporting capacity, and the infrastructure needed to make rules workable.",
+    href: "https://www.linkedin.com/pulse/issue-4-californias-climate-rules-ambitious-deadlines-alc%C3%A9nat-honorat-slqfc",
+    headerGradient: "from-teal-800 to-teal-600",
+    headerImage: "/optimized/verifiable-issue-4.webp",
   },
   {
     issue: 3,
     category: "GEOPOLITICS",
     title: "Impact Is Becoming a Geopolitical Asset",
     description: "Why impact evidence is becoming strategically valuable as governments, companies, and funders compete over credibility.",
+    href: "https://www.linkedin.com/pulse/impact-becoming-geopolitical-asset-alc%C3%A9nat-honorat-suv3c",
+    headerGradient: "from-indigo-800 to-indigo-600",
+    headerImage: "/optimized/verifiable-issue-3.webp",
   },
   {
     issue: 2,
     category: "VERIFICATION LENS",
     title: "Major Sustainability News This Week. Let's Apply the Verification Lens",
     description: "A practical reading of sustainability headlines through claim boundaries, source support, and evidence quality.",
+    href: "https://www.linkedin.com/pulse/major-sustainability-news-week-lets-apply-lens-alc%C3%A9nat-honorat-cfoyc",
+    headerGradient: "from-slate-700 to-slate-500",
+    headerImage: "/optimized/verifiable-issue-2.webp",
   },
   {
     issue: 1,
     category: "FOUNDER STORY",
     title: "The Verifiable: A Founder Story",
     description: "The origin of The Verifiable and why claim defensibility, evidence discipline, and reporting boundaries matter.",
+    href: "https://www.linkedin.com/pulse/verifiable-founder-story-alc%C3%A9nat-honorat-o27kc",
+    headerGradient: "from-[#0A1F44] to-[#1a3a6e]",
+    headerImage: "/optimized/verifiable-issue-1.webp",
   },
 ];
 
@@ -256,16 +286,42 @@ export default function ResourcesPage() {
               Read The Verifiable on LinkedIn <ArrowRight className="h-4 w-4" />
             </a>
           </div>
-          <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2 lg:grid-cols-5 lg:gap-5">
+          <div className="mt-5 grid gap-4 sm:mt-6 sm:grid-cols-2 lg:grid-cols-4 lg:gap-5">
             {articles.map((article) => (
-              <article key={article.title} className="group flex min-h-[220px] flex-col rounded-md border border-slate-200 bg-white p-4 shadow-md transition-all hover:-translate-y-0.5 hover:border-[#0A1F44]/25 hover:shadow-lg sm:min-h-[260px] sm:p-5">
-                <a href={NEWSLETTER_URL} target="_blank" rel="noopener noreferrer" className="flex h-full flex-col">
-                  <p className="text-xs font-extrabold uppercase tracking-wide text-[#c88914]">{article.category}</p>
-                  <h3 className="mt-4 font-serif text-lg leading-tight text-[#0A1F44]">{`Issue #${article.issue}: ${article.title}`}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-700">{article.description}</p>
-                  <p className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-bold text-[#c88914] transition-colors group-hover:text-[#a9720f]">
-                    Read The Verifiable <ArrowRight className="h-4 w-4" />
-                  </p>
+              <article key={article.title} className="group flex flex-col overflow-hidden rounded-md border border-slate-200 bg-white shadow-md transition-all hover:-translate-y-0.5 hover:border-[#0A1F44]/25 hover:shadow-lg">
+                <a href={article.href} target="_blank" rel="noopener noreferrer" className="flex h-full flex-col">
+                  <div className={`relative aspect-video overflow-hidden bg-gradient-to-br ${article.headerGradient}`}>
+                    {article.headerImage && (
+                      <>
+                        <img
+                          src={article.headerImage}
+                          alt=""
+                          aria-hidden="true"
+                          className="absolute inset-0 h-full w-full scale-105 object-cover opacity-35 blur-md"
+                        />
+                        <img
+                          src={article.headerImage}
+                          alt={`Issue #${article.issue} header image`}
+                          className="relative z-10 h-full w-full object-contain"
+                        />
+                      </>
+                    )}
+                    <div className="absolute inset-x-0 top-0 z-20 flex items-start justify-between gap-2 bg-gradient-to-b from-black/45 to-transparent p-2.5 sm:p-3">
+                      <span className="rounded-full bg-white/90 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#0A1F44] shadow-sm">
+                        {article.category}
+                      </span>
+                      <span className="rounded-full bg-[#0A1F44]/90 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-white shadow-sm">
+                        #{article.issue}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex flex-1 flex-col p-4 sm:p-5">
+                    <h3 className="font-serif text-base leading-tight text-[#0A1F44] sm:text-lg">{`Issue #${article.issue}: ${article.title}`}</h3>
+                    <p className="mt-3 text-sm leading-relaxed text-slate-700">{article.description}</p>
+                    <p className="mt-auto inline-flex items-center gap-2 pt-5 text-sm font-bold text-[#c88914] transition-colors group-hover:text-[#a9720f]">
+                      Read on LinkedIn <ArrowRight className="h-4 w-4" />
+                    </p>
+                  </div>
                 </a>
               </article>
             ))}

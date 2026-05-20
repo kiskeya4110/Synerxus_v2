@@ -641,19 +641,58 @@ export default function MarketingHome() {
   const [activeFrameworkCard, setActiveFrameworkCard] = useState<number | null>(null);
   const [activeFlowStep, setActiveFlowStep] = useState<number | null>(null);
 
+  const categoriesRef = useRef<HTMLDivElement>(null);
+  const frameworkRef = useRef<HTMLDivElement>(null);
+  const flowRef = useRef<HTMLDivElement>(null);
+
+  const flowStepColors = [
+    { circle: "border-[#0A1F44] bg-[#0A1F44]", icon: "text-[#ffcc33]", detail: "text-[#0A1F44]" },
+    { circle: "border-amber-600 bg-amber-600", icon: "text-white", detail: "text-amber-700" },
+    { circle: "border-amber-700 bg-amber-700", icon: "text-white", detail: "text-amber-800" },
+    { circle: "border-teal-600 bg-teal-600", icon: "text-white", detail: "text-teal-700" },
+    { circle: "border-emerald-600 bg-emerald-600", icon: "text-white", detail: "text-emerald-700" },
+  ];
+
+  useEffect(() => {
+    if (selectedCategory === null) return;
+    const handler = (e: MouseEvent) => {
+      if (!categoriesRef.current?.contains(e.target as Node)) setSelectedCategory(null);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (activeFrameworkCard === null) return;
+    const handler = (e: MouseEvent) => {
+      if (!frameworkRef.current?.contains(e.target as Node)) setActiveFrameworkCard(null);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [activeFrameworkCard]);
+
+  useEffect(() => {
+    if (activeFlowStep === null) return;
+    const handler = (e: MouseEvent) => {
+      if (!flowRef.current?.contains(e.target as Node)) setActiveFlowStep(null);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [activeFlowStep]);
+
   return (
     <MarketingLayout>
       {/* ── Hero ─────────────────────────────────────────────────────────── */}
       <section id="hero" className="border-b border-slate-200 bg-white">
-        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-7 sm:py-10 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-8 lg:py-14">
+        <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 sm:py-8 md:px-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center lg:gap-8 lg:py-12">
           <div>
-            <h1 className="max-w-2xl text-3xl font-extrabold leading-[1.08] tracking-tight text-[#0A1F44] sm:text-4xl md:text-5xl">
+            <h1 className="max-w-2xl text-2xl font-extrabold leading-[1.08] tracking-tight text-[#0A1F44] sm:text-3xl md:text-4xl lg:text-5xl">
               ESG evidence your team can trace, review, and report.
             </h1>
-            <p className="mt-4 max-w-xl text-base leading-relaxed text-[#0A1F44]/80 sm:mt-5 sm:text-lg">
+            <p className="mt-3 max-w-xl text-sm leading-relaxed text-[#0A1F44]/80 sm:mt-4 sm:text-base">
               Synerxus helps ESG teams organize activity records, confirmation status, source support, and evidence summaries before they appear in reporting or disclosure workflows.
             </p>
-            <div className="mt-6 grid gap-3 sm:mt-7 sm:flex sm:flex-row">
+            <div className="mt-5 grid gap-3 sm:mt-6 sm:flex sm:flex-row">
               <Button asChild className="w-full bg-[#c88914] text-white hover:bg-[#a9720f] sm:w-auto">
                 <Link href="/assessment">Request Readiness Assessment</Link>
               </Button>
@@ -676,21 +715,21 @@ export default function MarketingHome() {
       {/* ── Entry Points ────────────────────────────────────────────────── */}
       <section className="border-b border-slate-200 bg-white py-6 sm:py-8">
         <div className="mx-auto grid max-w-7xl gap-4 px-4 md:grid-cols-2 md:px-8">
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-5 sm:p-6">
-            <h2 className="text-xl font-extrabold text-[#0A1F44]">For Organizations</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <h2 className="text-lg font-extrabold text-[#0A1F44]">For Organizations</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">
               Define project metrics, record activities, confirm partner-submitted records, and generate evidence summaries for funders and corporate partners.
             </p>
-            <Link href="/use-cases" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
+            <Link href="/use-cases" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
               For organizations <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
-          <div className="rounded-md border border-slate-200 bg-slate-50 p-5 sm:p-6">
-            <h2 className="text-xl font-extrabold text-[#0A1F44]">For Corporations</h2>
-            <p className="mt-3 text-sm leading-relaxed text-slate-700">
+          <div className="rounded-md border border-slate-200 bg-slate-50 p-4 sm:p-5">
+            <h2 className="text-lg font-extrabold text-[#0A1F44]">For Corporations</h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-700">
               Review contribution records, confirmation status, source support, and evidence trails across partner programs and reporting workflows.
             </p>
-            <Link href="/for-esg-teams" className="mt-5 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
+            <Link href="/for-esg-teams" className="mt-4 inline-flex items-center gap-1.5 text-sm font-bold text-[#c88914] hover:text-[#a9720f]">
               For ESG teams <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
@@ -704,7 +743,7 @@ export default function MarketingHome() {
             ESG reporting often treats all evidence as equal. Synerxus does not.
           </h2>
           <p className="mt-1 text-center text-sm text-slate-400">Click any category to learn more.</p>
-          <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 md:grid-cols-5 md:gap-4">
+          <div ref={categoriesRef} className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 xl:grid-cols-5">
             {evidenceCategories.map((cat, index) => {
               const CategoryIcon = cat.icon;
               const isSelected = selectedCategory === index;
@@ -714,7 +753,7 @@ export default function MarketingHome() {
                   key={cat.title}
                   type="button"
                   onClick={() => setSelectedCategory((prev) => (prev === index ? null : index))}
-                  className={`group rounded-md border bg-white p-4 text-center shadow-sm transition-all duration-200 sm:p-5 md:p-6 ${
+                  className={`group rounded-md border bg-white p-3 text-center shadow-sm transition-all duration-200 sm:p-4 ${
                     isSelected
                       ? "border-[#0A1F44] shadow-md ring-2 ring-[#0A1F44]/20"
                       : isDimmed
@@ -722,12 +761,12 @@ export default function MarketingHome() {
                       : "border-slate-200 hover:border-[#0A1F44]/30 hover:shadow-md"
                   }`}
                 >
-                  <CategoryIcon className={`mx-auto h-10 w-10 transition-colors ${isSelected ? "text-[#c88914]" : "text-[#0A1F44]"}`} />
-                  <h3 className="mt-4 text-sm font-extrabold text-[#0A1F44]">{cat.title}</h3>
-                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{cat.body}</p>
+                  <CategoryIcon className={`mx-auto h-8 w-8 transition-colors ${isSelected ? "text-[#c88914]" : "text-[#0A1F44]"}`} />
+                  <h3 className="mt-3 text-sm font-extrabold text-[#0A1F44]">{cat.title}</h3>
+                  <p className="mt-2 text-[13px] leading-relaxed text-slate-600">{cat.body}</p>
 
                   {/* Strength indicator */}
-                  <div className="mt-4 text-left">
+                  <div className="mt-3 text-left">
                     <div className="flex items-center justify-between">
                       <p className="text-[10px] font-bold uppercase tracking-wide text-slate-400">Evidence strength</p>
                       <p className="text-[10px] font-bold text-slate-500">{cat.strength}%</p>
@@ -744,8 +783,8 @@ export default function MarketingHome() {
                   </div>
 
                   {isSelected && (
-                    <div className="mt-4 border-t border-slate-200 pt-4 text-left">
-                      <div className="space-y-3">
+                    <div className="mt-3 border-t border-slate-200 pt-3 text-left">
+                      <div className="space-y-2.5">
                         <div>
                           <p className="text-[10px] font-extrabold uppercase tracking-wide text-slate-400">What it means</p>
                           <p className="mt-1 text-xs leading-relaxed text-slate-700">{cat.meaning}</p>
@@ -769,7 +808,7 @@ export default function MarketingHome() {
                     </div>
                   )}
 
-                  <p className={`mt-4 text-xs font-bold text-[#c88914] transition-opacity ${isSelected ? "opacity-0 h-0" : "opacity-0 group-hover:opacity-100"}`}>
+                  <p className={`mt-3 text-xs font-bold text-[#c88914] transition-opacity ${isSelected ? "opacity-0 h-0" : "opacity-0 group-hover:opacity-100"}`}>
                     {isSelected ? "" : "See detail →"}
                   </p>
                 </button>
@@ -794,7 +833,7 @@ export default function MarketingHome() {
           <p className="mx-auto mt-2 max-w-4xl text-center text-sm leading-relaxed text-slate-600">
             Synerxus helps teams connect claim-level evidence to the reporting, disclosure, SDG mapping, and assurance-preparation contexts they use — while keeping confirmation status, source support, assumptions, and limitations visible.
           </p>
-          <div className="mt-5 grid gap-3 sm:mt-6 sm:grid-cols-2 md:grid-cols-4 md:gap-5">
+          <div ref={frameworkRef} className="mt-5 grid grid-cols-1 gap-3 sm:mt-6 sm:grid-cols-2 lg:grid-cols-4">
             {frameworkCards.map((card, index) => {
               const CardIcon = card.icon;
               const isActive = activeFrameworkCard === index;
@@ -811,19 +850,19 @@ export default function MarketingHome() {
                   }`}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white">
-                      <CardIcon className="h-5 w-5 text-[#0A1F44]" />
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white">
+                      <CardIcon className="h-4 w-4 text-[#0A1F44]" />
                     </div>
                     <div className="min-w-0 flex-1">
                       <h3 className="text-sm font-extrabold text-[#0A1F44]">{card.title}</h3>
-                      <p className="mt-1 text-[11px] font-semibold tracking-[0.08em] text-slate-500">{card.items.join(" · ")}</p>
+                      <p className="mt-0.5 text-[11px] font-semibold tracking-[0.08em] text-slate-500">{card.items.join(" · ")}</p>
                     </div>
                     <ChevronDown className={`h-4 w-4 shrink-0 text-slate-400 transition-transform ${isActive ? "rotate-180 text-[#0A1F44]" : ""}`} />
                   </div>
-                  <p className="mt-4 text-sm leading-relaxed text-slate-600">{card.description}</p>
-                  <p className="mt-4 border-t border-slate-200 pt-3 text-xs font-semibold text-slate-500">{card.boundary}</p>
+                  <p className="mt-3 text-sm leading-relaxed text-slate-600">{card.description}</p>
+                  <p className="mt-3 border-t border-slate-200 pt-2.5 text-xs font-semibold text-slate-500">{card.boundary}</p>
                   {isActive && (
-                    <div className="mt-4 rounded-md border border-[#0A1F44]/10 bg-white p-3">
+                    <div className="mt-3 rounded-md border border-[#0A1F44]/10 bg-white p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.12em] text-[#0A1F44]/60">Synerxus use</p>
                       <p className="mt-1 text-xs leading-relaxed text-slate-600">{card.detail}</p>
                     </div>
@@ -841,13 +880,13 @@ export default function MarketingHome() {
       {/* ── Evidence Flow Diagram ────────────────────────────────────────── */}
       <section className="border-b border-slate-200 bg-white py-6 sm:py-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
+          <div ref={flowRef} className="rounded-md border border-slate-200 bg-white p-4 shadow-sm sm:p-6">
             <h2 className="text-center text-sm font-extrabold uppercase tracking-[0.18em] text-[#0A1F44]">
               Bottom-up evidence flow
             </h2>
             <p className="mt-1 text-center text-xs text-slate-400">Click any step to learn more.</p>
 
-            <div className="mt-5 grid gap-5 sm:mt-6 sm:grid-cols-2 md:grid-cols-5">
+            <div className="mt-5 grid grid-cols-2 gap-4 sm:mt-6 sm:grid-cols-3 md:grid-cols-5">
               {evidenceFlow.map((step, index) => {
                 const Icon = step.icon;
                 const isActive = activeFlowStep === index;
@@ -856,16 +895,16 @@ export default function MarketingHome() {
                     <button
                       type="button"
                       onClick={() => setActiveFlowStep((prev) => (prev === index ? null : index))}
-                      className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full border transition-all duration-200 ${
+                      className={`mx-auto flex h-12 w-12 items-center justify-center rounded-full border transition-all duration-200 ${
                         isActive
-                          ? "border-[#0A1F44] bg-[#0A1F44] shadow-md"
+                          ? flowStepColors[index].circle + " shadow-md"
                           : "border-slate-200 bg-white hover:border-[#c88914]/60 hover:shadow-md"
                       }`}
                     >
-                      <Icon className={`h-8 w-8 transition-colors ${isActive ? "text-[#c88914]" : "text-[#0A1F44]"}`} />
+                      <Icon className={`h-6 w-6 transition-colors ${isActive ? flowStepColors[index].icon : "text-[#0A1F44]"}`} />
                     </button>
                     {index < evidenceFlow.length - 1 && (
-                      <ArrowRight className="absolute right-[-18px] top-6 hidden h-6 w-6 text-[#c88914] md:block" />
+                      <ArrowRight className="absolute right-[-12px] top-4 hidden h-4 w-4 text-[#c88914] md:block" />
                     )}
                     <Link
                       href="/platform"
@@ -882,9 +921,9 @@ export default function MarketingHome() {
             {activeFlowStep !== null && (
               <div className="mt-6 rounded-lg border border-[#0A1F44]/20 bg-[#f8fafc] p-5">
                 <div className="flex items-start gap-4">
-                  {(() => { const I = evidenceFlow[activeFlowStep].icon; return <I className="h-7 w-7 shrink-0 text-[#0A1F44]" />; })()}
+                  {(() => { const I = evidenceFlow[activeFlowStep].icon; return <I className={`h-7 w-7 shrink-0 ${flowStepColors[activeFlowStep].detail}`} />; })()}
                   <div className="flex-1">
-                    <h3 className="font-extrabold text-[#0A1F44]">{evidenceFlow[activeFlowStep].title}</h3>
+                    <h3 className={`font-extrabold ${flowStepColors[activeFlowStep].detail}`}>{evidenceFlow[activeFlowStep].title}</h3>
                     <p className="mt-2 text-sm leading-relaxed text-slate-700">{evidenceFlow[activeFlowStep].detail}</p>
                   </div>
                   <button
@@ -904,8 +943,8 @@ export default function MarketingHome() {
       {/* ── Bottom CTA ───────────────────────────────────────────────────── */}
       <section className="bg-white pb-8 pt-6 sm:pb-10 sm:pt-8">
         <div className="mx-auto max-w-7xl px-4 md:px-8">
-          <div className="grid gap-5 rounded-lg bg-[#061A36] p-5 text-white sm:p-8 md:grid-cols-[auto_1fr_auto] md:items-center">
-            <ShieldCheck className="hidden h-16 w-16 shrink-0 text-[#c88914] md:block" />
+          <div className="grid gap-4 rounded-lg bg-[#061A36] p-5 text-white sm:p-6 md:grid-cols-[auto_1fr_auto] md:items-center">
+            <ShieldCheck className="hidden h-12 w-12 shrink-0 text-[#c88914] md:block" />
             <div>
               <h2 className="text-2xl font-extrabold leading-tight text-white sm:text-3xl">Find out how defensible your claims are.</h2>
               <p className="mt-2 max-w-2xl text-white/80">

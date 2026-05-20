@@ -187,10 +187,11 @@ function PreviewPanel({ type }: { type: string }) {
 }
 
 export default function PlatformPage() {
-  const [activeArea, setActiveArea] = useState(0);
+  const [activeArea, setActiveArea] = useState<number | null>(0);
 
-  const area = areas[activeArea];
-  const Icon = area.icon;
+  const areaIdx = activeArea ?? 0;
+  const area = activeArea !== null ? areas[areaIdx] : null;
+  const Icon = area?.icon;
 
   return (
     <MarketingLayout>
@@ -239,7 +240,7 @@ export default function PlatformPage() {
                 <button
                   key={a.title}
                   type="button"
-                  onClick={() => setActiveArea(i)}
+                  onClick={() => setActiveArea((prev) => (prev === i ? null : i))}
                   aria-pressed={isActive}
                   className={`flex items-center gap-3 rounded-lg border p-3 text-left transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 sm:rounded-xl sm:p-4 ${
                     isActive
@@ -277,10 +278,11 @@ export default function PlatformPage() {
             })}
           </div>
 
+          {area !== null && Icon && (
           <article className="grid gap-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm sm:p-6 lg:grid-cols-[0.48fr_0.52fr] lg:items-center">
             <div className="grid gap-4 sm:grid-cols-[80px_1fr]">
               <span className="flex h-16 w-16 items-center justify-center rounded-full bg-[#061A36] text-3xl font-extrabold text-white">
-                {activeArea + 1}
+                {areaIdx + 1}
               </span>
               <div>
                 <div className="flex items-start gap-3 sm:items-center sm:gap-4">
@@ -327,6 +329,7 @@ export default function PlatformPage() {
               <PreviewPanel type={area.panel} />
             </div>
           </article>
+          )}
         </div>
       </section>
 

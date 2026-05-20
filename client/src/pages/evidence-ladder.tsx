@@ -137,7 +137,7 @@ function LadderSketch({
   selectedLevel,
   onSelect,
 }: {
-  selectedLevel: number;
+  selectedLevel: number | null;
   onSelect: (level: number) => void;
 }) {
   const rungs = [
@@ -324,7 +324,11 @@ function LadderSketch({
 }
 
 function EvidenceLadderVisual() {
-  const [selectedLevel, setSelectedLevel] = useState(0);
+  const [selectedLevel, setSelectedLevel] = useState<number | null>(null);
+
+  function toggleLevel(level: number) {
+    setSelectedLevel((prev) => (prev === level ? null : level));
+  }
 
   return (
     <div className="mx-auto grid max-w-7xl gap-6 px-4 md:px-8 lg:grid-cols-[340px_minmax(0,1fr)] lg:items-start">
@@ -346,7 +350,7 @@ function EvidenceLadderVisual() {
             <br />
             Higher risk
           </div>
-          <LadderSketch selectedLevel={selectedLevel} onSelect={setSelectedLevel} />
+          <LadderSketch selectedLevel={selectedLevel} onSelect={toggleLevel} />
         </div>
         <p className="mx-auto mt-3 max-w-[340px] text-center text-[11px] leading-snug text-slate-500 lg:max-w-none">
           Records do not need to climb every rung in sequence — but Level 5 requires all previous layers to be present.
@@ -377,7 +381,7 @@ function EvidenceLadderVisual() {
             <div key={lvl.title}>
               <button
                 type="button"
-                onClick={() => setSelectedLevel(lvl.n)}
+                onClick={() => toggleLevel(lvl.n)}
                 aria-pressed={selected}
                 aria-expanded={selected}
                 className={`w-full rounded-2xl border p-3 text-left shadow-sm transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-offset-2 sm:p-4 ${
@@ -473,6 +477,12 @@ function EvidenceLadderVisual() {
 }
 
 export default function EvidenceLadderPage() {
+  const [selectedBenefit, setSelectedBenefit] = useState<string | null>(benefits[0]?.title ?? null);
+
+  function toggleBenefit(title: string) {
+    setSelectedBenefit((prev) => (prev === title ? null : title));
+  }
+
   return (
     <MarketingLayout>
       <section className="bg-white py-7 md:py-14">
@@ -510,12 +520,36 @@ export default function EvidenceLadderPage() {
           <div className="grid rounded-lg border border-slate-200 bg-white shadow-sm sm:grid-cols-2 md:grid-cols-5">
             {benefits.map((b) => {
               const Icon = b.icon;
+              const selected = selectedBenefit === b.title;
               return (
-                <div key={b.title} className="border-b border-slate-200 p-4 text-center sm:p-6 md:border-b-0 md:border-r md:last:border-r-0">
-                  <Icon className="mx-auto h-10 w-10 text-[#0A1F44]" />
+                <button
+                  key={b.title}
+                  type="button"
+                  onClick={() => toggleBenefit(b.title)}
+                  aria-expanded={selected}
+                  className={`border-b border-slate-200 p-4 text-center transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#c88914] focus-visible:ring-inset sm:p-6 md:border-b-0 md:border-r md:last:border-r-0 ${
+                    selected ? "bg-[#f8efe0]" : "bg-white hover:bg-slate-50"
+                  }`}
+                >
+                  <Icon className={`mx-auto h-10 w-10 transition-colors ${selected ? "text-[#c88914]" : "text-[#0A1F44]"}`} />
                   <h3 className="mt-3 text-sm font-extrabold text-[#0A1F44]">{b.title}</h3>
                   <p className="mt-2 text-xs leading-relaxed text-slate-600">{b.body}</p>
-                </div>
+                  <div
+                    className="overflow-hidden transition-all duration-300"
+                    style={{
+                      maxHeight: selected ? 260 : 0,
+                      opacity: selected ? 1 : 0,
+                      marginTop: selected ? 12 : 0,
+                    }}
+                  >
+                    <div className="border-t border-[#c88914]/30 pt-3">
+                      <p className="text-xs leading-relaxed text-[#0A1F44]">{b.detail}</p>
+                      <p className="mt-3 rounded-md bg-white px-3 py-2 text-[11px] font-bold uppercase tracking-[0.12em] text-[#0A1F44]">
+                        {b.stat}
+                      </p>
+                    </div>
+                  </div>
+                </button>
               );
             })}
           </div>

@@ -1,7 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import multer from "multer";
 import * as path from "path";
-import * as fs from "fs";
 import {
   validateImage,
   processImage,
@@ -364,18 +363,8 @@ storageRouter.get("/storage/:filePath(*)", async (req: Request, res: Response) =
       return res.status(403).json({ message: "Invalid file path" });
     }
 
-    // Resolve and validate the path is within uploads directory
-    const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-    const resolvedPath = path.resolve(UPLOAD_DIR, sanitizedPath);
-
-    // Ensure resolved path is still within UPLOAD_DIR
-    if (!resolvedPath.startsWith(UPLOAD_DIR + path.sep) && resolvedPath !== UPLOAD_DIR) {
-      logger.warn(`[Storage] Path escape attempt blocked: ${filePath} -> ${resolvedPath}`);
-      return res.status(403).json({ message: "Invalid file path" });
-    }
-
     const imageUrl = `/api/storage/${sanitizedPath}`;
-    const buffer = getImageBuffer(imageUrl);
+    const buffer = await getImageBuffer(imageUrl);
 
     if (!buffer) {
       return res.status(404).json({ message: "File not found" });
@@ -428,7 +417,7 @@ storageRouter.get("/storage/info/:filePath(*)", async (req: Request, res: Respon
     }
 
     const imageUrl = `/api/storage/${sanitizedPath}`;
-    const buffer = getImageBuffer(imageUrl);
+    const buffer = await getImageBuffer(imageUrl);
 
     if (!buffer) {
       return res.json({ exists: false });

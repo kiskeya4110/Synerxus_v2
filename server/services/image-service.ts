@@ -1,30 +1,9 @@
-/**
- * Image Processing Service
- * Handles image validation, optimization, and storage
- *
- * Uses Sharp for:
- * - Image resizing (maintains aspect ratio)
- * - JPEG quality optimization (80% quality = 60-70% size reduction)
- * - WebP conversion option (25-30% smaller than JPEG)
- * - Automatic thumbnail generation
- */
-
 import { IMAGE_CONFIG, type ImageType, type AllowedMimeType } from '../../shared/constants';
-import * as fs from 'fs';
 import * as path from 'path';
 import sharp from 'sharp';
+import { Client } from '@replit/object-storage';
 
-// Storage paths
-const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
-const THUMBNAILS_DIR = path.join(UPLOAD_DIR, 'thumbnails');
-
-// Ensure upload directories exist
-if (!fs.existsSync(UPLOAD_DIR)) {
-  fs.mkdirSync(UPLOAD_DIR, { recursive: true });
-}
-if (!fs.existsSync(THUMBNAILS_DIR)) {
-  fs.mkdirSync(THUMBNAILS_DIR, { recursive: true });
-}
+const storageClient = new Client();
 
 export interface FileInfo {
   mimetype: string;
@@ -67,7 +46,6 @@ export function validateImage(
 ): ImageValidationResult {
   const { mimetype, size, originalname } = file;
 
-  // Check MIME type
   if (!IMAGE_CONFIG.ALLOWED_MIME_TYPES.includes(mimetype as AllowedMimeType)) {
     return {
       valid: false,
@@ -75,7 +53,6 @@ export function validateImage(
     };
   }
 
-  // Check file extension
   const ext = path.extname(originalname).toLowerCase();
   if (!IMAGE_CONFIG.ALLOWED_EXTENSIONS.includes(ext as any)) {
     return {
@@ -84,7 +61,6 @@ export function validateImage(
     };
   }
 
-  // Check file size
   if (size > IMAGE_CONFIG.MAX_FILE_SIZE) {
     const maxSizeMB = IMAGE_CONFIG.MAX_FILE_SIZE / (1024 * 1024);
     return {
@@ -132,7 +108,7 @@ export function generateFileName(
 }
 
 /**
- * Get storage path for an image type
+ * Get object storage key prefix for an image type
  */
 export function getStoragePath(imageType: ImageType): string {
   const typePaths: Record<ImageType, string> = {
@@ -142,7 +118,7 @@ export function getStoragePath(imageType: ImageType): string {
     spotlight: 'spotlights',
     evidence: 'evidence',
   };
-  return path.join(UPLOAD_DIR, typePaths[imageType] || 'misc');
+  return typePaths[imageType] || 'misc';
 }
 
 /**
@@ -197,24 +173,16 @@ export function getThumbnailDimensions(imageType: ImageType): { width: number; h
   }
 }
 
-/**
- * Image optimization configuration
- */
 const OPTIMIZATION_CONFIG = {
-  JPEG_QUALITY: 80,           // 80% quality = good balance of size/quality
-  WEBP_QUALITY: 75,           // WebP can use slightly lower quality
-  PNG_COMPRESSION: 8,         // 0-9, higher = more compression
-  MAX_DIMENSION: 2400,        // Max width/height for any image
-  THUMBNAIL_QUALITY: 70,      // Slightly lower for thumbnails
+  JPEG_QUALITY: 80,
+  WEBP_QUALITY: 75,
+  PNG_COMPRESSION: 8,
+  MAX_DIMENSION: 2400,
+  THUMBNAIL_QUALITY: 70,
 };
 
 /**
- * Process and optimize an uploaded image using Sharp
- * - Resizes to target dimensions (maintains aspect ratio)
- * - Optimizes quality for reduced file size
- * - Generates thumbnail
- *
- * Expected savings: 60-70% file size reduction
+ * Process and optimize an uploaded image, then store in object storage.
  */
 export async function processImage(
   buffer: Buffer,
@@ -222,48 +190,35 @@ export async function processImage(
 ): Promise<ProcessedImage> {
   const { imageType, userId, organizationId, generateThumbnail = true } = options;
 
-  // Get storage directory
-  const storageDir = getStoragePath(imageType);
-  if (!fs.existsSync(storageDir)) {
-    fs.mkdirSync(storageDir, { recursive: true });
-  }
-
-  // Get image metadata first
   const metadata = await sharp(buffer).metadata();
   const originalWidth = metadata.width || 800;
   const originalHeight = metadata.height || 600;
   const inputFormat = metadata.format || 'jpeg';
 
-  // Get target dimensions for this image type
   const targetDims = getTargetDimensions(imageType);
 
-  // Calculate resize dimensions (maintain aspect ratio, fit within target)
   const resizeOptions = {
     width: Math.min(targetDims.width, originalWidth, OPTIMIZATION_CONFIG.MAX_DIMENSION),
     height: Math.min(targetDims.height, originalHeight, OPTIMIZATION_CONFIG.MAX_DIMENSION),
     fit: 'inside' as const,
-    withoutEnlargement: true, // Don't upscale smaller images
+    withoutEnlargement: true,
   };
 
-  // Process the main image
   let sharpInstance = sharp(buffer)
     .resize(resizeOptions)
-    .rotate(); // Auto-rotate based on EXIF
+    .rotate();
 
-  // Apply format-specific optimization
   let outputBuffer: Buffer;
   let outputMimeType: string;
   let outputExt: string;
 
   if (inputFormat === 'png' && metadata.hasAlpha) {
-    // Keep PNG for images with transparency
     outputBuffer = await sharpInstance
       .png({ compressionLevel: OPTIMIZATION_CONFIG.PNG_COMPRESSION })
       .toBuffer();
     outputMimeType = 'image/png';
     outputExt = '.png';
   } else {
-    // Convert to optimized JPEG for everything else
     outputBuffer = await sharpInstance
       .jpeg({ quality: OPTIMIZATION_CONFIG.JPEG_QUALITY, mozjpeg: true })
       .toBuffer();
@@ -271,53 +226,36 @@ export async function processImage(
     outputExt = '.jpg';
   }
 
-  // Get final dimensions after processing
   const finalMetadata = await sharp(outputBuffer).metadata();
   const finalWidth = finalMetadata.width || targetDims.width;
   const finalHeight = finalMetadata.height || targetDims.height;
 
-  // Generate filename with correct extension
   const fileName = generateFileName(`image${outputExt}`, imageType, userId, organizationId);
-  const filePath = path.join(storageDir, fileName);
+  const keyPrefix = getStoragePath(imageType);
+  const storageKey = `${keyPrefix}/${fileName}`;
 
-  // Write the optimized file
-  fs.writeFileSync(filePath, outputBuffer);
+  await storageClient.uploadFromBytes(storageKey, outputBuffer);
 
-  // Generate public URL
-  const relativePath = path.relative(UPLOAD_DIR, filePath);
-  const url = `/api/storage/${relativePath.replace(/\\/g, '/')}`;
+  const url = `/api/storage/${storageKey}`;
 
-  // Generate thumbnail using Sharp
   let thumbnailUrl: string | undefined;
   if (generateThumbnail) {
     const thumbDims = getThumbnailDimensions(imageType);
-    const thumbDir = path.join(THUMBNAILS_DIR, path.dirname(relativePath));
 
-    if (!fs.existsSync(thumbDir)) {
-      fs.mkdirSync(thumbDir, { recursive: true });
-    }
-
-    // Create optimized thumbnail
     const thumbnailBuffer = await sharp(buffer)
       .resize({
         width: thumbDims.width,
         height: thumbDims.height,
-        fit: 'cover', // Crop to fill for thumbnails
+        fit: 'cover',
         position: 'center',
       })
       .jpeg({ quality: OPTIMIZATION_CONFIG.THUMBNAIL_QUALITY, mozjpeg: true })
       .toBuffer();
 
-    const thumbPath = path.join(thumbDir, fileName.replace(/\.\w+$/, '.jpg'));
-    fs.writeFileSync(thumbPath, thumbnailBuffer);
-    thumbnailUrl = `/api/storage/thumbnails/${relativePath.replace(/\\/g, '/').replace(/\.\w+$/, '.jpg')}`;
+    const thumbKey = `thumbnails/${keyPrefix}/${fileName.replace(/\.\w+$/, '.jpg')}`;
+    await storageClient.uploadFromBytes(thumbKey, thumbnailBuffer);
+    thumbnailUrl = `/api/storage/${thumbKey}`;
   }
-
-  // Log optimization stats
-  const originalSize = buffer.length;
-  const optimizedSize = outputBuffer.length;
-  const savings = ((1 - optimizedSize / originalSize) * 100).toFixed(1);
-  console.log(`[ImageService] Optimized ${imageType}: ${(originalSize/1024).toFixed(1)}KB -> ${(optimizedSize/1024).toFixed(1)}KB (${savings}% reduction)`);
 
   return {
     url,
@@ -331,24 +269,15 @@ export async function processImage(
 }
 
 /**
- * Delete an image and its thumbnail
+ * Delete an image and its thumbnail from object storage
  */
 export async function deleteImage(imageUrl: string): Promise<boolean> {
   try {
-    // Extract path from URL
-    const urlPath = imageUrl.replace('/api/storage/', '');
-    const filePath = path.join(UPLOAD_DIR, urlPath);
-    const thumbPath = path.join(THUMBNAILS_DIR, urlPath);
+    const storageKey = imageUrl.replace('/api/storage/', '');
+    const thumbKey = `thumbnails/${storageKey}`;
 
-    // Delete main file
-    if (fs.existsSync(filePath)) {
-      fs.unlinkSync(filePath);
-    }
-
-    // Delete thumbnail
-    if (fs.existsSync(thumbPath)) {
-      fs.unlinkSync(thumbPath);
-    }
+    await storageClient.delete(storageKey, { ignoreNotFound: true });
+    await storageClient.delete(thumbKey, { ignoreNotFound: true });
 
     return true;
   } catch (error) {
@@ -358,40 +287,28 @@ export async function deleteImage(imageUrl: string): Promise<boolean> {
 }
 
 /**
- * Get image metadata from storage
+ * Get image metadata from object storage
  */
-export function getImageMetadata(imageUrl: string): { exists: boolean; size?: number; path?: string } {
+export async function getImageMetadata(imageUrl: string): Promise<{ exists: boolean; size?: number; path?: string }> {
   try {
-    const urlPath = imageUrl.replace('/api/storage/', '');
-    const filePath = path.join(UPLOAD_DIR, urlPath);
-
-    if (fs.existsSync(filePath)) {
-      const stats = fs.statSync(filePath);
-      return {
-        exists: true,
-        size: stats.size,
-        path: filePath,
-      };
-    }
-
-    return { exists: false };
+    const storageKey = imageUrl.replace('/api/storage/', '');
+    const result = await storageClient.exists(storageKey);
+    return { exists: result.ok && result.value === true };
   } catch {
     return { exists: false };
   }
 }
 
 /**
- * Serve an image file
+ * Download an image buffer from object storage
  */
-export function getImageBuffer(imageUrl: string): Buffer | null {
+export async function getImageBuffer(imageUrl: string): Promise<Buffer | null> {
   try {
-    const urlPath = imageUrl.replace('/api/storage/', '');
-    const filePath = path.join(UPLOAD_DIR, urlPath);
-
-    if (fs.existsSync(filePath)) {
-      return fs.readFileSync(filePath);
+    const storageKey = imageUrl.replace('/api/storage/', '');
+    const result = await storageClient.downloadAsBytes(storageKey);
+    if (result.ok && result.value) {
+      return result.value[0];
     }
-
     return null;
   } catch {
     return null;

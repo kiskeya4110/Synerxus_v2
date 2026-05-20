@@ -1,4 +1,20 @@
 // Service Worker registration with update handling
+const SW_RELOAD_KEY = 'synerxus-sw-controller-reload-at';
+const SW_RELOAD_WINDOW_MS = 30_000;
+const SW_UPDATE_CHECK_MS = 10 * 60 * 1000;
+
+function recentlyReloadedForServiceWorker() {
+  const lastReloadAt = Number(sessionStorage.getItem(SW_RELOAD_KEY) || 0);
+  return Number.isFinite(lastReloadAt) && Date.now() - lastReloadAt < SW_RELOAD_WINDOW_MS;
+}
+
+function reloadForServiceWorkerUpdate() {
+  if (recentlyReloadedForServiceWorker()) return;
+
+  sessionStorage.setItem(SW_RELOAD_KEY, String(Date.now()));
+  window.location.reload();
+}
+
 export function registerServiceWorker() {
   // Only register in production and if service workers are supported
   if ('serviceWorker' in navigator && import.meta.env.PROD) {
@@ -13,7 +29,7 @@ export function registerServiceWorker() {
             registration.update().catch(err => {
               console.log('Service Worker update check failed:', err);
             });
-          }, 60000); // Check every minute
+          }, SW_UPDATE_CHECK_MS);
 
           // Listen for updates
           registration.addEventListener('updatefound', () => {
@@ -50,7 +66,17 @@ export function registerServiceWorker() {
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (refreshing) return;
       refreshing = true;
-      window.location.reload();
+
+      if (document.visibilityState === 'hidden') {
+        window.addEventListener('visibilitychange', () => {
+          if (document.visibilityState === 'visible') {
+            reloadForServiceWorkerUpdate();
+          }
+        }, { once: true });
+        return;
+      }
+
+      reloadForServiceWorkerUpdate();
     });
   } else {
     console.log('Service Worker not registered (development mode or not supported)');

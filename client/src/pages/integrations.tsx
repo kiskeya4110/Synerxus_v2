@@ -24,6 +24,7 @@ import { MarketingLayout } from "@/components/marketing/marketing-layout";
 type Status = "AVAILABLE NOW" | "IN DEVELOPMENT" | "ON ROADMAP";
 type StatusFilter = Status | "ALL";
 type CapabilityTab = "in" | "out";
+type StatusTone = "emerald" | "amber" | "slate";
 
 type Capability = {
   title: string;
@@ -80,11 +81,60 @@ const flowBoxes: FlowBox[] = [
   },
 ];
 
-const statusSummary = [
-  { label: "Available now", value: "Manual entry, image uploads, HTML evidence summaries" },
-  { label: "In development", value: "Partner portal, PDF output, assurance-preparation export" },
-  { label: "Roadmap", value: "API, spreadsheet import, native ESG platform integrations" },
+const statusSummary: {
+  label: string;
+  icon: LucideIcon;
+  tone: StatusTone;
+  summary: string;
+  meaning: string;
+  value: string;
+}[] = [
+  {
+    label: "Available Now",
+    icon: CheckCircle2,
+    tone: "emerald",
+    summary: "Ready to use",
+    meaning: "Capabilities active in the current platform.",
+    value: "Manual entry, image uploads, HTML evidence summaries",
+  },
+  {
+    label: "In Development",
+    icon: PlugZap,
+    tone: "amber",
+    summary: "Being built",
+    meaning: "Near-term workflows under active product development.",
+    value: "Partner portal, PDF output, assurance-preparation export",
+  },
+  {
+    label: "Roadmap",
+    icon: GitBranch,
+    tone: "slate",
+    summary: "Planned next",
+    meaning: "Planned integrations and automation not claimed as live yet.",
+    value: "API, spreadsheet import, native ESG platform integrations",
+  },
 ];
+
+const statusToneClasses = {
+  emerald: {
+    card: "border-emerald-200 bg-emerald-50/60",
+    icon: "bg-emerald-700 text-white",
+    label: "text-emerald-800",
+    chip: "border-emerald-200 bg-white text-emerald-800",
+  },
+  amber: {
+    card: "border-amber-200 bg-amber-50/70",
+    icon: "bg-[#c88914] text-white",
+    label: "text-[#8a5a08]",
+    chip: "border-amber-200 bg-white text-[#8a5a08]",
+  },
+  slate: {
+    card: "border-slate-200 bg-slate-50",
+    icon: "bg-[#0A1F44] text-[#ffcc33]",
+    label: "text-[#0A1F44]",
+    chip: "border-slate-200 bg-white text-slate-700",
+  },
+};
 
 const integrationPrinciples = [
   "Keep reporting tools in place",
@@ -692,13 +742,28 @@ export default function IntegrationsPage() {
             <p className="mt-3 max-w-2xl text-sm leading-relaxed text-slate-700 sm:text-base">
               Synerxus sits between raw activity records and external ESG reporting workflows. It helps teams organize claim-level evidence before information moves into reports, board materials, funder updates, or assurance review.
             </p>
-            <div className="mt-4 grid gap-2.5 sm:mt-5 sm:grid-cols-3">
-              {statusSummary.map((item) => (
-                <div key={item.label} className="rounded-lg border border-slate-200 bg-slate-50 p-3">
-                  <p className="text-[10px] font-extrabold uppercase tracking-wide text-[#c88914]">{item.label}</p>
-                  <p className="mt-1.5 text-xs font-semibold leading-snug text-[#0A1F44]">{item.value}</p>
-                </div>
-              ))}
+            <div className="mt-4 grid gap-3 sm:mt-5 sm:grid-cols-3">
+              {statusSummary.map((item) => {
+                const Icon = item.icon;
+                const tone = statusToneClasses[item.tone];
+                return (
+                  <div key={item.label} className={`rounded-lg border p-3.5 shadow-sm ${tone.card}`}>
+                    <div className="flex items-center gap-2.5">
+                      <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-md ${tone.icon}`}>
+                        <Icon className="h-4 w-4" />
+                      </span>
+                      <div className="min-w-0">
+                        <p className={`text-[10px] font-extrabold uppercase tracking-wide ${tone.label}`}>{item.label}</p>
+                        <p className="text-sm font-extrabold leading-tight text-[#0A1F44]">{item.summary}</p>
+                      </div>
+                    </div>
+                    <p className="mt-3 min-h-[2.5rem] text-xs font-semibold leading-relaxed text-slate-700">{item.meaning}</p>
+                    <div className={`mt-3 rounded-md border px-2.5 py-2 text-[11px] font-bold leading-snug ${tone.chip}`}>
+                      {item.value}
+                    </div>
+                  </div>
+                );
+              })}
             </div>
           </div>
           <PipelinePreview />

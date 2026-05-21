@@ -127,7 +127,7 @@ class ErrorBoundary extends Component<Props, State> {
             <p className="text-stone-600 mb-6">
               We encountered an unexpected error. You can retry this view without reloading the whole app, or return to the home page.
             </p>
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <div className="mb-6 p-3 bg-red-50 rounded-lg text-left">
                 <p className="text-sm font-mono text-red-800 break-words">
                   {this.state.error.message}

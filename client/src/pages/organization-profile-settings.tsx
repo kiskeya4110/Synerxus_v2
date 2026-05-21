@@ -472,7 +472,7 @@ export default function OrganizationProfileSettings() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch((err) => {
         // Log cache invalidation errors for monitoring but don't block user flow
-        if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
+        if (import.meta.env.DEV) console.warn('Cache invalidation failed:', err);
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       toast({
@@ -538,7 +538,7 @@ export default function OrganizationProfileSettings() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/matchable-organizations"] }).catch((err) => {
-        if (process.env.NODE_ENV === 'development') console.warn('Cache invalidation failed:', err);
+        if (import.meta.env.DEV) console.warn('Cache invalidation failed:', err);
       });
       queryClient.invalidateQueries({ queryKey: ["/api/users/me"] }).catch(() => {});
       toast({

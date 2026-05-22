@@ -124,7 +124,7 @@ export function generateTokenPair(user: {
   const accessToken = jwt.sign(
     { ...payload, type: "access" },
     JWT_SECRET_VALUE,
-    { expiresIn: "15m" }
+    { expiresIn: "30m" }
   );
 
   const refreshToken = jwt.sign(
@@ -136,7 +136,7 @@ export function generateTokenPair(user: {
   return {
     accessToken,
     refreshToken,
-    expiresIn: 15 * 60,
+    expiresIn: 30 * 60,
   };
 }
 

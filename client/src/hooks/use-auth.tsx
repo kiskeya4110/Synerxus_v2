@@ -10,6 +10,7 @@ import {
 import { auth, googleProvider } from "@/lib/firebase";
 import { useToast } from "@/hooks/use-toast";
 import { clearAllProfileCaches } from "@/lib/profile-cache";
+import { getAuthHeaders } from "@/lib/queryClient";
 
 // Database user type from backend
 interface DbUser {
@@ -66,10 +67,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const delay = Math.max((expiresInSeconds - 120) * 1000, 0);
     refreshTimerRef.current = setTimeout(async () => {
       try {
+        const headers = await getAuthHeaders();
+        headers["Content-Type"] = "application/json";
         const res = await fetch('/api/users/token/refresh', {
           method: 'POST',
           credentials: 'include',
-          headers: { 'Content-Type': 'application/json' },
+          headers,
           body: JSON.stringify({ refreshToken }),
         });
         if (res.ok) {
@@ -125,6 +128,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       const response = await fetch("/api/users/firebase-sync", {
         method: "POST",
+        credentials: "include",
         headers: {
           "Content-Type": "application/json",
           "Authorization": `Bearer ${idToken}`,
@@ -160,7 +164,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem("sessionFirebaseUid", firebaseUser.uid);
 
       // JWT is now set as an httpOnly cookie by the server — no localStorage storage needed.
-      // Schedule silent refresh for demo sessions (Firebase users refresh via Firebase SDK).
+      // Schedule a silent token refresh 2 minutes before the access token expires.
       if (data.refreshToken && data.expiresIn) {
         scheduleTokenRefresh(data.refreshToken, data.expiresIn);
       }
@@ -177,6 +181,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearNewUserFlag = useCallback(() => {
     setIsNewUser(false);
   }, []);
+
+  // Re-establish the session when the user returns to the tab after being away.
+  // For demo users: re-validate the httpOnly cookie. For Firebase users: onAuthStateChanged
+  // handles restoration automatically, so we only act when dbUser is unexpectedly null.
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState !== "visible") return;
+      const sessionType = localStorage.getItem("sessionType");
+      if (!sessionType) return;
+
+      if (sessionType === "demo" && !dbUser) {
+        await restoreDemoUser();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => document.removeEventListener("visibilitychange", handleVisibilityChange);
+  }, [dbUser, restoreDemoUser]);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
@@ -315,10 +337,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           // Try to find user by email in backend using firebase-sync with isLoginAttempt flag
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), 10000);
+          const headers = await getAuthHeaders();
+          headers["Content-Type"] = "application/json";
 
           const response = await fetch("/api/users/firebase-sync", {
             method: "POST",
-            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            headers,
             body: JSON.stringify({
               firebaseUid: `demo_login_${Date.now()}`,
               email,
@@ -417,9 +442,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         // Create user directly in backend without Firebase
         const demoUid = `demo_${Date.now()}_${Math.random().toString(36).substring(7)}`;
+        const headers = await getAuthHeaders();
+        headers["Content-Type"] = "application/json";
         const response = await fetch("/api/users/firebase-sync", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          headers,
           body: JSON.stringify({
             firebaseUid: demoUid,
             email,
@@ -499,9 +527,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.removeItem('lastLoginTime');
       localStorage.removeItem('pendingOrganizationName');
       // Clear the httpOnly cookie server-side
+      const headers = await getAuthHeaders();
       await fetch('/api/users/logout', {
         method: 'POST',
         credentials: 'include',
+        headers,
       }).catch(() => {}); // best-effort — don't block redirect on failure
       // Redirect to landing page after sign out
       window.location.href = '/';

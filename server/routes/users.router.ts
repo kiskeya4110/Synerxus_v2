@@ -6,11 +6,12 @@ import { authRateLimiter, secureCookieOptions } from "../middleware/security";
 import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth";
 import { generateTokenPair, blacklistToken, verifyRefreshToken } from "../middleware/security";
 import { logger } from "../logger";
+import { verifyFirebaseIdToken } from "../lib/firebase-admin";
 
-/** Cookie options for the auth JWT — 15 min lifetime matches access token expiry */
+/** Cookie options for the auth JWT — 30 min lifetime matches access token expiry */
 const AUTH_COOKIE_OPTIONS = {
   ...secureCookieOptions,
-  maxAge: 15 * 60 * 1000, // 15 minutes
+  maxAge: 30 * 60 * 1000, // 30 minutes
 } as const;
 import { isPreapprovedEmail } from "../config/preapproved-emails";
 import { getPaginationParams, paginateArray } from "../pagination";
@@ -156,6 +157,20 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
     if (!firebaseUid || !email) {
       console.log(`[firebase-sync] Missing fields - firebaseUid: ${!!firebaseUid}, email: ${!!email}`);
       return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
+    }
+
+    const authHeader = req.headers.authorization;
+    if (authHeader?.startsWith("Bearer ")) {
+      const decoded = await verifyFirebaseIdToken(authHeader.slice(7));
+      if (!decoded?.uid) {
+        return res.status(401).json({ message: "Invalid Firebase authentication token" });
+      }
+      if (decoded.uid !== firebaseUid) {
+        return res.status(403).json({ message: "Firebase token does not match requested user" });
+      }
+      if (decoded.email && decoded.email.toLowerCase() !== email.toLowerCase()) {
+        return res.status(403).json({ message: "Firebase token email does not match requested user" });
+      }
     }
 
     console.log(`[firebase-sync] Attempting sync for email: ${email}, firebaseUid: ${firebaseUid?.substring(0, 8)}..., isLoginAttempt: ${isLoginAttempt}`);

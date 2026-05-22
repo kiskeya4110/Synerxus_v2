@@ -4,7 +4,12 @@ import { storage } from "../storage";
 import { logger } from "../logger";
 import { verifyFirebaseIdToken } from "../lib/firebase-admin";
 import { cache, CACHE_TTL, cacheKeys } from "../cache";
-import { tokenBlacklist } from "./security";
+import { tokenBlacklist, generateTokenPair, secureCookieOptions } from "./security";
+
+const SLIDING_COOKIE_OPTIONS = {
+  ...secureCookieOptions,
+  maxAge: 30 * 60 * 1000, // 30-minute sliding window
+};
 
 // Extend Express Request to include user
 declare global {
@@ -62,6 +67,7 @@ export async function authMiddleware(
   try {
     let userId: number | null = null;
     let userFromToken = false;
+    let usedCookieAuth = false;
 
     // Method 1: Check Authorization header for Bearer token
     const authHeader = req.headers.authorization;
@@ -117,6 +123,7 @@ export async function authMiddleware(
       if (cookieDecoded?.userId) {
         userId = cookieDecoded.userId;
         userFromToken = true;
+        usedCookieAuth = true;
         logger.debug(`[Auth] Cookie JWT verified, userId: ${userId}`);
       }
     }
@@ -160,6 +167,13 @@ export async function authMiddleware(
       firebaseUid: user.firebaseUid,
     };
     req.userId = user.id;
+
+    // Sliding session: re-issue the cookie on every cookie-authenticated request so
+    // the 30-minute inactivity window resets as long as the user is active.
+    if (usedCookieAuth) {
+      const newTokens = generateTokenPair(user);
+      res.cookie("authToken", newTokens.accessToken, SLIDING_COOKIE_OPTIONS);
+    }
 
     next();
   } catch (error) {

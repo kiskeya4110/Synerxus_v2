@@ -50,6 +50,15 @@ const processStages: ProcessStage[] = [
 
 const articles = [
   {
+    issue: 9,
+    category: "ECOLOGICAL HARM",
+    title: "When Environmental Harm Becomes Social Harm",
+    description: "How the 1987 Khian Sea toxic waste dumping in Haiti shows what happens when environmental claims and governance documentation fail — and why environmental claims carry a higher evidence burden than most.",
+    href: "https://www.linkedin.com/pulse/issue-9-when-environmental-harm-becomes-social-disaster-honorat-bpq2c",
+    headerGradient: "from-red-900 to-red-700",
+    headerImage: "/optimized/verifiable-issue-9.webp",
+  },
+  {
     issue: 8,
     category: "COMMUNITY EVIDENCE",
     title: "When ESG Evidence Misses the Communities Closest to the Work",

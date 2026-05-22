@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -27,6 +27,11 @@ export default function LoginAuth() {
   const [isResetLoading, setIsResetLoading] = useState(false);
   const [showRoleDialog, setShowRoleDialog] = useState(false);
   const [pendingGoogleUser, setPendingGoogleUser] = useState<any>(null);
+
+  // Already logged in — skip the login page entirely
+  useEffect(() => {
+    if (dbUser) navigate(getDashboardRoute());
+  }, [dbUser, navigate]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),

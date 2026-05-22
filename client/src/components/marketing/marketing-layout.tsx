@@ -3,6 +3,7 @@ import { Link, useLocation } from "wouter";
 import { ChevronDown, Facebook, Linkedin, LayoutDashboard, Menu, X } from "lucide-react";
 import Logo from "@/components/ui/logo";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/use-auth";
 
 const navItems = [
   { label: "Platform", href: "/platform" },
@@ -50,6 +51,8 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
   const [solutionsOpen, setSolutionsOpen] = useState(false);
   const [location, navigate] = useLocation();
   const isLanding = location === "/landing" || location === "/";
+  const { dbUser } = useAuth();
+  const dashboardHref = dbUser ? "/dashboard" : "/login";
 
   const handleLandingSectionClick = (
     event: MouseEvent<HTMLAnchorElement>,
@@ -140,9 +143,9 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
 
           <div className="hidden items-center gap-2 lg:flex">
             <Button asChild className="bg-[#0A1F44] text-white hover:bg-[#102b5a]">
-              <Link href="/login">
+              <Link href={dashboardHref}>
                 <LayoutDashboard className="mr-2 h-4 w-4" />
-                Access Dashboard
+                {dbUser ? "Go to Dashboard" : "Access Dashboard"}
               </Link>
             </Button>
           </div>
@@ -184,9 +187,9 @@ export function MarketingLayout({ children }: { children: ReactNode }) {
                 </Link>
               ))}
               <Button asChild className="mt-1 bg-[#0A1F44] text-[#ffcc33] hover:bg-[#102b5a]">
-                <Link href="/login" onClick={() => setMobileOpen(false)}>
+                <Link href={dashboardHref} onClick={() => setMobileOpen(false)}>
                   <LayoutDashboard className="mr-2 h-4 w-4" />
-                  Access Dashboard
+                  {dbUser ? "Go to Dashboard" : "Access Dashboard"}
                 </Link>
               </Button>
             </div>

@@ -76,6 +76,10 @@ export async function verifyFirebaseIdToken(
   }
 }
 
+export function isFirebaseAdminConfigured(): boolean {
+  return initializeFirebaseAdmin() !== null;
+}
+
 export function getFirebaseAuth(): admin.auth.Auth | null {
   const app = initializeFirebaseAdmin();
   if (!app) {

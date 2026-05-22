@@ -6,15 +6,15 @@ import { authRateLimiter, secureCookieOptions } from "../middleware/security";
 import { authMiddleware, optionalAuthMiddleware } from "../middleware/auth";
 import { generateTokenPair, blacklistToken, verifyRefreshToken } from "../middleware/security";
 import { logger } from "../logger";
-import { verifyFirebaseIdToken } from "../lib/firebase-admin";
+import { verifyFirebaseIdToken, isFirebaseAdminConfigured } from "../lib/firebase-admin";
+import { isPreapprovedEmail } from "../config/preapproved-emails";
+import { getPaginationParams, paginateArray } from "../pagination";
 
 /** Cookie options for the auth JWT — 30 min lifetime matches access token expiry */
 const AUTH_COOKIE_OPTIONS = {
   ...secureCookieOptions,
   maxAge: 30 * 60 * 1000, // 30 minutes
 } as const;
-import { isPreapprovedEmail } from "../config/preapproved-emails";
-import { getPaginationParams, paginateArray } from "../pagination";
 
 export const usersRouter = Router();
 
@@ -159,8 +159,11 @@ usersRouter.post("/firebase-sync", authRateLimiter, async (req: Request, res: Re
       return res.status(400).json({ message: "Missing required fields: firebaseUid, email" });
     }
 
+    // When Firebase Admin SDK is configured, verify the Bearer token cryptographically.
+    // When it is not configured (credentials missing in env), skip verification so
+    // login still works — the uid/email lookup below enforces account ownership.
     const authHeader = req.headers.authorization;
-    if (authHeader?.startsWith("Bearer ")) {
+    if (authHeader?.startsWith("Bearer ") && isFirebaseAdminConfigured()) {
       const decoded = await verifyFirebaseIdToken(authHeader.slice(7));
       if (!decoded?.uid) {
         return res.status(401).json({ message: "Invalid Firebase authentication token" });

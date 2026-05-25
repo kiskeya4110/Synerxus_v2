@@ -54,6 +54,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   // Prevents onAuthStateChanged from overwriting state during demo login
   const ignoreNextNullAuthRef = useRef(false);
+  // Fresh login/signup attempts should replace stale local session markers.
+  const activeAuthOperationRef = useRef(false);
   // Holds the timer that fires a silent token refresh before the access token expires
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -221,7 +223,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const isUidMismatch = storedFirebaseUid && firebaseUser.uid !== storedFirebaseUid;
         const isDemoSession = sessionType === "demo";
 
-        if (isUidMismatch || isDemoSession) {
+        if (!activeAuthOperationRef.current && (isUidMismatch || isDemoSession)) {
           ignoreNextNullAuthRef.current = true;
           try { await firebaseSignOut(auth); } catch (_) { ignoreNextNullAuthRef.current = false; }
           await restoreDemoUser();
@@ -257,6 +259,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [syncWithBackend, restoreDemoUser]);
 
   const signInWithGoogle = async (userType?: string) => {
+    activeAuthOperationRef.current = true;
     try {
       const result = await signInWithPopup(auth, googleProvider);
 
@@ -278,6 +281,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      activeAuthOperationRef.current = false;
     }
   };
 
@@ -291,6 +296,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       ]);
     };
 
+    activeAuthOperationRef.current = true;
     try {
       const result = await withTimeout(
         signInWithEmailAndPassword(auth, email, password),
@@ -412,10 +418,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      activeAuthOperationRef.current = false;
     }
   };
 
   const signUp = async (email: string, password: string, userType?: string, displayName?: string) => {
+    activeAuthOperationRef.current = true;
     try {
       const result = await createUserWithEmailAndPassword(auth, email, password);
 
@@ -499,6 +508,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         variant: "destructive",
       });
       throw error;
+    } finally {
+      activeAuthOperationRef.current = false;
     }
   };
 

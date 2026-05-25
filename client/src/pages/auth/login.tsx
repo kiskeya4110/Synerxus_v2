@@ -73,7 +73,7 @@ export default function LoginAuth() {
       const result = await signInWithGoogle();
 
       if (!result) {
-        throw new Error("Google sign-in failed");
+        return;
       }
 
       const { user, isNewUser } = result;

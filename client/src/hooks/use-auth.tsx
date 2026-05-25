@@ -3,6 +3,7 @@ import {
   User,
   signInWithEmailAndPassword,
   signInWithPopup,
+  signInWithRedirect,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged
@@ -58,6 +59,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const activeAuthOperationRef = useRef(false);
   // Holds the timer that fires a silent token refresh before the access token expires
   const refreshTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const shouldUseRedirectSignIn = () => {
+    if (typeof window === "undefined") return false;
+    const isStandalone = window.matchMedia?.("(display-mode: standalone)")?.matches
+      || (window.navigator as any).standalone === true;
+    const isTouchMobile = window.matchMedia?.("(pointer: coarse)")?.matches
+      && window.innerWidth < 768;
+    return isStandalone || isTouchMobile;
+  };
 
   /**
    * Schedule a silent token refresh for demo/non-Firebase sessions.
@@ -261,6 +271,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signInWithGoogle = async (userType?: string) => {
     activeAuthOperationRef.current = true;
     try {
+      if (shouldUseRedirectSignIn()) {
+        await signInWithRedirect(auth, googleProvider);
+        return null;
+      }
+
       const result = await signInWithPopup(auth, googleProvider);
 
       // Sync with backend to check if user exists

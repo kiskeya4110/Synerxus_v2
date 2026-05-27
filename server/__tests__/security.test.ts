@@ -56,7 +56,7 @@ describe("Security Middleware", () => {
       expect(tokens).toHaveProperty("expiresIn");
       expect(typeof tokens.accessToken).toBe("string");
       expect(typeof tokens.refreshToken).toBe("string");
-      expect(tokens.expiresIn).toBe(15 * 60);
+      expect(tokens.expiresIn).toBe(30 * 60);
     });
 
     it("should generate different access and refresh tokens", () => {

@@ -4,6 +4,52 @@ Impact data infrastructure that captures ground-truth outcomes confirmed by NGOs
 
 ---
 
+## Running a Downloaded Copy Locally
+
+Login works in Replit because Replit injects Secrets and a managed database into the running app. Those values are not included when the project is downloaded.
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Create a local environment file:
+
+```bash
+cp .env.example .env
+```
+
+3. Fill `.env` with the same values used in Replit Secrets:
+
+- `DATABASE_URL`
+- `JWT_SECRET`
+- `REFRESH_TOKEN_SECRET`
+- all `VITE_FIREBASE_*` values
+- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, and `FIREBASE_PRIVATE_KEY` for production-grade token verification
+
+4. In Firebase Console, open **Authentication -> Settings -> Authorized domains** and add:
+
+- `localhost`
+- `127.0.0.1`
+- your downloaded app's deployed domain, if you are running it somewhere other than your machine
+
+5. Verify the local auth setup:
+
+```bash
+npm run check:local-auth
+```
+
+6. Start the app:
+
+```bash
+npm run dev
+```
+
+Open `http://localhost:5000`. If login still fails, check the browser console and the server logs for Firebase domain/config errors or database connection errors.
+
+---
+
 ## Database Migration Guide
 
 Instructions for migrating data from the previous deployment to this version.

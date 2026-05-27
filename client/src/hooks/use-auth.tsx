@@ -4,6 +4,7 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
+  getRedirectResult,
   createUserWithEmailAndPassword,
   signOut as firebaseSignOut,
   onAuthStateChanged
@@ -193,6 +194,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const clearNewUserFlag = useCallback(() => {
     setIsNewUser(false);
   }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const completeRedirectSignIn = async () => {
+      activeAuthOperationRef.current = true;
+      try {
+        const result = await getRedirectResult(auth);
+        if (!result?.user || cancelled) return;
+
+        const syncResult = await syncWithBackend(result.user);
+        if (cancelled) return;
+
+        if (syncResult) {
+          setUser(result.user);
+          setDbUser(syncResult.user);
+        } else {
+          setUser(result.user);
+          setDbUser(null);
+          setIsNewUser(true);
+        }
+      } catch (error) {
+        console.error("[Auth] Error completing redirect sign-in:", error);
+        toast({
+          title: "Authentication Error",
+          description: "Failed to complete Google sign-in. Please try again.",
+          variant: "destructive",
+        });
+      } finally {
+        activeAuthOperationRef.current = false;
+        if (!cancelled) setLoading(false);
+      }
+    };
+
+    completeRedirectSignIn();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [syncWithBackend, toast]);
 
   // Re-establish the session when the user returns to the tab after being away.
   // For demo users: re-validate the httpOnly cookie. For Firebase users: onAuthStateChanged

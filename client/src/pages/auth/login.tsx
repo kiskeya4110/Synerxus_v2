@@ -19,7 +19,7 @@ import { RoleSelectionDialog } from "@/components/auth/role-selection-dialog";
 export default function LoginAuth() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
-  const { signInWithEmail, signInWithGoogle, dbUser } = useAuth();
+  const { signInWithEmail, signInWithGoogle, user, dbUser, isNewUser } = useAuth();
 
   const [showPassword, setShowPassword] = useState(false);
   const [isEmailLoading, setIsEmailLoading] = useState(false);
@@ -32,6 +32,13 @@ export default function LoginAuth() {
   useEffect(() => {
     if (dbUser) navigate(getDashboardRoute());
   }, [dbUser, navigate]);
+
+  useEffect(() => {
+    if (user && isNewUser && !dbUser) {
+      setPendingGoogleUser(user);
+      setShowRoleDialog(true);
+    }
+  }, [user, isNewUser, dbUser]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),

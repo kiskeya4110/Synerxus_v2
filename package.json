@@ -17,6 +17,7 @@
     "start:cluster": "NODE_OPTIONS='--max-old-space-size=1024' NODE_ENV=production node dist/index-cluster.js",
     "start:production": "NODE_OPTIONS='--max-old-space-size=1024' NODE_ENV=production CLUSTER_MODE=true node dist/index-cluster.js",
     "check": "tsc",
+    "check:local-auth": "tsx scripts/check-local-auth-env.ts",
     "db:push": "npx drizzle-kit push",
     "synerxus": "./start-synerxus.sh",
     "seed": "tsx dummy/seed-data.ts",

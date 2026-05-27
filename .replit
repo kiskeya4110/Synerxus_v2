@@ -70,5 +70,5 @@ timeoutMs = 120000
 [userenv]
 
 [userenv.shared]
-CORS_WHITELIST = "https://synerxus-esg.replit.app"
+CORS_WHITELIST = "https://synerxus.com,https://www.synerxus.com,https://synerxus-esg.replit.app"
 APP_ORIGIN = "https://synerxus-esg.replit.app"

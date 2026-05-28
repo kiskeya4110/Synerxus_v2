@@ -542,7 +542,7 @@ interface ApprovalNotificationData {
   recipientName: string;
   itemType: 'hours' | 'impact';
   projectName: string;
-  status: 'approved' | 'rejected';
+  status: 'approved' | 'rejected' | 'returned';
   details: {
     hours?: number;
     date?: string;
@@ -556,9 +556,10 @@ interface ApprovalNotificationData {
 // Generate HTML template for approval notification
 function generateApprovalNotificationTemplate(data: ApprovalNotificationData): string {
   const isApproved = data.status === 'approved';
-  const statusColor = isApproved ? '#10b981' : '#ef4444';
-  const statusIcon = isApproved ? '✅' : '❌';
-  const statusText = isApproved ? 'Approved' : 'Rejected';
+  const isReturned = data.status === 'returned';
+  const statusColor = isApproved ? '#10b981' : isReturned ? '#f59e0b' : '#ef4444';
+  const statusIcon = isApproved ? '✅' : isReturned ? '↩️' : '❌';
+  const statusText = isApproved ? 'Approved' : isReturned ? 'Returned for Revision' : 'Rejected';
 
   const itemDescription = data.itemType === 'hours'
     ? `${data.details.hours || 0} volunteer hours`
@@ -652,8 +653,8 @@ function generateApprovalNotificationTemplate(data: ApprovalNotificationData): s
 async function sendApprovalNotification(data: ApprovalNotificationData): Promise<boolean> {
   try {
     const htmlContent = generateApprovalNotificationTemplate(data);
-    const statusText = data.status === 'approved' ? 'Approved' : 'Rejected';
-    const statusIcon = data.status === 'approved' ? '✅' : '❌';
+    const statusText = data.status === 'approved' ? 'Approved' : data.status === 'returned' ? 'Returned for Revision' : 'Rejected';
+    const statusIcon = data.status === 'approved' ? '✅' : data.status === 'returned' ? '↩️' : '❌';
     const itemType = data.itemType === 'hours' ? 'Hours' : 'Impact';
 
     const mailOptions = {
@@ -676,7 +677,7 @@ async function sendApprovalNotification(data: ApprovalNotificationData): Promise
 // Helper function to send activity approval notification
 async function sendActivityApprovalNotification(
   activityId: number,
-  status: 'approved' | 'rejected',
+  status: 'approved' | 'rejected' | 'returned',
   reviewerId?: number
 ): Promise<boolean> {
   try {

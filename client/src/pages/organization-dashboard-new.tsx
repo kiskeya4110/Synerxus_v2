@@ -24,6 +24,7 @@ import {
   Home,
   Menu,
   FileText,
+  RotateCcw,
 } from "lucide-react";
 import { getSDGColor, getSDGName } from "@/lib/sdg-utils";
 import { prepareReportContent } from "@/lib/report-sanitizer";
@@ -36,7 +37,8 @@ import { Avatar, AvatarFallback, AvatarImage, UserAvatar } from "@/components/ui
 import { Progress, CircularProgress, ProgressWithLabel } from "@/components/ui/progress";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Stat, StatGroup } from "@/components/ui/stat";
 import { EmptyState, LoadingState, ErrorState } from "@/components/ui/empty-state";
@@ -102,10 +104,11 @@ interface ReviewItemProps {
   item: PendingReview;
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
+  onFlagForReview: (id: number) => void;
   isProcessing?: boolean;
 }
 
-function ReviewItem({ item, onApprove, onReject, isProcessing }: ReviewItemProps) {
+function ReviewItem({ item, onApprove, onReject, onFlagForReview, isProcessing }: ReviewItemProps) {
   return (
     <div className="flex items-start gap-4 p-4 rounded-xl bg-secondary/30 border border-border hover:border-primary/30 transition-all">
       {/* Volunteer Avatar */}
@@ -164,17 +167,27 @@ function ReviewItem({ item, onApprove, onReject, isProcessing }: ReviewItemProps
           variant="success"
           onClick={() => onApprove(item.id)}
           disabled={isProcessing}
-          className="w-24"
+          className="w-28"
         >
           <CheckCircle2 className="h-4 w-4 mr-1" />
-          Confirm
+          Accept
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => onFlagForReview(item.id)}
+          disabled={isProcessing}
+          className="w-28 border-amber-300 text-amber-700 hover:bg-amber-50"
+        >
+          <RotateCcw className="h-4 w-4 mr-1" />
+          Return
         </Button>
         <Button
           size="sm"
           variant="outline"
           onClick={() => onReject(item.id)}
           disabled={isProcessing}
-          className="w-24"
+          className="w-28 border-destructive/40 text-destructive hover:bg-destructive/5"
         >
           <XCircle className="h-4 w-4 mr-1" />
           Reject
@@ -191,6 +204,7 @@ interface ReviewQueueProps {
   items: PendingReview[];
   onApprove: (id: number) => void;
   onReject: (id: number) => void;
+  onFlagForReview: (id: number) => void;
   onApproveAll: () => void;
   processingIds: Set<number>;
   isApprovingAll?: boolean;
@@ -201,6 +215,7 @@ function ReviewQueue({
   items,
   onApprove,
   onReject,
+  onFlagForReview,
   onApproveAll,
   processingIds,
   isApprovingAll,
@@ -266,6 +281,7 @@ function ReviewQueue({
               item={item}
               onApprove={onApprove}
               onReject={onReject}
+              onFlagForReview={onFlagForReview}
               isProcessing={processingIds.has(item.id)}
             />
           ))}
@@ -453,6 +469,15 @@ export default function OrganizationDashboardNew() {
 
   const [processingIds, setProcessingIds] = useState<Set<number>>(new Set());
   const [isApprovingAll, setIsApprovingAll] = useState(false);
+
+  // Reject dialog state
+  const [rejectDialog, setRejectDialog] = useState<{ open: boolean; id: number | null; reason: string }>({
+    open: false, id: null, reason: ""
+  });
+  // Flag-for-review dialog state
+  const [flagDialog, setFlagDialog] = useState<{ open: boolean; id: number | null; message: string }>({
+    open: false, id: null, message: ""
+  });
   const [activeTab, setActiveTab] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return params.get("tab") || "overview";
@@ -694,20 +719,55 @@ export default function OrganizationDashboardNew() {
     }
   };
 
-  const handleReject = async (id: number) => {
+  const handleReject = (id: number) => {
+    setRejectDialog({ open: true, id, reason: "" });
+  };
+
+  const handleFlagForReview = (id: number) => {
+    setFlagDialog({ open: true, id, message: "" });
+  };
+
+  const handleConfirmReject = async () => {
+    const id = rejectDialog.id;
+    if (!id) return;
+    if (!rejectDialog.reason.trim()) {
+      toast({ title: "Reason required", description: "Please provide a reason for rejection.", variant: "destructive" });
+      return;
+    }
+    setRejectDialog((d) => ({ ...d, open: false }));
     setProcessingIds((prev) => new Set(prev).add(id));
     try {
-      await apiRequest("POST", `/api/volunteer-activities/${id}/reject`, { reviewerId: userId });
+      await apiRequest("POST", `/api/volunteer-activities/${id}/reject`, { reason: rejectDialog.reason.trim() });
       refetchPending();
-      toast({ title: "Rejected", description: "The submission has been rejected." });
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
+      toast({ title: "Rejected", description: "The submission has been rejected and the volunteer has been notified." });
     } catch (err) {
       toast({ title: "Error", description: "Failed to reject.", variant: "destructive" });
     } finally {
-      setProcessingIds((prev) => {
-        const next = new Set(prev);
-        next.delete(id);
-        return next;
-      });
+      setProcessingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      setRejectDialog({ open: false, id: null, reason: "" });
+    }
+  };
+
+  const handleConfirmFlag = async () => {
+    const id = flagDialog.id;
+    if (!id) return;
+    if (!flagDialog.message.trim()) {
+      toast({ title: "Message required", description: "Please provide a message for the volunteer.", variant: "destructive" });
+      return;
+    }
+    setFlagDialog((d) => ({ ...d, open: false }));
+    setProcessingIds((prev) => new Set(prev).add(id));
+    try {
+      await apiRequest("POST", `/api/volunteer-activities/${id}/return`, { reason: flagDialog.message.trim() });
+      refetchPending();
+      queryClient.invalidateQueries({ queryKey: ["/api/organization"] });
+      toast({ title: "Returned for revision", description: "The submission has been returned to the volunteer with your message." });
+    } catch (err) {
+      toast({ title: "Error", description: "Failed to return submission.", variant: "destructive" });
+    } finally {
+      setProcessingIds((prev) => { const next = new Set(prev); next.delete(id); return next; });
+      setFlagDialog({ open: false, id: null, message: "" });
     }
   };
 
@@ -864,18 +924,25 @@ export default function OrganizationDashboardNew() {
                       ))}
                     </div>
                   )}
-                  <div className="flex gap-2">
+                  <div className="flex gap-1.5">
                     <button
                       onClick={() => handleApprove(item.id)}
                       disabled={processingIds.has(item.id)}
-                      className="flex-1 py-2 px-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                      className="flex-1 py-2 px-2 bg-emerald-600 text-white text-xs font-medium rounded-lg hover:bg-emerald-700 disabled:opacity-50"
                     >
-                      ✓ Confirm
+                      ✓ Accept
+                    </button>
+                    <button
+                      onClick={() => handleFlagForReview(item.id)}
+                      disabled={processingIds.has(item.id)}
+                      className="flex-1 py-2 px-2 bg-amber-50 text-amber-700 border border-amber-200 text-xs font-medium rounded-lg hover:bg-amber-100 disabled:opacity-50"
+                    >
+                      ↩ Return
                     </button>
                     <button
                       onClick={() => handleReject(item.id)}
                       disabled={processingIds.has(item.id)}
-                      className="flex-1 py-2 px-3 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 disabled:opacity-50"
+                      className="flex-1 py-2 px-2 bg-red-50 text-red-700 border border-red-200 text-xs font-medium rounded-lg hover:bg-red-100 disabled:opacity-50"
                     >
                       ✗ Reject
                     </button>
@@ -1149,6 +1216,7 @@ export default function OrganizationDashboardNew() {
                   items={pendingReviews}
                   onApprove={handleApprove}
                   onReject={handleReject}
+                  onFlagForReview={handleFlagForReview}
                   onApproveAll={handleApproveAll}
                   processingIds={processingIds}
                   isApprovingAll={isApprovingAll}
@@ -1468,6 +1536,78 @@ export default function OrganizationDashboardNew() {
           />
         </div>
       )}
+
+      {/* Reject Dialog */}
+      <Dialog open={rejectDialog.open} onOpenChange={(open) => !open && setRejectDialog({ open: false, id: null, reason: "" })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <XCircle className="h-5 w-5 text-destructive" />
+              Reject Submission
+            </DialogTitle>
+            <DialogDescription>
+              This will reject the submission and notify the volunteer. They may resubmit after reviewing your feedback.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-sm font-medium text-foreground">Reason for rejection <span className="text-destructive">*</span></label>
+            <Textarea
+              placeholder="Explain why this submission is being rejected and what the volunteer should fix…"
+              value={rejectDialog.reason}
+              onChange={(e) => setRejectDialog((d) => ({ ...d, reason: e.target.value }))}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setRejectDialog({ open: false, id: null, reason: "" })}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmReject} disabled={!rejectDialog.reason.trim()}>
+              <XCircle className="h-4 w-4 mr-1" />
+              Reject & Notify
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Flag for Review (Return) Dialog */}
+      <Dialog open={flagDialog.open} onOpenChange={(open) => !open && setFlagDialog({ open: false, id: null, message: "" })}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <RotateCcw className="h-5 w-5 text-amber-600" />
+              Return for Revision
+            </DialogTitle>
+            <DialogDescription>
+              Send this submission back to the volunteer with your feedback. They can edit and resubmit it.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <label className="text-sm font-medium text-foreground">Message to volunteer <span className="text-destructive">*</span></label>
+            <Textarea
+              placeholder="Describe what needs to be corrected or clarified before this can be approved…"
+              value={flagDialog.message}
+              onChange={(e) => setFlagDialog((d) => ({ ...d, message: e.target.value }))}
+              rows={4}
+              className="resize-none"
+            />
+          </div>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setFlagDialog({ open: false, id: null, message: "" })}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-amber-500 hover:bg-amber-600 text-white"
+              onClick={handleConfirmFlag}
+              disabled={!flagDialog.message.trim()}
+            >
+              <RotateCcw className="h-4 w-4 mr-1" />
+              Return & Notify
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

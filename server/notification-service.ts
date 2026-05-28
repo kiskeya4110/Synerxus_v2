@@ -845,3 +845,78 @@ export async function notifyBadgeEarned(
     logger.error("Error creating badge earned notification:", error);
   }
 }
+
+/**
+ * Notify a volunteer that their activity was returned for revision or rejected
+ */
+export async function notifyActivityReturned(
+  volunteerId: number,
+  activityId: number,
+  reason: string | undefined,
+  statusType: 'returned' | 'rejected'
+): Promise<void> {
+  try {
+    const activity = await storage.getVolunteerActivity(activityId);
+    const project = activity?.projectId ? await storage.getProject(activity.projectId) : null;
+    const projectName = project?.name || 'your project';
+
+    const isReturn = statusType === 'returned';
+    const title = isReturn ? "Impact submission needs revision" : "Impact submission rejected";
+    const baseMsg = isReturn
+      ? `Your impact submission for "${projectName}" has been returned for revision.`
+      : `Your impact submission for "${projectName}" has been rejected.`;
+    const message = reason ? `${baseMsg} Reason: "${reason}". Please review and resubmit.` : `${baseMsg} Please review and resubmit.`;
+
+    const notification: InsertNotification = {
+      userId: volunteerId,
+      type: "activity_returned",
+      title,
+      message,
+      relatedEntityType: "volunteer_activity",
+      relatedEntityId: activityId,
+      read: false,
+    };
+
+    await storage.createNotification(notification);
+    await broadcastToUser(volunteerId, notification);
+  } catch (error) {
+    logger.error("Error creating activity returned notification:", error);
+  }
+}
+
+/**
+ * Notify organization managers when a volunteer resubmits a revised activity
+ */
+export async function notifyActivityResubmitted(
+  activityId: number,
+  projectId: number,
+  volunteerId: number
+): Promise<void> {
+  try {
+    const project = await storage.getProject(projectId);
+    if (!project?.organizationId) return;
+
+    const volunteer = await storage.getUser(volunteerId);
+    const volunteerName = volunteer?.displayName || volunteer?.username || 'A volunteer';
+    const projectName = project.name || 'a project';
+
+    const orgUsers = await storage.listOrganizationMembers(project.organizationId);
+
+    for (const member of orgUsers) {
+      if (!member.userId) continue;
+      const notification: InsertNotification = {
+        userId: member.userId,
+        type: "pending_approval",
+        title: "Revised submission ready for review",
+        message: `${volunteerName} has revised and resubmitted their impact for "${projectName}". Please review.`,
+        relatedEntityType: "volunteer_activity",
+        relatedEntityId: activityId,
+        read: false,
+      };
+      await storage.createNotification(notification);
+      await broadcastToUser(member.userId, notification);
+    }
+  } catch (error) {
+    logger.error("Error creating activity resubmitted notification:", error);
+  }
+}

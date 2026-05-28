@@ -128,6 +128,7 @@ export default function LogActivity() {
   const [photoUrl, setPhotoUrl] = useState<string>("");
   const [calendarOpen, setCalendarOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [contributionType, setContributionType] = useState<"individual" | "collective">("individual");
 
   // Geolocation capture on mount
   const [geolocation, setGeolocation] = useState<{ lat: number; lng: number; accuracy: number; timestamp: number } | null>(null);
@@ -257,6 +258,7 @@ export default function LogActivity() {
     setSelectedKpi("");
     setKpiQuantity("");
     setHoursWorked("");
+    setContributionType("individual");
   }, [selectedProjectId]);
 
   // Auto-select project if only one available
@@ -300,6 +302,7 @@ export default function LogActivity() {
       setBeneficiaryCount("");
       setPhotoUrl("");
       setDate(new Date());
+      setContributionType("individual");
       setIsSubmitting(false);
     },
     onError: () => {
@@ -354,7 +357,7 @@ export default function LogActivity() {
       outcomes: selectedKpi,
       outcomeText: selectedKpi,
       outcomeQuantity: parseFloat(kpiQuantity),
-      outcomeType: "individual",
+      outcomeType: contributionType === "collective" ? "shared" : "individual",
       beneficiaryCount: beneficiaryCount && parseFloat(beneficiaryCount) > 0 ? Math.round(parseFloat(beneficiaryCount)) : null,
       sdgTags: sdgTags.length > 0 ? sdgTags : null,
       geolocation: geolocation || null,
@@ -389,6 +392,7 @@ export default function LogActivity() {
         setBeneficiaryCount("");
         setPhotoUrl("");
         setDate(new Date());
+        setContributionType("individual");
         setIsSubmitting(false);
       } catch (err) {
         console.error('[LogActivity] Failed to save offline:', err);
@@ -539,6 +543,47 @@ export default function LogActivity() {
                       <p className="text-sm text-slate-500">No KPIs set up for this project yet.</p>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* 2b. Contribution Type */}
+              {selectedProjectId && (
+                <div className="space-y-2">
+                  <Label className="text-slate-700 font-medium">
+                    Contribution Type <span className="text-red-500">*</span>
+                  </Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setContributionType("individual")}
+                      className={`flex flex-col items-center text-center p-4 rounded-xl border-2 transition-all ${
+                        contributionType === "individual"
+                          ? "border-emerald-500 bg-emerald-50 shadow-md"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+                      }`}
+                    >
+                      <span className="text-2xl mb-1">🙋</span>
+                      <span className={`text-sm font-medium ${contributionType === "individual" ? "text-emerald-800" : "text-slate-700"}`}>
+                        Individual
+                      </span>
+                      <span className="text-xs text-slate-400 mt-0.5">Your own contribution</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setContributionType("collective")}
+                      className={`flex flex-col items-center text-center p-4 rounded-xl border-2 transition-all ${
+                        contributionType === "collective"
+                          ? "border-emerald-500 bg-emerald-50 shadow-md"
+                          : "border-slate-200 bg-white hover:border-slate-300 hover:shadow-sm"
+                      }`}
+                    >
+                      <span className="text-2xl mb-1">👥</span>
+                      <span className={`text-sm font-medium ${contributionType === "collective" ? "text-emerald-800" : "text-slate-700"}`}>
+                        Collective
+                      </span>
+                      <span className="text-xs text-slate-400 mt-0.5">Team contribution</span>
+                    </button>
+                  </div>
                 </div>
               )}
 

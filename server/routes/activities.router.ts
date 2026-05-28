@@ -30,6 +30,8 @@ import {
 import {
   notifyPendingImpact,
   notifyPendingActivity,
+  notifyActivityReturned,
+  notifyActivityResubmitted,
 } from "../notification-service";
 import { persistKPIsForActivity } from "../kpi-persistence-service";
 
@@ -1380,9 +1382,13 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
     }
 
     const previousStatus = activity.verificationStatus || 'pending';
+    const rejectionReason = req.body.reason?.trim() || undefined;
     const updatedActivity = await storage.updateVolunteerActivity(activityId, {
-      verificationStatus: 'rejected'
-    });
+      verificationStatus: 'rejected',
+      rejectedReason: rejectionReason ?? null,
+      verifiedBy: req.user!.id,
+      verifiedAt: new Date(),
+    } as any);
 
     // Write immutable audit log entry
     try {
@@ -1396,7 +1402,7 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
         performedBy: req.user!.id,
         performedByRole: req.user?.userType || 'organization',
         volunteerId: activity.userId,
-        reason: req.body.reason || undefined,
+        reason: rejectionReason,
         ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
         userAgent: req.headers['user-agent'] || undefined,
       };
@@ -1405,10 +1411,15 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
       logger.error("[Audit] Failed to write audit log for activity rejection:", auditErr);
     }
 
-    // Send email notification to volunteer (non-blocking)
+    // Send email + in-app notification to volunteer (non-blocking)
     sendActivityApprovalNotification(activityId, 'rejected', req.user?.id).catch(err => {
       logger.error("Failed to send rejection notification:", err);
     });
+    if (activity.userId) {
+      notifyActivityReturned(activity.userId, activityId, rejectionReason, 'rejected').catch(err => {
+        logger.error("Failed to send in-app rejection notification:", err);
+      });
+    }
 
     // Persist KPIs (fire-and-forget)
     if (activity?.userId) {
@@ -1428,6 +1439,183 @@ activitiesRouter.post("/volunteer-activities/:id/reject", authMiddleware, async 
   } catch (err) {
     logger.error("Error rejecting activity:", err);
     res.status(500).json({ message: "Failed to reject activity" });
+  }
+});
+
+/**
+ * POST /volunteer-activities/:id/return - Return activity to volunteer for revision ("Flag for Review")
+ * Sets status=returned, notifies the volunteer with the reviewer's message
+ */
+activitiesRouter.post("/volunteer-activities/:id/return", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const activityId = parseInt(req.params.id);
+    const { reason } = req.body;
+
+    if (!reason || typeof reason !== 'string' || reason.trim().length === 0) {
+      return res.status(400).json({ message: "A message to the volunteer is required" });
+    }
+
+    if (req.user?.userType !== 'organization') {
+      return res.status(403).json({ message: "Only organization users can return activities for revision" });
+    }
+
+    const activity = await storage.getVolunteerActivity(activityId);
+    if (!activity) {
+      return res.status(404).json({ message: "Volunteer activity not found" });
+    }
+
+    if (activity.projectId) {
+      const project = await storage.getProject(activity.projectId);
+      if (project && project.organizationId !== req.user.organizationId) {
+        return res.status(403).json({ message: "Cannot return activities for other organizations" });
+      }
+    }
+
+    if (req.user.organizationId) {
+      const members = await storage.listOrganizationMembers(req.user.organizationId);
+      const currentMember = members.find((m: any) => m.userId === req.user?.id);
+      if (currentMember && !currentMember.canApproveHours) {
+        return res.status(403).json({ message: "You do not have permission to review hours" });
+      }
+    }
+
+    const previousStatus = activity.verificationStatus || 'pending';
+    const trimmedReason = reason.trim();
+
+    const updatedActivity = await storage.updateVolunteerActivity(activityId, {
+      verificationStatus: 'returned',
+      rejectedReason: trimmedReason,
+      verifiedBy: req.user!.id,
+      verifiedAt: new Date(),
+    } as any);
+
+    try {
+      const auditEntry: InsertVerificationAuditLog = {
+        activityId,
+        projectId: activity.projectId || undefined,
+        organizationId: req.user?.organizationId || undefined,
+        action: 'reverted',
+        previousStatus,
+        newStatus: 'returned',
+        performedBy: req.user!.id,
+        performedByRole: req.user?.userType || 'organization',
+        volunteerId: activity.userId,
+        reason: trimmedReason,
+        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+        userAgent: req.headers['user-agent'] || undefined,
+      };
+      await (storage as any).createVerificationAuditLog?.(auditEntry);
+    } catch (auditErr) {
+      logger.error("[Audit] Failed to write audit log for activity return:", auditErr);
+    }
+
+    storage.markNotificationsReadByEntity("volunteer_activity", activityId).catch(err => {
+      logger.error("[Notification] Failed to clear stale notifications:", err);
+    });
+
+    if (activity.userId) {
+      notifyActivityReturned(activity.userId, activityId, trimmedReason, 'returned').catch(err => {
+        logger.error("Failed to send in-app return notification:", err);
+      });
+    }
+
+    if (activity?.userId) {
+      const project = activity.projectId ? await storage.getProject(activity.projectId) : null;
+      persistKPIsForActivity(activity.userId, project?.organizationId).catch(err =>
+        logger.error("[KPI] Error persisting KPIs after activity return:", err)
+      );
+    }
+
+    broadcastUpdate("activity_returned", updatedActivity);
+    res.json(updatedActivity);
+  } catch (err) {
+    logger.error("Error returning activity:", err);
+    res.status(500).json({ message: "Failed to return activity for revision" });
+  }
+});
+
+/**
+ * POST /volunteer-activities/:id/resubmit - Volunteer resubmits a rejected or returned activity
+ * Resets status to pending with updated data
+ */
+activitiesRouter.post("/volunteer-activities/:id/resubmit", authMiddleware, async (req: Request, res: Response) => {
+  try {
+    const activityId = parseInt(req.params.id);
+
+    if (req.user?.userType !== 'volunteer') {
+      return res.status(403).json({ message: "Only volunteers can resubmit activities" });
+    }
+
+    const activity = await storage.getVolunteerActivity(activityId);
+    if (!activity) {
+      return res.status(404).json({ message: "Volunteer activity not found" });
+    }
+
+    if (activity.userId !== req.user.id) {
+      return res.status(403).json({ message: "You can only resubmit your own activities" });
+    }
+
+    if (activity.verificationStatus !== 'rejected' && activity.verificationStatus !== 'returned') {
+      return res.status(400).json({ message: "Only rejected or returned activities can be resubmitted" });
+    }
+
+    const { hours, description, outcomeText, outcomes, outcomeQuantity, sdgTags } = req.body;
+
+    const updateData: Record<string, any> = {
+      verificationStatus: 'pending',
+      rejectedReason: null,
+      verifiedBy: null,
+      verifiedAt: null,
+      updatedAt: new Date(),
+    };
+
+    if (hours !== undefined && hours !== null) {
+      const parsedHours = parseFloat(hours);
+      if (!isNaN(parsedHours) && parsedHours > 0) updateData.hours = parsedHours;
+    }
+    if (description !== undefined) updateData.description = description;
+    if (outcomeText !== undefined) updateData.outcomeText = outcomeText;
+    if (outcomes !== undefined) updateData.outcomes = outcomes;
+    if (outcomeQuantity !== undefined && outcomeQuantity !== null) {
+      const parsed = parseInt(outcomeQuantity);
+      if (!isNaN(parsed)) updateData.outcomeQuantity = parsed;
+    }
+    if (Array.isArray(sdgTags)) {
+      updateData.sdgTags = sdgTags.filter((t: any) => typeof t === 'number');
+    }
+
+    const updatedActivity = await storage.updateVolunteerActivity(activityId, updateData);
+
+    try {
+      const auditEntry: InsertVerificationAuditLog = {
+        activityId,
+        projectId: activity.projectId || undefined,
+        action: 'submitted',
+        previousStatus: activity.verificationStatus || 'rejected',
+        newStatus: 'pending',
+        performedBy: req.user.id,
+        performedByRole: 'volunteer',
+        volunteerId: req.user.id,
+        ipAddress: (req.headers['x-forwarded-for'] as string)?.split(',')[0]?.trim() || req.ip || undefined,
+        userAgent: req.headers['user-agent'] || undefined,
+      };
+      await (storage as any).createVerificationAuditLog?.(auditEntry);
+    } catch (auditErr) {
+      logger.error("[Audit] Failed to write audit log for resubmission:", auditErr);
+    }
+
+    // Notify org managers that this has been resubmitted
+    if (activity.projectId) {
+      notifyActivityResubmitted(activityId, activity.projectId, req.user.id).catch(err => {
+        logger.error("Failed to send resubmission notification:", err);
+      });
+    }
+
+    broadcastUpdate("activity_resubmitted", updatedActivity);
+    res.json(updatedActivity);
+  } catch (err) {
+    logger.error("Error resubmitting activity:", err);
+    res.status(500).json({ message: "Failed to resubmit activity" });
   }
 });
 
